@@ -16,6 +16,7 @@ def _callback_url(request: Request, path: str) -> str:
     base = str(request.base_url).rstrip("/")
     if base.startswith("http://") and "localhost" not in base:
         base = "https://" + base[7:]
+    base = re.sub(r":\d+$", "", base)  # strip port injected by Railway proxy
     return f"{base}{path}"
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -109,7 +110,8 @@ async def google_callback(request: Request, code: str, db: AsyncSession = Depend
                 "grant_type": "authorization_code",
             },
         )
-        token_resp.raise_for_status()
+        if not token_resp.is_success:
+            raise HTTPException(status_code=400, detail=f"Google token error {token_resp.status_code}: {token_resp.text}")
         access_token = token_resp.json()["access_token"]
 
         user_resp = await client.get(
