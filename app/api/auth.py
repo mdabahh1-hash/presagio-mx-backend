@@ -1,5 +1,6 @@
 import re
 import httpx
+from urllib.parse import urlencode
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +10,13 @@ from app.models.user import User
 from app.core.auth import create_access_token
 from app.config import settings
 from app.schemas.user import UserMe
+
+
+def _callback_url(request: Request, path: str) -> str:
+    base = str(request.base_url).rstrip("/")
+    if base.startswith("http://") and "localhost" not in base:
+        base = "https://" + base[7:]
+    return f"{base}{path}"
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -75,20 +83,21 @@ async def get_or_create_user(
 # ── Google OAuth ──────────────────────────────────────────────────────────────
 
 @router.get("/google")
-async def google_login():
-    params = {
+async def google_login(request: Request):
+    cb = _callback_url(request, "/api/auth/google/callback")
+    url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode({
         "client_id": settings.GOOGLE_CLIENT_ID,
-        "redirect_uri": f"{settings.BACKEND_URL}/api/auth/google/callback",
+        "redirect_uri": cb,
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
-    }
-    url = "https://accounts.google.com/o/oauth2/v2/auth?" + "&".join(f"{k}={v}" for k, v in params.items())
+    })
     return RedirectResponse(url)
 
 
 @router.get("/google/callback")
-async def google_callback(code: str, db: AsyncSession = Depends(get_db)):
+async def google_callback(request: Request, code: str, db: AsyncSession = Depends(get_db)):
+    cb = _callback_url(request, "/api/auth/google/callback")
     async with httpx.AsyncClient() as client:
         token_resp = await client.post(
             "https://oauth2.googleapis.com/token",
@@ -96,7 +105,7 @@ async def google_callback(code: str, db: AsyncSession = Depends(get_db)):
                 "code": code,
                 "client_id": settings.GOOGLE_CLIENT_ID,
                 "client_secret": settings.GOOGLE_CLIENT_SECRET,
-                "redirect_uri": f"{settings.BACKEND_URL}/api/auth/google/callback",
+                "redirect_uri": cb,
                 "grant_type": "authorization_code",
             },
         )
@@ -127,18 +136,19 @@ async def google_callback(code: str, db: AsyncSession = Depends(get_db)):
 # ── GitHub OAuth ──────────────────────────────────────────────────────────────
 
 @router.get("/github")
-async def github_login():
-    params = {
+async def github_login(request: Request):
+    cb = _callback_url(request, "/api/auth/github/callback")
+    url = "https://github.com/login/oauth/authorize?" + urlencode({
         "client_id": settings.GITHUB_CLIENT_ID,
-        "redirect_uri": f"{settings.BACKEND_URL}/api/auth/github/callback",
+        "redirect_uri": cb,
         "scope": "user:email",
-    }
-    url = "https://github.com/login/oauth/authorize?" + "&".join(f"{k}={v}" for k, v in params.items())
+    })
     return RedirectResponse(url)
 
 
 @router.get("/github/callback")
-async def github_callback(code: str, db: AsyncSession = Depends(get_db)):
+async def github_callback(request: Request, code: str, db: AsyncSession = Depends(get_db)):
+    cb = _callback_url(request, "/api/auth/github/callback")
     async with httpx.AsyncClient() as client:
         token_resp = await client.post(
             "https://github.com/login/oauth/access_token",
@@ -147,7 +157,7 @@ async def github_callback(code: str, db: AsyncSession = Depends(get_db)):
                 "client_id": settings.GITHUB_CLIENT_ID,
                 "client_secret": settings.GITHUB_CLIENT_SECRET,
                 "code": code,
-                "redirect_uri": f"{settings.BACKEND_URL}/api/auth/github/callback",
+                "redirect_uri": cb,
             },
         )
         token_resp.raise_for_status()
