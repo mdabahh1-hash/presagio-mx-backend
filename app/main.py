@@ -56,4 +56,6 @@ async def debug_oauth():
         "google_secret_len": len(g_sec),
         "google_secret_preview": f"{g_sec[:8]}...{g_sec[-4:]}" if len(g_sec) > 12 else "(empty)",
         "github_client_id": gh_id,
+        "frontend_url": settings.FRONTEND_URL,
+        "backend_url": settings.BACKEND_URL,
     }
