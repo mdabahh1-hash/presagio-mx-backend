@@ -1,16 +1,36 @@
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import create_tables
+from sqlalchemy import select
+from app.database import create_tables, AsyncSessionLocal
 from app.config import settings
 from app.api import auth, markets, trades, comments, users, websockets, admin
 from app.services.seed import seed_markets
+from app.models.market import Market, MarketStatus
+
+
+async def close_expired_markets() -> None:
+    async with AsyncSessionLocal() as db:
+        now = datetime.now(timezone.utc)
+        result = await db.execute(
+            select(Market).where(
+                Market.status == MarketStatus.OPEN,
+                Market.ends_at < now,
+            )
+        )
+        expired = result.scalars().all()
+        for m in expired:
+            m.status = MarketStatus.CLOSED
+        if expired:
+            await db.commit()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await create_tables()
     await seed_markets()
+    await close_expired_markets()
     yield
 
 

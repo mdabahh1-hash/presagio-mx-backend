@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -31,6 +32,10 @@ async def execute_trade(
         raise HTTPException(status_code=404, detail="Mercado no encontrado")
     if market.status != MarketStatus.OPEN:
         raise HTTPException(status_code=400, detail="Este mercado ya no acepta operaciones")
+    if market.ends_at < datetime.now(timezone.utc):
+        market.status = MarketStatus.CLOSED
+        await db.commit()
+        raise HTTPException(status_code=400, detail="Este mercado ya cerró")
 
     if current_user.points < payload.points:
         raise HTTPException(
