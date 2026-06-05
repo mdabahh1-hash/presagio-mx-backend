@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
-from app.database import create_tables, AsyncSessionLocal
+from app.database import create_tables, migrate_enums, AsyncSessionLocal
 from app.config import settings
 from app.api import auth, markets, trades, comments, users, websockets, admin
 from app.services.seed import seed_markets
@@ -21,7 +21,7 @@ async def close_expired_markets() -> None:
         )
         expired = result.scalars().all()
         for m in expired:
-            m.status = MarketStatus.CLOSED
+            m.status = MarketStatus.PENDING_RESOLUTION
         if expired:
             await db.commit()
 
@@ -29,6 +29,7 @@ async def close_expired_markets() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await create_tables()
+    await migrate_enums()
     await seed_markets()
     await close_expired_markets()
     yield

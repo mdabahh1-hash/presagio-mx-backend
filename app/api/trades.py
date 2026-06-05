@@ -33,9 +33,9 @@ async def execute_trade(
     if market.status != MarketStatus.OPEN:
         raise HTTPException(status_code=400, detail="Este mercado ya no acepta operaciones")
     if market.ends_at < datetime.now(timezone.utc):
-        market.status = MarketStatus.CLOSED
+        market.status = MarketStatus.PENDING_RESOLUTION
         await db.commit()
-        raise HTTPException(status_code=400, detail="Este mercado ya cerró")
+        raise HTTPException(status_code=400, detail="Este mercado cerró y está pendiente de resolución")
 
     if current_user.points < payload.points:
         raise HTTPException(

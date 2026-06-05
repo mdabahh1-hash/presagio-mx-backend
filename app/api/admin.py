@@ -33,7 +33,7 @@ async def resolve_market(
     market = result.scalar_one_or_none()
     if not market:
         raise HTTPException(status_code=404, detail="Mercado no encontrado")
-    if market.status not in (MarketStatus.OPEN, MarketStatus.CLOSED):
+    if market.status not in (MarketStatus.OPEN, MarketStatus.PENDING_RESOLUTION, MarketStatus.CLOSED):
         raise HTTPException(status_code=400, detail="Mercado ya resuelto o cancelado")
 
     resolution = payload.resolution.upper()

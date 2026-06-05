@@ -7,6 +7,7 @@ from app.database import Base
 
 class MarketStatus(str, enum.Enum):
     OPEN = "open"
+    PENDING_RESOLUTION = "pending_resolution"
     CLOSED = "closed"
     RESOLVED_YES = "resolved_yes"
     RESOLVED_NO = "resolved_no"
@@ -20,6 +21,10 @@ class MarketCategory(str, enum.Enum):
     GLOBAL = "Global"
     TECH = "Tech"
     ENTRETENIMIENTO = "Entretenimiento"
+    MUNDIAL_2026 = "Mundial 2026"
+    CRYPTO = "Crypto"
+    MERCADOS_GLOBALES = "Mercados Globales"
+    MEXICO = "México"
 
 
 class Market(Base):
