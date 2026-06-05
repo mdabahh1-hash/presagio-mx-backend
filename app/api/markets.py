@@ -16,7 +16,7 @@ router = APIRouter(prefix="/markets", tags=["markets"])
 @router.get("", response_model=list[MarketList])
 async def list_markets(
     category: MarketCategory | None = Query(None),
-    status: MarketStatus = Query(MarketStatus.OPEN),
+    status: str = Query("open"),
     trending: bool | None = Query(None),
     q: str | None = Query(None),
     sort: str = Query("volume"),
@@ -24,7 +24,13 @@ async def list_markets(
     offset: int = Query(0),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = select(Market).where(Market.status == status)
+    stmt = select(Market)
+    if status != "all":
+        try:
+            status_enum = MarketStatus(status)
+            stmt = stmt.where(Market.status == status_enum)
+        except ValueError:
+            stmt = stmt.where(Market.status == MarketStatus.OPEN)
     if category:
         stmt = stmt.where(Market.category == category)
     if trending is not None:

@@ -13,6 +13,13 @@ from app.core import lmsr
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
+ADMIN_EMAIL = "mdabahh@atid.edu.mx"
+
+
+def _require_admin(current_user: User) -> None:
+    if current_user.email != ADMIN_EMAIL:
+        raise HTTPException(status_code=403, detail="No autorizado")
+
 
 @router.post("/markets/{market_id}/resolve")
 async def resolve_market(
@@ -21,11 +28,12 @@ async def resolve_market(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    _require_admin(current_user)
     result = await db.execute(select(Market).where(Market.id == market_id).with_for_update())
     market = result.scalar_one_or_none()
     if not market:
         raise HTTPException(status_code=404, detail="Mercado no encontrado")
-    if market.status != MarketStatus.OPEN:
+    if market.status not in (MarketStatus.OPEN, MarketStatus.CLOSED):
         raise HTTPException(status_code=400, detail="Mercado ya resuelto o cancelado")
 
     resolution = payload.resolution.upper()
@@ -70,6 +78,7 @@ async def toggle_trending(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    _require_admin(current_user)
     result = await db.execute(select(Market).where(Market.id == market_id).with_for_update())
     market = result.scalar_one_or_none()
     if not market:
