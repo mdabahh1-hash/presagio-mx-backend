@@ -34,19 +34,14 @@ async def create_tables():
 
 
 async def migrate_enums() -> None:
-    """Add new enum values to existing PostgreSQL ENUM types (idempotent)."""
-    new_status_values = ["pending_resolution"]
-    new_category_values = ["Mundial 2026", "Crypto", "Mercados Globales", "México"]
+    """Add new enum values to existing PostgreSQL ENUM types (idempotent).
+    SQLAlchemy stores Python enum NAMES (e.g. MUNDIAL_2026), not values.
+    """
+    from sqlalchemy import text
+    new_status_names = ["PENDING_RESOLUTION"]
+    new_category_names = ["MUNDIAL_2026", "CRYPTO", "MERCADOS_GLOBALES", "MEXICO"]
     async with engine.begin() as conn:
-        for v in new_status_values:
-            await conn.execute(
-                __import__("sqlalchemy", fromlist=["text"]).text(
-                    f"ALTER TYPE marketstatus ADD VALUE IF NOT EXISTS '{v}'"
-                )
-            )
-        for v in new_category_values:
-            await conn.execute(
-                __import__("sqlalchemy", fromlist=["text"]).text(
-                    f"ALTER TYPE marketcategory ADD VALUE IF NOT EXISTS '{v}'"
-                )
-            )
+        for v in new_status_names:
+            await conn.execute(text(f"ALTER TYPE marketstatus ADD VALUE IF NOT EXISTS '{v}'"))
+        for v in new_category_names:
+            await conn.execute(text(f"ALTER TYPE marketcategory ADD VALUE IF NOT EXISTS '{v}'"))
