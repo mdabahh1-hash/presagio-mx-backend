@@ -37,6 +37,7 @@ class TradeResponse(BaseModel):
 class PositionOut(BaseModel):
     id: int
     market_id: str
+    market_question: str
     side: TradeSide
     shares: float
     avg_cost: float
