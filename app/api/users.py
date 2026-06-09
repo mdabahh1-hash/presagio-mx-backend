@@ -80,15 +80,16 @@ async def get_points_history(
         day_str = created_at.date().isoformat()
         spending_by_day[day_str] = spending_by_day.get(day_str, 0) + cost
 
-    points = []
+    history = []
     balance = current_user.points
-    for i in range(29, -1, -1):
+    for i in range(30):
         day = today - timedelta(days=i)
         day_str = day.isoformat()
-        points.append({"date": day_str, "price": round(balance, 2)})
+        history.append({"date": day_str, "price": round(balance, 2)})
         balance += spending_by_day.get(day_str, 0)
 
-    return points
+    history.reverse()
+    return history
 
 
 @router.get("/{username}", response_model=UserPublic)
