@@ -5,7 +5,7 @@ from pydantic import field_validator
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:password@localhost:5432/presagio"
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:password@localhost:5432/veredikt"
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
