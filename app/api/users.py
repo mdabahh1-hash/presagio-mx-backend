@@ -66,24 +66,25 @@ async def get_points_history(
     db: AsyncSession = Depends(get_db),
 ):
     today = datetime.now(timezone.utc).date()
-    since = today - timedelta(days=29)
+    since = datetime.now(timezone.utc) - timedelta(days=29)
 
     result = await db.execute(
-        select(
-            func.date(Trade.created_at).label("day"),
-            func.sum(Trade.cost).label("spent"),
-        )
-        .where(Trade.user_id == current_user.id, Trade.created_at >= since.isoformat())
-        .group_by(func.date(Trade.created_at))
+        select(Trade.created_at, Trade.cost)
+        .where(Trade.user_id == current_user.id, Trade.created_at >= since)
+        .order_by(Trade.created_at)
     )
-    spending_by_day = {str(row.day): row.spent for row in result.all()}
+    trades = result.all()
 
-    # Walk backwards from today to reconstruct balance
+    spending_by_day: dict[str, float] = {}
+    for created_at, cost in trades:
+        day_str = created_at.date().isoformat()
+        spending_by_day[day_str] = spending_by_day.get(day_str, 0) + cost
+
     points = []
     balance = current_user.points
     for i in range(29, -1, -1):
         day = today - timedelta(days=i)
-        day_str = str(day)
+        day_str = day.isoformat()
         points.append({"date": day_str, "price": round(balance, 2)})
         balance += spending_by_day.get(day_str, 0)
 
