@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, Integer, Float, DateTime, func
+from sqlalchemy import String, Integer, Float, DateTime, Boolean, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
@@ -16,6 +16,12 @@ class User(Base):
     # OAuth
     google_id: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True)
     github_id: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True)
+
+    # Email/password auth
+    password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
+    email_verification_code: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    email_verification_expires: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Balance
     points: Mapped[float] = mapped_column(Float, default=1000.0, nullable=False)

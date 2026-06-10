@@ -4,4 +4,4 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
-alembic/versions/*.py
+# alembic versions are tracked

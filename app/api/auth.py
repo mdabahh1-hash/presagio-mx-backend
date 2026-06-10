@@ -1,8 +1,13 @@
 import re
+import secrets
+import string
 import httpx
+from datetime import datetime, timezone, timedelta
 from urllib.parse import urlencode
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
+from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
@@ -10,6 +15,29 @@ from app.models.user import User
 from app.core.auth import create_access_token
 from app.config import settings
 from app.schemas.user import UserMe
+from app.services.email import send_verification_email
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def _gen_code() -> str:
+    return "".join(secrets.choice(string.digits) for _ in range(6))
+
+
+class EmailRegisterRequest(BaseModel):
+    email: str
+    password: str
+    display_name: str
+
+
+class EmailLoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class VerifyEmailRequest(BaseModel):
+    email: str
+    code: str
 
 
 def _callback_url(request: Request, path: str) -> str:
@@ -195,6 +223,90 @@ async def github_callback(request: Request, code: str, db: AsyncSession = Depend
     response = RedirectResponse(f"{settings.FRONTEND_URL}/#/auth/callback?token={jwt_token}")
     response.set_cookie("access_token", jwt_token, httponly=True, samesite="lax", max_age=604800)
     return response
+
+
+@router.post("/register")
+async def email_register(payload: EmailRegisterRequest, db: AsyncSession = Depends(get_db)):
+    email = payload.email.strip().lower()
+    result = await db.execute(select(User).where(User.email == email))
+    if result.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Este correo ya está registrado")
+
+    base_username = slugify_username(payload.display_name)
+    username = base_username
+    suffix = 1
+    while True:
+        exists = await db.execute(select(User).where(User.username == username))
+        if not exists.scalar_one_or_none():
+            break
+        username = f"{base_username}_{suffix}"
+        suffix += 1
+
+    code = _gen_code()
+    expires = datetime.now(timezone.utc) + timedelta(minutes=15)
+
+    user = User(
+        email=email,
+        username=username,
+        display_name=payload.display_name.strip(),
+        password_hash=pwd_context.hash(payload.password),
+        email_verified=False,
+        email_verification_code=code,
+        email_verification_expires=expires,
+        points=float(settings.NEW_USER_POINTS),
+    )
+    db.add(user)
+    await db.commit()
+
+    await send_verification_email(email, payload.display_name.strip(), code)
+    return {"message": "Código enviado a tu correo", "email": email}
+
+
+@router.post("/login")
+async def email_login(payload: EmailLoginRequest, db: AsyncSession = Depends(get_db)):
+    email = payload.email.strip().lower()
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+
+    if not user or not user.password_hash or not pwd_context.verify(payload.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Correo o contraseña incorrectos")
+
+    if not user.email_verified:
+        raise HTTPException(status_code=403, detail="Verifica tu correo antes de entrar")
+
+    token = create_access_token(user.id)
+    return {"token": token, "user": user}
+
+
+@router.post("/verify-email")
+async def verify_email_endpoint(payload: VerifyEmailRequest, db: AsyncSession = Depends(get_db)):
+    email = payload.email.strip().lower()
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    if user.email_verified:
+        token = create_access_token(user.id)
+        return {"token": token, "user": user}
+
+    if (
+        not user.email_verification_code
+        or user.email_verification_code != payload.code.strip()
+        or not user.email_verification_expires
+        or datetime.now(timezone.utc) > user.email_verification_expires
+    ):
+        raise HTTPException(status_code=400, detail="Código inválido o expirado")
+
+    user.email_verified = True
+    user.email_verification_code = None
+    user.email_verification_expires = None
+    await db.commit()
+    await db.refresh(user)
+
+    token = create_access_token(user.id)
+    return {"token": token, "user": user}
 
 
 @router.post("/logout")
