@@ -16,7 +16,7 @@ def _send_sync(to_email: str, subject: str, html: str) -> None:
     msg["To"] = to_email
     msg.attach(MIMEText(html, "html"))
 
-    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+    with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as server:
         server.ehlo()
         server.starttls()
         server.login(settings.GMAIL_USER, settings.GMAIL_APP_PASSWORD)

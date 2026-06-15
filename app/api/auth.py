@@ -263,7 +263,8 @@ async def email_register(payload: EmailRegisterRequest, db: AsyncSession = Depen
     db.add(user)
     await db.commit()
 
-    await send_verification_email(email, payload.display_name.strip(), code)
+    import asyncio as _asyncio
+    _asyncio.create_task(send_verification_email(email, payload.display_name.strip(), code))
     return {"message": "Código enviado a tu correo", "email": email}
 
 
