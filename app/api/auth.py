@@ -6,8 +6,8 @@ from datetime import datetime, timezone, timedelta
 from urllib.parse import urlencode
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
+import bcrypt as _bcrypt
 from pydantic import BaseModel
-from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
@@ -17,7 +17,12 @@ from app.config import settings
 from app.schemas.user import UserMe
 from app.services.email import send_verification_email
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+def _hash_password(password: str) -> str:
+    return _bcrypt.hashpw(password.encode(), _bcrypt.gensalt(12)).decode()
+
+
+def _verify_password(password: str, hashed: str) -> bool:
+    return _bcrypt.checkpw(password.encode(), hashed.encode())
 
 
 def _gen_code() -> str:
@@ -249,7 +254,7 @@ async def email_register(payload: EmailRegisterRequest, db: AsyncSession = Depen
         email=email,
         username=username,
         display_name=payload.display_name.strip(),
-        password_hash=pwd_context.hash(payload.password),
+        password_hash=_hash_password(payload.password),
         email_verified=False,
         email_verification_code=code,
         email_verification_expires=expires,
@@ -268,7 +273,7 @@ async def email_login(payload: EmailLoginRequest, db: AsyncSession = Depends(get
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
 
-    if not user or not user.password_hash or not pwd_context.verify(payload.password, user.password_hash):
+    if not user or not user.password_hash or not _verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Correo o contraseña incorrectos")
 
     if not user.email_verified:
