@@ -32,8 +32,8 @@ class Settings(BaseSettings):
 
     NEW_USER_POINTS: int = 1000
 
-    RESEND_API_KEY: str = ""
-    FROM_EMAIL: str = "VEREDIKT <onboarding@resend.dev>"
+    GMAIL_USER: str = ""
+    GMAIL_APP_PASSWORD: str = ""
 
 
 settings = Settings()
