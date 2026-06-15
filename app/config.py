@@ -35,5 +35,7 @@ class Settings(BaseSettings):
     GMAIL_USER: str = ""
     GMAIL_APP_PASSWORD: str = ""
 
+    RESEND_API_KEY: str = ""
+
 
 settings = Settings()

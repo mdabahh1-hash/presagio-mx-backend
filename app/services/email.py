@@ -1,30 +1,15 @@
-import asyncio
 import logging
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import httpx
 
 from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-
-def _send_sync(to_email: str, subject: str, html: str) -> None:
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = f"VEREDIKT <{settings.GMAIL_USER}>"
-    msg["To"] = to_email
-    msg.attach(MIMEText(html, "html"))
-
-    with smtplib.SMTP("smtp.gmail.com", 587, timeout=15) as server:
-        server.ehlo()
-        server.starttls()
-        server.login(settings.GMAIL_USER, settings.GMAIL_APP_PASSWORD)
-        server.send_message(msg)
+_FROM = "VEREDIKT <onboarding@resend.dev>"
 
 
 async def send_verification_email(to_email: str, display_name: str, code: str) -> None:
-    if not settings.GMAIL_USER or not settings.GMAIL_APP_PASSWORD:
+    if not settings.RESEND_API_KEY:
         logger.info(f"[DEV] Código de verificación para {to_email}: {code}")
         return
 
@@ -50,6 +35,21 @@ async def send_verification_email(to_email: str, display_name: str, code: str) -
 
     subject = f"{code} es tu código de verificación VEREDIKT"
     try:
-        await asyncio.to_thread(_send_sync, to_email, subject, html)
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
+                json={
+                    "from": _FROM,
+                    "to": [to_email],
+                    "subject": subject,
+                    "html": html,
+                },
+                timeout=15,
+            )
+            if not resp.is_success:
+                logger.error(f"Resend error {resp.status_code}: {resp.text}")
+            else:
+                logger.info(f"Email enviado a {to_email} — id: {resp.json().get('id')}")
     except Exception as e:
         logger.error(f"Error enviando email a {to_email}: {e}")
