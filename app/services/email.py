@@ -5,7 +5,7 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-_FROM = "VEREDIKT <onboarding@resend.dev>"
+_FROM = "VEREDIKT <noreply@veredikt.mx>"
 
 
 async def send_verification_email(to_email: str, display_name: str, code: str) -> None:
