@@ -92,6 +92,18 @@ async def get_points_history(
     return history
 
 
+@router.get("/leaderboard", response_model=list[UserPublic])
+async def get_leaderboard(limit: int = 50, db: AsyncSession = Depends(get_db)):
+    limit = max(1, min(limit, 100))
+    result = await db.execute(
+        select(User)
+        .where(User.markets_traded > 0)
+        .order_by(desc(User.points), desc(User.correct_predictions))
+        .limit(limit)
+    )
+    return result.scalars().all()
+
+
 @router.get("/{username}", response_model=UserPublic)
 async def get_user(username: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.username == username))
