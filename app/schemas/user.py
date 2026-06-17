@@ -24,3 +24,14 @@ class UserMe(UserPublic):
 class UserUpdate(BaseModel):
     display_name: str | None = None
     username: str | None = None
+
+
+class LeaderboardEntry(BaseModel):
+    id: int
+    username: str
+    display_name: str
+    avatar_url: str | None
+    pnl: float
+    volume: float
+    markets_traded: int
+    accuracy: float
