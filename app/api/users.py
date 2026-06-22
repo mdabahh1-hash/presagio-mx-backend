@@ -1,12 +1,12 @@
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc, func
+from sqlalchemy import select, desc
 from app.database import get_db
 from app.models.user import User
 from app.models.position import Position
-from app.models.market import Market
-from app.models.trade import Trade, TradeSide
+from app.models.market import Market, MarketStatus
+from app.models.trade import Trade
 from app.schemas.user import UserMe, UserPublic, UserUpdate, LeaderboardEntry, ProfilePublic
 from app.schemas.trade import PositionOut
 from app.core.auth import get_current_user
@@ -89,30 +89,63 @@ async def get_points_history(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    today = datetime.now(timezone.utc).date()
-    since = datetime.now(timezone.utc) - timedelta(days=29)
+    """Daily points balance over the last 30 days.
 
-    result = await db.execute(
-        select(Trade.created_at, Trade.cost)
-        .where(Trade.user_id == current_user.id, Trade.created_at >= since)
-        .order_by(Trade.created_at)
+    Reconstructed from real events so the line starts at the 1000 PT sign-up
+    grant and moves only when something actually changes the balance:
+      • sign-up      → +1000 PT
+      • each trade   → −cost (points spent on shares)
+      • a resolution → +winning shares (1 PT each) for markets the user got right
+    Any leftover (e.g. daily bonuses, whose exact timing we don't store) is
+    folded in so today's value matches the real current balance.
+    """
+    now = datetime.now(timezone.utc)
+    today = now.date()
+    base = float(settings.NEW_USER_POINTS)
+
+    # All of the user's trades, with the market's resolution state.
+    res = await db.execute(
+        select(
+            Trade.created_at, Trade.cost, Trade.shares, Trade.side, Trade.market_id,
+            Market.status, Market.resolved_at,
+        )
+        .join(Market, Market.id == Trade.market_id)
+        .where(Trade.user_id == current_user.id)
     )
-    trades = result.all()
+    rows = res.all()
 
-    spending_by_day: dict[str, float] = {}
-    for created_at, cost in trades:
-        day_str = created_at.date().isoformat()
-        spending_by_day[day_str] = spending_by_day.get(day_str, 0) + cost
+    # (timestamp, delta) events. Start from the sign-up grant.
+    events: list[tuple[datetime, float]] = [(current_user.created_at or now, base)]
+    per_market: dict[str, dict] = {}
+    for created_at, cost, shares, side, market_id, status, resolved_at in rows:
+        events.append((created_at, -cost))
+        m = per_market.setdefault(
+            market_id, {"status": status, "resolved_at": resolved_at, "YES": 0.0, "NO": 0.0}
+        )
+        m[side.value] += shares
+
+    # Resolution payouts: winning shares pay 1 PT each.
+    for m in per_market.values():
+        if not m["resolved_at"]:
+            continue
+        if m["status"] == MarketStatus.RESOLVED_YES:
+            events.append((m["resolved_at"], m["YES"]))
+        elif m["status"] == MarketStatus.RESOLVED_NO:
+            events.append((m["resolved_at"], m["NO"]))
+
+    # Fold any residual (bonuses, manual adjustments) so the chart ends on the
+    # real current balance.
+    residual = current_user.points - sum(d for _, d in events)
+    if abs(residual) > 0.01:
+        events.append((current_user.last_bonus_at or now, residual))
+
+    events.sort(key=lambda e: e[0])
 
     history = []
-    balance = current_user.points
-    for i in range(30):
+    for i in range(29, -1, -1):
         day = today - timedelta(days=i)
-        day_str = day.isoformat()
-        history.append({"date": day_str, "price": round(balance, 2)})
-        balance += spending_by_day.get(day_str, 0)
-
-    history.reverse()
+        balance = sum(d for t, d in events if t.date() <= day)
+        history.append({"date": day.isoformat(), "price": round(balance, 2)})
     return history
 
 
@@ -125,23 +158,16 @@ async def get_leaderboard(limit: int = 50, db: AsyncSession = Depends(get_db)):
     if not users:
         return []
 
-    # Total volume traded per user (sum of LMSR costs)
-    vol_res = await db.execute(
-        select(Trade.user_id, func.sum(Trade.cost)).group_by(Trade.user_id)
-    )
-    vol_by_user = {uid: float(s or 0) for uid, s in vol_res.all()}
-
-    # Current value of open positions per user.
-    # A winning share pays 1 PT, so a share is worth (price/100) PT right now.
+    # Amount currently invested per user = cost basis of open positions
+    # (what they have at stake right now). Used for both volume and P&L so that
+    # placing a bet is P&L-neutral; P&L only moves when a market resolves.
     pos_res = await db.execute(
-        select(Position.user_id, Position.side, Position.shares, Market.yes_price)
-        .join(Market, Market.id == Position.market_id)
+        select(Position.user_id, Position.shares, Position.avg_cost)
         .where(Position.shares > 0)
     )
-    posval_by_user: dict[int, float] = {}
-    for uid, side, shares, yes_price in pos_res.all():
-        frac = (yes_price if side == TradeSide.YES else (100 - yes_price)) / 100.0
-        posval_by_user[uid] = posval_by_user.get(uid, 0.0) + shares * frac
+    invested_by_user: dict[int, float] = {}
+    for uid, shares, avg_cost in pos_res.all():
+        invested_by_user[uid] = invested_by_user.get(uid, 0.0) + shares * avg_cost
 
     base = float(settings.NEW_USER_POINTS)
     entries = [
@@ -150,8 +176,8 @@ async def get_leaderboard(limit: int = 50, db: AsyncSession = Depends(get_db)):
             username=u.username,
             display_name=u.display_name,
             avatar_url=u.avatar_url,
-            pnl=round(u.points + posval_by_user.get(u.id, 0.0) - base, 2),
-            volume=round(vol_by_user.get(u.id, 0.0), 2),
+            pnl=round(u.points + invested_by_user.get(u.id, 0.0) - base, 2),
+            volume=round(invested_by_user.get(u.id, 0.0), 2),
             markets_traded=u.markets_traded,
             accuracy=u.accuracy,
         )
@@ -162,22 +188,22 @@ async def get_leaderboard(limit: int = 50, db: AsyncSession = Depends(get_db)):
 
 
 async def _pnl_and_volume(db: AsyncSession, user: User) -> tuple[float, float]:
-    """P&L (net worth − starting bonus) and total traded volume for one user."""
-    vol_res = await db.execute(select(func.sum(Trade.cost)).where(Trade.user_id == user.id))
-    volume = float(vol_res.scalar() or 0)
+    """Realized P&L and amount currently invested for one user.
 
+    invested = cost basis of open positions (what's at stake right now).
+    pnl = points + invested − starting bonus → P&L-neutral when betting, only
+    moves when a market resolves.
+    """
     pos_res = await db.execute(
-        select(Position.side, Position.shares, Market.yes_price)
-        .join(Market, Market.id == Position.market_id)
+        select(Position.shares, Position.avg_cost)
         .where(Position.user_id == user.id, Position.shares > 0)
     )
-    posval = 0.0
-    for side, shares, yes_price in pos_res.all():
-        frac = (yes_price if side == TradeSide.YES else (100 - yes_price)) / 100.0
-        posval += shares * frac
+    invested = 0.0
+    for shares, avg_cost in pos_res.all():
+        invested += shares * avg_cost
 
-    pnl = user.points + posval - float(settings.NEW_USER_POINTS)
-    return round(pnl, 2), round(volume, 2)
+    pnl = user.points + invested - float(settings.NEW_USER_POINTS)
+    return round(pnl, 2), round(invested, 2)
 
 
 @router.get("/{username}", response_model=ProfilePublic)
