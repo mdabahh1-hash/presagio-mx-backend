@@ -1,4 +1,5 @@
 """Admin endpoints to seed markets and resolve them."""
+import asyncio
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +11,7 @@ from app.models.user import User
 from app.schemas.market import MarketResolve
 from app.core.auth import get_current_user
 from app.core import lmsr
+from app.services.email import send_resolution_email
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -49,6 +51,9 @@ async def resolve_market(
     )
     positions = positions_result.scalars().all()
 
+    # Aggregate per user for one summary email per holder
+    notify: dict[int, dict] = {}
+
     for pos in positions:
         user_result = await db.execute(
             select(User).where(User.id == pos.user_id).with_for_update()
@@ -68,7 +73,23 @@ async def resolve_market(
             user.correct_predictions += 1
         pos.shares = 0  # Mark as settled
 
+        if user.email and user.email_notifications:
+            entry = notify.setdefault(
+                user.id,
+                {"email": user.email, "name": user.display_name, "payout": 0.0},
+            )
+            entry["payout"] += payout
+
     await db.commit()
+
+    # Fire-and-forget resolution emails (don't block the admin response)
+    question = market.question
+    for entry in notify.values():
+        won = entry["payout"] > 0
+        asyncio.create_task(
+            send_resolution_email(entry["email"], entry["name"], question, won, entry["payout"])
+        )
+
     return {"ok": True, "resolution": resolution, "positions_settled": len(positions)}
 
 

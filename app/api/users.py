@@ -7,7 +7,7 @@ from app.models.user import User
 from app.models.position import Position
 from app.models.market import Market
 from app.models.trade import Trade, TradeSide
-from app.schemas.user import UserMe, UserPublic, UserUpdate, LeaderboardEntry
+from app.schemas.user import UserMe, UserPublic, UserUpdate, LeaderboardEntry, ProfilePublic
 from app.schemas.trade import PositionOut
 from app.core.auth import get_current_user
 from app.config import settings
@@ -36,9 +36,32 @@ async def update_me(
         if exists.scalar_one_or_none():
             raise HTTPException(status_code=409, detail="Username ya en uso")
         current_user.username = username
+    if payload.email_notifications is not None:
+        current_user.email_notifications = payload.email_notifications
     await db.commit()
     await db.refresh(current_user)
     return current_user
+
+
+@router.post("/me/daily-bonus")
+async def claim_daily_bonus(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    today = datetime.now(timezone.utc).date()
+    last = current_user.last_bonus_at.date() if current_user.last_bonus_at else None
+    if last == today:
+        raise HTTPException(status_code=409, detail="Ya reclamaste tu bono de hoy")
+
+    streak = current_user.streak + 1 if last == today - timedelta(days=1) else 1
+    amount = min(100 + (streak - 1) * 20, 300)
+
+    current_user.points += amount
+    current_user.streak = streak
+    current_user.last_bonus_at = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(current_user)
+    return {"awarded": amount, "streak": streak, "new_balance": current_user.points}
 
 
 @router.get("/me/positions", response_model=list[PositionOut])
@@ -138,10 +161,54 @@ async def get_leaderboard(limit: int = 50, db: AsyncSession = Depends(get_db)):
     return entries[:limit]
 
 
-@router.get("/{username}", response_model=UserPublic)
+async def _pnl_and_volume(db: AsyncSession, user: User) -> tuple[float, float]:
+    """P&L (net worth − starting bonus) and total traded volume for one user."""
+    vol_res = await db.execute(select(func.sum(Trade.cost)).where(Trade.user_id == user.id))
+    volume = float(vol_res.scalar() or 0)
+
+    pos_res = await db.execute(
+        select(Position.side, Position.shares, Market.yes_price)
+        .join(Market, Market.id == Position.market_id)
+        .where(Position.user_id == user.id, Position.shares > 0)
+    )
+    posval = 0.0
+    for side, shares, yes_price in pos_res.all():
+        frac = (yes_price if side == TradeSide.YES else (100 - yes_price)) / 100.0
+        posval += shares * frac
+
+    pnl = user.points + posval - float(settings.NEW_USER_POINTS)
+    return round(pnl, 2), round(volume, 2)
+
+
+@router.get("/{username}", response_model=ProfilePublic)
 async def get_user(username: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.username == username))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    return user
+    pnl, volume = await _pnl_and_volume(db, user)
+    return ProfilePublic(
+        id=user.id, username=user.username, display_name=user.display_name,
+        avatar_url=user.avatar_url, pnl=pnl, volume=volume,
+        markets_traded=user.markets_traded, accuracy=user.accuracy, created_at=user.created_at,
+    )
+
+
+@router.get("/{username}/positions", response_model=list[PositionOut])
+async def get_user_positions(username: str, db: AsyncSession = Depends(get_db)):
+    user_res = await db.execute(select(User).where(User.username == username))
+    user = user_res.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    result = await db.execute(
+        select(Position, Market.question)
+        .join(Market, Market.id == Position.market_id)
+        .where(Position.user_id == user.id, Position.shares > 0)
+        .order_by(desc(Position.updated_at))
+    )
+    out = []
+    for pos, question in result.all():
+        data = PositionOut.model_validate(pos)
+        data.market_question = question
+        out.append(data)
+    return out

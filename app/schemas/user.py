@@ -19,11 +19,15 @@ class UserMe(UserPublic):
     email: str
     correct_predictions: int
     total_predictions: int
+    streak: int
+    last_bonus_at: datetime | None
+    email_notifications: bool
 
 
 class UserUpdate(BaseModel):
     display_name: str | None = None
     username: str | None = None
+    email_notifications: bool | None = None
 
 
 class LeaderboardEntry(BaseModel):
@@ -35,3 +39,17 @@ class LeaderboardEntry(BaseModel):
     volume: float
     markets_traded: int
     accuracy: float
+
+
+class ProfilePublic(BaseModel):
+    id: int
+    username: str
+    display_name: str
+    avatar_url: str | None
+    pnl: float
+    volume: float
+    markets_traded: int
+    accuracy: float
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
