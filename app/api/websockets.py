@@ -1,8 +1,10 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.models.market import Market
+from app.models.outcome import Outcome
 from app.core.websocket_manager import ws_manager
 
 router = APIRouter(tags=["websockets"])
@@ -13,16 +15,24 @@ async def market_ws(market_id: str, ws: WebSocket, db: AsyncSession = Depends(ge
     await ws_manager.connect_market(market_id, ws)
     try:
         # Send current snapshot on connect
-        result = await db.execute(select(Market).where(Market.id == market_id))
+        result = await db.execute(
+            select(Market).where(Market.id == market_id).options(selectinload(Market.outcomes))
+        )
         market = result.scalar_one_or_none()
         if market:
-            await ws_manager.send_market_snapshot(market_id, ws, {
+            snapshot: dict = {
                 "market_id": market_id,
                 "yes_price": market.yes_price,
                 "no_price": round(100 - market.yes_price, 2),
                 "volume": market.volume,
                 "num_trades": market.num_trades,
-            })
+            }
+            if market.market_type == "multi" and market.outcomes:
+                snapshot["outcomes"] = [
+                    {"outcome_key": o.outcome_key, "price": o.price}
+                    for o in market.outcomes
+                ]
+            await ws_manager.send_market_snapshot(market_id, ws, snapshot)
         # Keep connection alive, listening for client pings
         while True:
             data = await ws.receive_text()

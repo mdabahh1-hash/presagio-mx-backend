@@ -12,5 +12,6 @@ class PriceHistory(Base):
     yes_price: Mapped[float] = mapped_column(Float, nullable=False)
     volume_snapshot: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)
+    outcome_key: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
 
     market: Mapped["Market"] = relationship("Market", back_populates="price_history")

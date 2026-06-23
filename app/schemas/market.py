@@ -7,6 +7,7 @@ class PricePoint(BaseModel):
     recorded_at: datetime
     yes_price: float
     volume_snapshot: float
+    outcome_key: str | None = None
 
     model_config = {"from_attributes": True}
 

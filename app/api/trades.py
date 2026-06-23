@@ -117,12 +117,13 @@ async def execute_trade(
             )
             db.add(position)
 
-        ph = PriceHistory(
-            market_id=market_id,
-            yes_price=target_outcome.price,
-            volume_snapshot=market.volume,
-        )
-        db.add(ph)
+        for o in outcomes:
+            db.add(PriceHistory(
+                market_id=market_id,
+                outcome_key=o.outcome_key,
+                yes_price=o.price,
+                volume_snapshot=market.volume,
+            ))
 
         await db.commit()
         await db.refresh(trade)
@@ -132,6 +133,7 @@ async def execute_trade(
             "yes_price": target_outcome.price,
             "volume": market.volume,
             "num_trades": market.num_trades,
+            "outcomes": [{"outcome_key": o.outcome_key, "price": o.price} for o in outcomes],
             "trade": {
                 "outcome_key": payload.outcome_key,
                 "label": target_outcome.label,
