@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
 from app.models.market import Market, MarketStatus
+from app.models.outcome import Outcome
 from app.models.position import Position
 from app.models.user import User
 from app.schemas.market import MarketResolve
@@ -38,59 +39,114 @@ async def resolve_market(
     if market.status not in (MarketStatus.OPEN, MarketStatus.PENDING_RESOLUTION, MarketStatus.CLOSED):
         raise HTTPException(status_code=400, detail="Mercado ya resuelto o cancelado")
 
-    resolution = payload.resolution.upper()
-    if resolution not in ("YES", "NO"):
-        raise HTTPException(status_code=400, detail="Resolución debe ser YES o NO")
-
-    market.status = MarketStatus.RESOLVED_YES if resolution == "YES" else MarketStatus.RESOLVED_NO
-    market.resolved_at = datetime.now(timezone.utc)
-
-    # Pay out all positions
     positions_result = await db.execute(
         select(Position).where(Position.market_id == market_id, Position.shares > 0)
     )
     positions = positions_result.scalars().all()
-
-    # Aggregate per user for one summary email per holder
     notify: dict[int, dict] = {}
 
-    for pos in positions:
-        user_result = await db.execute(
-            select(User).where(User.id == pos.user_id).with_for_update()
-        )
-        user = user_result.scalar_one_or_none()
-        if not user:
-            continue
+    if market.market_type == "multi":
+        # ── Multi-outcome resolution ─────────────────────────────────────────
+        if not payload.outcome_key:
+            raise HTTPException(status_code=400, detail="Especifica 'outcome_key' para mercados multi-resultado")
 
-        payout = (
-            lmsr.payout_if_yes(pos.side.value, pos.shares)
-            if resolution == "YES"
-            else lmsr.payout_if_no(pos.side.value, pos.shares)
+        outcomes_res = await db.execute(
+            select(Outcome).where(Outcome.market_id == market_id)
         )
-        user.points += payout
-        user.total_predictions += 1
-        if (resolution == "YES" and pos.side.value == "YES") or (resolution == "NO" and pos.side.value == "NO"):
-            user.correct_predictions += 1
-        pos.shares = 0  # Mark as settled
+        valid_keys = {o.outcome_key for o in outcomes_res.scalars().all()}
+        if payload.outcome_key not in valid_keys:
+            raise HTTPException(status_code=400, detail=f"outcome_key inválido: {payload.outcome_key}")
 
-        if user.email and user.email_notifications:
-            entry = notify.setdefault(
-                user.id,
-                {"email": user.email, "name": user.display_name, "payout": 0.0},
+        market.status = MarketStatus.RESOLVED
+        market.resolved_outcome_key = payload.outcome_key
+        market.resolved_at = datetime.now(timezone.utc)
+
+        for pos in positions:
+            user_result = await db.execute(
+                select(User).where(User.id == pos.user_id).with_for_update()
             )
-            entry["payout"] += payout
+            user = user_result.scalar_one_or_none()
+            if not user:
+                continue
 
-    await db.commit()
+            payout = pos.shares if pos.outcome_key == payload.outcome_key else 0.0
+            user.points += payout
+            user.total_predictions += 1
+            if pos.outcome_key == payload.outcome_key:
+                user.correct_predictions += 1
+            pos.shares = 0
 
-    # Fire-and-forget resolution emails (don't block the admin response)
-    question = market.question
-    for entry in notify.values():
-        won = entry["payout"] > 0
-        asyncio.create_task(
-            send_resolution_email(entry["email"], entry["name"], question, won, entry["payout"])
-        )
+            if user.email and user.email_notifications:
+                entry = notify.setdefault(
+                    user.id,
+                    {"email": user.email, "name": user.display_name, "payout": 0.0},
+                )
+                entry["payout"] += payout
 
-    return {"ok": True, "resolution": resolution, "positions_settled": len(positions)}
+        await db.commit()
+
+        question = market.question
+        for entry in notify.values():
+            won = entry["payout"] > 0
+            asyncio.create_task(
+                send_resolution_email(entry["email"], entry["name"], question, won, entry["payout"])
+            )
+
+        return {
+            "ok": True,
+            "resolution": payload.outcome_key,
+            "positions_settled": len(positions),
+        }
+
+    else:
+        # ── Binary resolution (unchanged) ────────────────────────────────────
+        if not payload.resolution:
+            raise HTTPException(status_code=400, detail="Especifica 'resolution' (YES o NO) para mercados binarios")
+
+        resolution = payload.resolution.upper()
+        if resolution not in ("YES", "NO"):
+            raise HTTPException(status_code=400, detail="Resolución debe ser YES o NO")
+
+        market.status = MarketStatus.RESOLVED_YES if resolution == "YES" else MarketStatus.RESOLVED_NO
+        market.resolved_at = datetime.now(timezone.utc)
+
+        for pos in positions:
+            user_result = await db.execute(
+                select(User).where(User.id == pos.user_id).with_for_update()
+            )
+            user = user_result.scalar_one_or_none()
+            if not user:
+                continue
+
+            side_val = pos.outcome_key or (pos.side.value if pos.side else "")
+            payout = (
+                lmsr.payout_if_yes(side_val, pos.shares)
+                if resolution == "YES"
+                else lmsr.payout_if_no(side_val, pos.shares)
+            )
+            user.points += payout
+            user.total_predictions += 1
+            if (resolution == "YES" and side_val == "YES") or (resolution == "NO" and side_val == "NO"):
+                user.correct_predictions += 1
+            pos.shares = 0
+
+            if user.email and user.email_notifications:
+                entry = notify.setdefault(
+                    user.id,
+                    {"email": user.email, "name": user.display_name, "payout": 0.0},
+                )
+                entry["payout"] += payout
+
+        await db.commit()
+
+        question = market.question
+        for entry in notify.values():
+            won = entry["payout"] > 0
+            asyncio.create_task(
+                send_resolution_email(entry["email"], entry["name"], question, won, entry["payout"])
+            )
+
+        return {"ok": True, "resolution": resolution, "positions_settled": len(positions)}
 
 
 @router.post("/markets/{market_id}/toggle-trending")

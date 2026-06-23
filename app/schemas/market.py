@@ -11,6 +11,14 @@ class PricePoint(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class OutcomeOut(BaseModel):
+    outcome_key: str
+    label: str
+    price: float
+
+    model_config = {"from_attributes": True}
+
+
 class MarketBase(BaseModel):
     id: str
     question: str
@@ -24,6 +32,8 @@ class MarketBase(BaseModel):
     trending: bool
     ends_at: datetime
     created_at: datetime
+    market_type: str = "binary"
+    outcomes: list[OutcomeOut] = []
 
     model_config = {"from_attributes": True}
 
@@ -37,6 +47,7 @@ class MarketDetail(MarketBase):
     q_yes: float
     q_no: float
     resolved_at: datetime | None
+    resolved_outcome_key: str | None = None
 
 
 class MarketCreate(BaseModel):
@@ -51,4 +62,5 @@ class MarketCreate(BaseModel):
 
 
 class MarketResolve(BaseModel):
-    resolution: str  # "YES" or "NO"
+    resolution: str | None = None   # "YES" or "NO" for binary markets
+    outcome_key: str | None = None  # outcome key for multi-outcome markets

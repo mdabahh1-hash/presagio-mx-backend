@@ -2,6 +2,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
+from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.models.market import Market, MarketStatus, MarketCategory
 from app.models.price_history import PriceHistory
@@ -49,14 +50,16 @@ async def list_markets(
     else:
         stmt = stmt.order_by(desc(Market.volume))
 
-    stmt = stmt.limit(limit).offset(offset)
+    stmt = stmt.limit(limit).offset(offset).options(selectinload(Market.outcomes))
     result = await db.execute(stmt)
     return result.scalars().all()
 
 
 @router.get("/{market_id}", response_model=MarketDetail)
 async def get_market(market_id: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Market).where(Market.id == market_id))
+    result = await db.execute(
+        select(Market).where(Market.id == market_id).options(selectinload(Market.outcomes))
+    )
     market = result.scalar_one_or_none()
     if not market:
         raise HTTPException(status_code=404, detail="Mercado no encontrado")

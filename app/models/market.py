@@ -11,6 +11,7 @@ class MarketStatus(str, enum.Enum):
     CLOSED = "closed"
     RESOLVED_YES = "resolved_yes"
     RESOLVED_NO = "resolved_no"
+    RESOLVED = "resolved"        # multi-outcome resolution
     CANCELLED = "cancelled"
 
 
@@ -55,6 +56,10 @@ class Market(Base):
     )
     trending: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
+    # Multi-outcome support
+    market_type: Mapped[str] = mapped_column(String(20), default="binary", nullable=False, server_default="binary")
+    resolved_outcome_key: Mapped[str | None] = mapped_column(String(100), nullable=True)
+
     ends_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -66,4 +71,7 @@ class Market(Base):
     )
     price_history: Mapped[list["PriceHistory"]] = relationship(
         "PriceHistory", back_populates="market", lazy="select", order_by="PriceHistory.recorded_at"
+    )
+    outcomes: Mapped[list["Outcome"]] = relationship(
+        "Outcome", back_populates="market", lazy="select", order_by="Outcome.price.desc()"
     )

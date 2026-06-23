@@ -115,8 +115,8 @@ async def get_points_history(
     # All of the user's trades, with the market's resolution state.
     res = await db.execute(
         select(
-            Trade.created_at, Trade.cost, Trade.shares, Trade.side, Trade.market_id,
-            Market.status, Market.resolved_at,
+            Trade.created_at, Trade.cost, Trade.shares, Trade.side, Trade.outcome_key,
+            Trade.market_id, Market.status, Market.resolved_at, Market.resolved_outcome_key,
         )
         .join(Market, Market.id == Trade.market_id)
         .where(Trade.user_id == current_user.id)
@@ -126,21 +126,27 @@ async def get_points_history(
     # (timestamp, delta) events. Start from the sign-up grant.
     events: list[tuple[datetime, float]] = [(current_user.created_at or now, base)]
     per_market: dict[str, dict] = {}
-    for created_at, cost, shares, side, market_id, status, resolved_at in rows:
+    for created_at, cost, shares, side, outcome_key, market_id, status, resolved_at, resolved_outcome_key in rows:
         events.append((created_at, -cost))
+        effective_key = outcome_key or (side.value if side else "")
         m = per_market.setdefault(
-            market_id, {"status": status, "resolved_at": resolved_at, "YES": 0.0, "NO": 0.0}
+            market_id,
+            {"status": status, "resolved_at": resolved_at, "resolved_outcome_key": resolved_outcome_key, "shares_by_key": {}},
         )
-        m[side.value] += shares
+        m["shares_by_key"][effective_key] = m["shares_by_key"].get(effective_key, 0.0) + shares
 
     # Resolution payouts: winning shares pay 1 PT each.
+    from app.models.market import MarketStatus as MS
     for m in per_market.values():
         if not m["resolved_at"]:
             continue
-        if m["status"] == MarketStatus.RESOLVED_YES:
-            events.append((m["resolved_at"], m["YES"]))
-        elif m["status"] == MarketStatus.RESOLVED_NO:
-            events.append((m["resolved_at"], m["NO"]))
+        sbk = m["shares_by_key"]
+        if m["status"] == MS.RESOLVED_YES:
+            events.append((m["resolved_at"], sbk.get("YES", 0.0)))
+        elif m["status"] == MS.RESOLVED_NO:
+            events.append((m["resolved_at"], sbk.get("NO", 0.0)))
+        elif m["status"] == MS.RESOLVED and m["resolved_outcome_key"]:
+            events.append((m["resolved_at"], sbk.get(m["resolved_outcome_key"], 0.0)))
 
     # Fold any residual (bonuses, manual adjustments) so the chart ends on the
     # real current balance.

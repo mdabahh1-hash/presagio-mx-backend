@@ -7,13 +7,14 @@ from app.models.trade import TradeSide
 
 class Position(Base):
     __tablename__ = "positions"
-    __table_args__ = (UniqueConstraint("user_id", "market_id", "side", name="uq_position_user_market_side"),)
+    __table_args__ = (UniqueConstraint("user_id", "market_id", "outcome_key", name="uq_position_user_market_outcome"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     market_id: Mapped[str] = mapped_column(String(100), ForeignKey("markets.id"), nullable=False, index=True)
 
-    side: Mapped[TradeSide] = mapped_column(Enum(TradeSide), nullable=False)
+    side: Mapped[TradeSide | None] = mapped_column(Enum(TradeSide), nullable=True)
+    outcome_key: Mapped[str] = mapped_column(String(100), nullable=False, server_default="YES")
     shares: Mapped[float] = mapped_column(Float, default=0.0)   # total shares held
     avg_cost: Mapped[float] = mapped_column(Float, default=0.0) # average cost per share
 

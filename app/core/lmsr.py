@@ -104,3 +104,65 @@ def init_q_for_price(target_price: float, b: float) -> tuple[float, float]:
         raise ValueError("target_price must be in (0, 1)")
     q_yes = b * math.log(target_price / (1 - target_price))
     return q_yes, 0.0
+
+
+# ---------------------------------------------------------------------------
+# N-outcome LMSR (generalised)
+#
+#   Cost:    C(q) = b * log( Σ exp(q_i / b) )
+#   Price_i: p_i  = exp(q_i / b) / Σ exp(q_j / b)
+#
+# Uses the log-sum-exp trick for numerical stability.
+# ---------------------------------------------------------------------------
+
+def _log_sum_exp_multi(q: dict[str, float], b: float) -> float:
+    """Numerically stable log-sum-exp for N values."""
+    vals = [v / b for v in q.values()]
+    a = max(vals)
+    return b * (a + math.log(sum(math.exp(v - a) for v in vals)))
+
+
+def cost_multi(q: dict[str, float], b: float) -> float:
+    """N-outcome LMSR cost function at the current state."""
+    return _log_sum_exp_multi(q, b)
+
+
+def prices_multi(q: dict[str, float], b: float) -> dict[str, float]:
+    """Return {outcome_key: probability_0_to_100} for all outcomes."""
+    vals = {k: v / b for k, v in q.items()}
+    a = max(vals.values())
+    exps = {k: math.exp(v - a) for k, v in vals.items()}
+    total = sum(exps.values())
+    return {k: round(e / total * 100, 4) for k, e in exps.items()}
+
+
+def trade_cost_multi(
+    q: dict[str, float], b: float, outcome_key: str, delta: float
+) -> float:
+    """Cost (in points) to buy `delta` shares of `outcome_key`."""
+    before = cost_multi(q, b)
+    q_after = {k: (v + delta if k == outcome_key else v) for k, v in q.items()}
+    after = cost_multi(q_after, b)
+    return after - before
+
+
+def shares_for_cost_multi(
+    q: dict[str, float],
+    b: float,
+    outcome_key: str,
+    points: float,
+    tolerance: float = 1e-9,
+    max_iter: int = 100,
+) -> float:
+    """Binary search: how many shares of `outcome_key` can you buy with `points`?"""
+    lo, hi = 0.0, points * 10
+    for _ in range(max_iter):
+        mid = (lo + hi) / 2
+        c = trade_cost_multi(q, b, outcome_key, mid)
+        if abs(c - points) < tolerance:
+            return mid
+        elif c < points:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2

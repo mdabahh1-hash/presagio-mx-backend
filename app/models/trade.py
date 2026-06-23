@@ -17,7 +17,8 @@ class Trade(Base):
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     market_id: Mapped[str] = mapped_column(String(100), ForeignKey("markets.id"), nullable=False, index=True)
 
-    side: Mapped[TradeSide] = mapped_column(Enum(TradeSide), nullable=False)
+    side: Mapped[TradeSide | None] = mapped_column(Enum(TradeSide), nullable=True)
+    outcome_key: Mapped[str | None] = mapped_column(String(100), nullable=True)  # for multi-outcome markets
     shares: Mapped[float] = mapped_column(Float, nullable=False)   # number of shares bought
     cost: Mapped[float] = mapped_column(Float, nullable=False)     # points spent (LMSR cost)
 
