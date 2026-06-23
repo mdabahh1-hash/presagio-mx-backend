@@ -38,7 +38,7 @@ async def migrate_enums() -> None:
     SQLAlchemy stores Python enum NAMES (e.g. MUNDIAL_2026), not values.
     """
     from sqlalchemy import text
-    new_status_names = ["PENDING_RESOLUTION"]
+    new_status_names = ["PENDING_RESOLUTION", "RESOLVED"]
     new_category_names = ["MUNDIAL_2026", "CRYPTO", "MERCADOS_GLOBALES", "MEXICO"]
     async with engine.begin() as conn:
         for v in new_status_names:
