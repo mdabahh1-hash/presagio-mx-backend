@@ -14,6 +14,10 @@ from app.config import settings
 
 router = APIRouter(prefix="/users", tags=["users"])
 
+# Daily bonus "day" is anchored to Mexico time (UTC−6; Mexico has no DST since 2022)
+# so the day boundary is midnight Mexico, not 6pm Mexico (UTC midnight).
+MX_TZ = timezone(timedelta(hours=-6))
+
 
 @router.get("/me", response_model=UserMe)
 async def get_me(current_user: User = Depends(get_current_user)):
@@ -48,8 +52,13 @@ async def claim_daily_bonus(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    today = datetime.now(timezone.utc).date()
-    last = current_user.last_bonus_at.date() if current_user.last_bonus_at else None
+    today = datetime.now(MX_TZ).date()
+    created = current_user.created_at.astimezone(MX_TZ).date() if current_user.created_at else today
+    last = current_user.last_bonus_at.astimezone(MX_TZ).date() if current_user.last_bonus_at else None
+
+    # No bonus on the day you register — first bonus is the next day you connect.
+    if created == today:
+        raise HTTPException(status_code=409, detail="Tu primer bono estará disponible mañana")
     if last == today:
         raise HTTPException(status_code=409, detail="Ya reclamaste tu bono de hoy")
 
