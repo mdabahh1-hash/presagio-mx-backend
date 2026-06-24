@@ -6,7 +6,7 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 _FROM = "VEREDIKT <noreply@veredikt.mx>"
-_SITE = "https://presagio-mx.vercel.app"
+_SITE = "https://veredikt.mx"
 
 
 async def _send(to_email: str, subject: str, html: str) -> None:
