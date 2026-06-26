@@ -3,10 +3,12 @@ from datetime import datetime, timezone
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
-from app.database import create_tables, migrate_enums, AsyncSessionLocal
+from app.database import create_tables, migrate_enums, migrate_columns, AsyncSessionLocal
 from app.config import settings
 from app.api import auth, markets, trades, comments, users, websockets, admin
 from app.services.seed import seed_markets
+from app.services.ledger_backfill import backfill_ledger
+from app.services.referral import assign_codes_to_all
 from app.models.market import Market, MarketStatus
 
 
@@ -30,6 +32,17 @@ async def close_expired_markets() -> None:
 async def lifespan(app: FastAPI):
     await create_tables()
     await migrate_enums()
+    await migrate_columns()
+    # Best-effort historical backfill — must never block startup.
+    try:
+        await backfill_ledger()
+    except Exception as e:  # noqa: BLE001
+        print(f"[startup] ledger backfill skipped: {e}")
+    try:
+        async with AsyncSessionLocal() as db:
+            await assign_codes_to_all(db)
+    except Exception as e:  # noqa: BLE001
+        print(f"[startup] referral code backfill skipped: {e}")
     await seed_markets()
     await close_expired_markets()
     yield

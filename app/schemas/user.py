@@ -22,6 +22,7 @@ class UserMe(UserPublic):
     streak: int
     last_bonus_at: datetime | None
     email_notifications: bool
+    referral_code: str | None = None
 
 
 class UserUpdate(BaseModel):

@@ -13,6 +13,7 @@ from app.schemas.market import MarketResolve
 from app.core.auth import get_current_user
 from app.core import lmsr
 from app.services.email import send_resolution_email
+from app.services import ledger
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -71,6 +72,7 @@ async def resolve_market(
 
             payout = pos.shares if pos.outcome_key == payload.outcome_key else 0.0
             user.points += payout
+            ledger.record(db, user.id, payout, "payout")
             user.total_predictions += 1
             if pos.outcome_key == payload.outcome_key:
                 user.correct_predictions += 1
@@ -125,6 +127,7 @@ async def resolve_market(
                 else lmsr.payout_if_no(side_val, pos.shares)
             )
             user.points += payout
+            ledger.record(db, user.id, payout, "payout")
             user.total_predictions += 1
             if (resolution == "YES" and side_val == "YES") or (resolution == "NO" and side_val == "NO"):
                 user.correct_predictions += 1

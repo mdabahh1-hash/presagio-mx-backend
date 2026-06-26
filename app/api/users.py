@@ -11,6 +11,8 @@ from app.schemas.user import UserMe, UserPublic, UserUpdate, LeaderboardEntry, P
 from app.schemas.trade import PositionOut
 from app.core.auth import get_current_user
 from app.config import settings
+from app.services import ledger, referral
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -66,11 +68,35 @@ async def claim_daily_bonus(
     amount = min(100 + (streak - 1) * 20, 300)
 
     current_user.points += amount
+    ledger.record(db, current_user.id, amount, "daily_bonus")
     current_user.streak = streak
     current_user.last_bonus_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(current_user)
     return {"awarded": amount, "streak": streak, "new_balance": current_user.points}
+
+
+class ReferralAttachRequest(BaseModel):
+    code: str
+
+
+@router.post("/me/referral")
+async def attach_referral(
+    payload: ReferralAttachRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Attribute the current (brand-new) user to a referral code. The bonus is
+    NOT paid here — it's paid on the user's first trade. Safe to call once, only
+    before any trading and only if not already attributed."""
+    if current_user.referred_by_id is not None or current_user.markets_traded > 0:
+        return {"ok": False, "reason": "not_eligible"}
+    referrer_id = await referral.resolve_referrer(db, payload.code, current_user.email)
+    if referrer_id is None:
+        return {"ok": False, "reason": "invalid_code"}
+    current_user.referred_by_id = referrer_id
+    await db.commit()
+    return {"ok": True}
 
 
 @router.get("/me/positions", response_model=list[PositionOut])
@@ -164,9 +190,29 @@ async def get_points_history(
     return history
 
 
+def _period_start(period: str) -> datetime | None:
+    """Window start (UTC) for a leaderboard period, anchored to Mexico time.
+    Returns None for 'all' / unknown → caller uses the all-time formula.
+    """
+    now_mx = datetime.now(MX_TZ)
+    if period == "today":
+        start_mx = now_mx.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif period == "week":
+        start_mx = now_mx - timedelta(days=7)
+    elif period == "month":
+        start_mx = now_mx - timedelta(days=30)
+    else:
+        return None
+    return start_mx.astimezone(timezone.utc)
+
+
 @router.get("/leaderboard", response_model=list[LeaderboardEntry])
-async def get_leaderboard(limit: int = 50, db: AsyncSession = Depends(get_db)):
+async def get_leaderboard(limit: int = 50, period: str = "all", db: AsyncSession = Depends(get_db)):
     limit = max(1, min(limit, 100))
+
+    start = _period_start(period)
+    if start is not None:
+        return await _period_leaderboard(db, start, limit)
 
     users_res = await db.execute(select(User).where(User.markets_traded > 0))
     users = users_res.scalars().all()
@@ -193,6 +239,49 @@ async def get_leaderboard(limit: int = 50, db: AsyncSession = Depends(get_db)):
             avatar_url=u.avatar_url,
             pnl=round(u.points + invested_by_user.get(u.id, 0.0) - base, 2),
             volume=round(invested_by_user.get(u.id, 0.0), 2),
+            markets_traded=u.markets_traded,
+            accuracy=u.accuracy,
+        )
+        for u in users
+    ]
+    entries.sort(key=lambda e: e.pnl, reverse=True)
+    return entries[:limit]
+
+
+async def _period_leaderboard(db: AsyncSession, start: datetime, limit: int) -> list[LeaderboardEntry]:
+    """Per-period board: realized P&L = Σ ledger deltas in window; volume = Σ trade cost."""
+    from sqlalchemy import func as safunc
+    from app.models.points_ledger import PointsLedger
+
+    pnl_res = await db.execute(
+        select(PointsLedger.user_id, safunc.sum(PointsLedger.delta))
+        .where(PointsLedger.created_at >= start)
+        .group_by(PointsLedger.user_id)
+    )
+    pnl_by_user = {uid: float(d or 0.0) for uid, d in pnl_res.all()}
+
+    vol_res = await db.execute(
+        select(Trade.user_id, safunc.sum(Trade.cost))
+        .where(Trade.created_at >= start)
+        .group_by(Trade.user_id)
+    )
+    vol_by_user = {uid: float(c or 0.0) for uid, c in vol_res.all()}
+
+    active_ids = set(pnl_by_user) | set(vol_by_user)
+    if not active_ids:
+        return []
+
+    users_res = await db.execute(select(User).where(User.id.in_(active_ids)))
+    users = users_res.scalars().all()
+
+    entries = [
+        LeaderboardEntry(
+            id=u.id,
+            username=u.username,
+            display_name=u.display_name,
+            avatar_url=u.avatar_url,
+            pnl=round(pnl_by_user.get(u.id, 0.0), 2),
+            volume=round(vol_by_user.get(u.id, 0.0), 2),
             markets_traded=u.markets_traded,
             accuracy=u.accuracy,
         )

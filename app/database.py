@@ -45,3 +45,22 @@ async def migrate_enums() -> None:
             await conn.execute(text(f"ALTER TYPE marketstatus ADD VALUE IF NOT EXISTS '{v}'"))
         for v in new_category_names:
             await conn.execute(text(f"ALTER TYPE marketcategory ADD VALUE IF NOT EXISTS '{v}'"))
+
+
+async def migrate_columns() -> None:
+    """Add new columns to existing tables (idempotent).
+
+    `create_all` only creates missing tables, never adds columns to existing
+    ones, and Railway starts with plain `uvicorn` (no `alembic upgrade`). So new
+    columns on long-lived tables are guaranteed here with ADD COLUMN IF NOT EXISTS.
+    """
+    from sqlalchemy import text
+    stmts = [
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_code VARCHAR(16)",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_by_id INTEGER REFERENCES users(id)",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_credited_at TIMESTAMPTZ",
+        "CREATE UNIQUE INDEX IF NOT EXISTS ix_users_referral_code ON users (referral_code)",
+    ]
+    async with engine.begin() as conn:
+        for s in stmts:
+            await conn.execute(text(s))

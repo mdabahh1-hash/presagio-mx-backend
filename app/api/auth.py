@@ -16,6 +16,7 @@ from app.core.auth import create_access_token
 from app.config import settings
 from app.schemas.user import UserMe
 from app.services.email import send_verification_email
+from app.services import referral
 
 def _hash_password(password: str) -> str:
     return _bcrypt.hashpw(password.encode(), _bcrypt.gensalt(12)).decode()
@@ -108,6 +109,7 @@ async def get_or_create_user(
         google_id=provider_id if provider == "google" else None,
         github_id=provider_id if provider == "github" else None,
     )
+    await referral.ensure_code(db, user)
     db.add(user)
     await db.commit()
     await db.refresh(user)
@@ -260,6 +262,7 @@ async def email_register(payload: EmailRegisterRequest, db: AsyncSession = Depen
         email_verification_expires=expires,
         points=float(settings.NEW_USER_POINTS),
     )
+    await referral.ensure_code(db, user)
     db.add(user)
     await db.commit()
 

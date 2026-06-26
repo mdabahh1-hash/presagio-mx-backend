@@ -15,6 +15,7 @@ from app.schemas.market import OutcomeOut
 from app.core.auth import get_current_user
 from app.core import lmsr
 from app.core.websocket_manager import ws_manager
+from app.services import ledger, referral
 
 router = APIRouter(prefix="/markets", tags=["trades"])
 
@@ -80,6 +81,9 @@ async def execute_trade(
         market.volume += actual_cost
         market.num_trades += 1
         current_user.points -= actual_cost
+        ledger.record(db, current_user.id, -actual_cost, "trade")
+        if current_user.markets_traded == 0:
+            await referral.credit_referral(db, current_user)
         current_user.markets_traded += 1
 
         trade = Trade(
@@ -189,6 +193,9 @@ async def execute_trade(
 
         price_after = market.yes_price
         current_user.points -= actual_cost
+        ledger.record(db, current_user.id, -actual_cost, "trade")
+        if current_user.markets_traded == 0:
+            await referral.credit_referral(db, current_user)
         current_user.markets_traded += 1
 
         trade = Trade(

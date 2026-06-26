@@ -32,6 +32,10 @@ class Settings(BaseSettings):
 
     NEW_USER_POINTS: int = 1000
 
+    # Referral bonus (PT) granted to BOTH inviter and invitee after the
+    # invitee's first trade.
+    REFERRAL_BONUS: int = 200
+
     GMAIL_USER: str = ""
     GMAIL_APP_PASSWORD: str = ""
 
