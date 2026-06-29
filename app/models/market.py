@@ -64,6 +64,10 @@ class Market(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    # Notification idempotency guards (set once so periodic maintenance doesn't resend)
+    closing_notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    resolution_reminded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     trades: Mapped[list["Trade"]] = relationship("Trade", back_populates="market", lazy="select")
     positions: Mapped[list["Position"]] = relationship("Position", back_populates="market", lazy="select")
     comments: Mapped[list["Comment"]] = relationship(

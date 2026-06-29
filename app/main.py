@@ -1,31 +1,26 @@
+import asyncio
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select
 from app.database import create_tables, migrate_enums, migrate_columns, AsyncSessionLocal
 from app.config import settings
 from app.api import auth, markets, trades, comments, users, websockets, admin
 from app.services.seed import seed_markets
 from app.services.ledger_backfill import backfill_ledger
 from app.services.referral import assign_codes_to_all
-from app.models.market import Market, MarketStatus
+from app.services.market_maintenance import run_market_maintenance
+
+# How often the background job runs (closing-soon notices, auto-close, admin reminders).
+MAINTENANCE_INTERVAL_SECONDS = 900  # 15 min
 
 
-async def close_expired_markets() -> None:
-    async with AsyncSessionLocal() as db:
-        now = datetime.now(timezone.utc)
-        result = await db.execute(
-            select(Market).where(
-                Market.status == MarketStatus.OPEN,
-                Market.ends_at < now,
-            )
-        )
-        expired = result.scalars().all()
-        for m in expired:
-            m.status = MarketStatus.PENDING_RESOLUTION
-        if expired:
-            await db.commit()
+async def _maintenance_loop() -> None:
+    while True:
+        await asyncio.sleep(MAINTENANCE_INTERVAL_SECONDS)
+        try:
+            await run_market_maintenance()
+        except Exception as e:  # noqa: BLE001
+            print(f"[maintenance] error: {e}")
 
 
 @asynccontextmanager
@@ -44,8 +39,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:  # noqa: BLE001
         print(f"[startup] referral code backfill skipped: {e}")
     await seed_markets()
-    await close_expired_markets()
+    # Run once at boot, then on a fixed interval in the background.
+    try:
+        await run_market_maintenance()
+    except Exception as e:  # noqa: BLE001
+        print(f"[startup] market maintenance skipped: {e}")
+    task = asyncio.create_task(_maintenance_loop())
     yield
+    task.cancel()
 
 
 app = FastAPI(
