@@ -1,5 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import create_tables, migrate_enums, migrate_columns, AsyncSessionLocal
@@ -8,7 +9,7 @@ from app.api import auth, markets, trades, comments, users, websockets, admin
 from app.services.seed import seed_markets
 from app.services.ledger_backfill import backfill_ledger
 from app.services.referral import assign_codes_to_all
-from app.services.market_maintenance import run_market_maintenance
+from app.services.market_maintenance import run_market_maintenance, get_maintenance_status
 
 # How often the background job runs (closing-soon notices, auto-close, admin reminders).
 MAINTENANCE_INTERVAL_SECONDS = 900  # 15 min
@@ -79,6 +80,28 @@ app.include_router(websockets.router)
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "version": "1.0.0"}
+
+
+@app.get("/api/health/maintenance")
+async def maintenance_health():
+    """Liveness of the periodic market-maintenance job.
+
+    `healthy` is False if it hasn't run within 2 intervals (job stalled / server
+    slept). Pointing an external uptime monitor here also keeps the server awake.
+    """
+    st = get_maintenance_status()
+    seconds_since = None
+    healthy = False
+    if st["ran_at"]:
+        delta = (datetime.now(timezone.utc) - datetime.fromisoformat(st["ran_at"])).total_seconds()
+        seconds_since = round(delta)
+        healthy = delta < MAINTENANCE_INTERVAL_SECONDS * 2
+    return {
+        **st,
+        "seconds_since_run": seconds_since,
+        "interval_seconds": MAINTENANCE_INTERVAL_SECONDS,
+        "healthy": healthy,
+    }
 
 @app.get("/api/debug/oauth")
 async def debug_oauth():

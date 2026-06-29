@@ -19,9 +19,25 @@ from app.services.email import send_closing_soon_email, send_admin_resolution_re
 # How far ahead of close we warn open-position holders.
 CLOSING_SOON_WINDOW = timedelta(hours=24)
 
+# In-memory record of the last maintenance run, exposed for health monitoring.
+# Resets to ran_at=None on restart — so a stale/None ran_at means the loop isn't
+# ticking (e.g. the server slept). See GET /api/health/maintenance.
+_LAST_RUN: dict = {
+    "ran_at": None,
+    "run_count": 0,
+    "last_closing_emails": 0,
+    "last_closed": 0,
+    "last_admin_reminders": 0,
+}
 
-async def _notify_closing_soon(db: AsyncSession, now: datetime) -> None:
-    """Email open-position holders for markets closing within the window."""
+
+def get_maintenance_status() -> dict:
+    return dict(_LAST_RUN)
+
+
+async def _notify_closing_soon(db: AsyncSession, now: datetime) -> int:
+    """Email open-position holders for markets closing within the window.
+    Returns the number of closing-soon emails queued."""
     window_end = now + CLOSING_SOON_WINDOW
     res = await db.execute(
         select(Market).where(
@@ -32,6 +48,7 @@ async def _notify_closing_soon(db: AsyncSession, now: datetime) -> None:
         )
     )
     markets = res.scalars().all()
+    emails = 0
     for m in markets:
         holders = await db.execute(
             select(User.email, User.display_name)
@@ -48,21 +65,26 @@ async def _notify_closing_soon(db: AsyncSession, now: datetime) -> None:
             asyncio.create_task(
                 send_closing_soon_email(email, display_name, m.question, m.ends_at, m.id)
             )
+            emails += 1
         # Mark even when there were no holders, so we don't re-scan this market.
         m.closing_notified_at = now
+    return emails
 
 
-async def _close_expired(db: AsyncSession, now: datetime) -> None:
-    """Flip OPEN markets past their end date to PENDING_RESOLUTION."""
+async def _close_expired(db: AsyncSession, now: datetime) -> int:
+    """Flip OPEN markets past their end date to PENDING_RESOLUTION. Returns count."""
     res = await db.execute(
         select(Market).where(Market.status == MarketStatus.OPEN, Market.ends_at < now)
     )
-    for m in res.scalars().all():
+    expired = res.scalars().all()
+    for m in expired:
         m.status = MarketStatus.PENDING_RESOLUTION
+    return len(expired)
 
 
-async def _remind_admin(db: AsyncSession, now: datetime) -> None:
-    """Email the admin a digest of markets that closed and await resolution."""
+async def _remind_admin(db: AsyncSession, now: datetime) -> int:
+    """Email the admin a digest of markets that closed and await resolution.
+    Returns the number of markets in the reminder."""
     res = await db.execute(
         select(Market).where(
             Market.status == MarketStatus.PENDING_RESOLUTION,
@@ -71,11 +93,12 @@ async def _remind_admin(db: AsyncSession, now: datetime) -> None:
     )
     pending = res.scalars().all()
     if not pending:
-        return
+        return 0
     digest = [(m.id, m.question, m.ends_at) for m in pending]
     asyncio.create_task(send_admin_resolution_reminder(digest))
     for m in pending:
         m.resolution_reminded_at = now
+    return len(pending)
 
 
 async def run_market_maintenance() -> None:
@@ -83,7 +106,15 @@ async def run_market_maintenance() -> None:
     async with AsyncSessionLocal() as db:
         # Order matters: warn before closing (so a just-expired market isn't
         # warned), then close, then remind admin about the newly-pending ones.
-        await _notify_closing_soon(db, now)
-        await _close_expired(db, now)
-        await _remind_admin(db, now)
+        closing_emails = await _notify_closing_soon(db, now)
+        closed = await _close_expired(db, now)
+        admin_reminders = await _remind_admin(db, now)
         await db.commit()
+
+    _LAST_RUN.update(
+        ran_at=now.isoformat(),
+        run_count=_LAST_RUN["run_count"] + 1,
+        last_closing_emails=closing_emails,
+        last_closed=closed,
+        last_admin_reminders=admin_reminders,
+    )
