@@ -26,6 +26,9 @@ class MarketCategory(str, enum.Enum):
     CRYPTO = "Crypto"
     MERCADOS_GLOBALES = "Mercados Globales"
     MEXICO = "México"
+    CLIMA = "Clima"
+    BOXEO = "Boxeo"
+    MOTOR = "Motor"
 
 
 class Market(Base):

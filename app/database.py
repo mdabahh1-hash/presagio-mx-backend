@@ -39,7 +39,7 @@ async def migrate_enums() -> None:
     """
     from sqlalchemy import text
     new_status_names = ["PENDING_RESOLUTION", "RESOLVED"]
-    new_category_names = ["MUNDIAL_2026", "CRYPTO", "MERCADOS_GLOBALES", "MEXICO"]
+    new_category_names = ["MUNDIAL_2026", "CRYPTO", "MERCADOS_GLOBALES", "MEXICO", "CLIMA", "BOXEO", "MOTOR"]
     async with engine.begin() as conn:
         for v in new_status_names:
             await conn.execute(text(f"ALTER TYPE marketstatus ADD VALUE IF NOT EXISTS '{v}'"))
