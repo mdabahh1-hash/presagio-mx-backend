@@ -11,6 +11,14 @@ from app.database import get_db
 ALGORITHM = "HS256"
 bearer_scheme = HTTPBearer(auto_error=False)
 
+ADMIN_EMAIL = "mdabahh@atid.edu.mx"
+
+
+def require_admin(current_user) -> None:
+    """Raise 403 unless the user is the admin. Shared by admin + market-creation routes."""
+    if current_user.email != ADMIN_EMAIL:
+        raise HTTPException(status_code=403, detail="No autorizado")
+
 
 def create_access_token(subject: int | str, extra: dict[str, Any] | None = None) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)

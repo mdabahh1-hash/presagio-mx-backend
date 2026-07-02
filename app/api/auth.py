@@ -7,7 +7,7 @@ from urllib.parse import urlencode
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 import bcrypt as _bcrypt
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
@@ -17,6 +17,7 @@ from app.config import settings
 from app.schemas.user import UserMe
 from app.services.email import send_verification_email
 from app.services import referral
+from app.core.background import spawn
 
 def _hash_password(password: str) -> str:
     return _bcrypt.hashpw(password.encode(), _bcrypt.gensalt(12)).decode()
@@ -34,6 +35,13 @@ class EmailRegisterRequest(BaseModel):
     email: str
     password: str
     display_name: str
+
+    @field_validator("password")
+    @classmethod
+    def password_strong_enough(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("La contraseña debe tener al menos 8 caracteres")
+        return v
 
 
 class EmailLoginRequest(BaseModel):
@@ -166,7 +174,7 @@ async def google_callback(request: Request, code: str, db: AsyncSession = Depend
     )
     jwt_token = create_access_token(user.id)
     response = RedirectResponse(f"{settings.FRONTEND_URL}/#/auth/callback?token={jwt_token}")
-    response.set_cookie("access_token", jwt_token, httponly=True, samesite="lax", max_age=604800)
+    response.set_cookie("access_token", jwt_token, httponly=True, secure=True, samesite="lax", max_age=604800)
     return response
 
 
@@ -228,7 +236,7 @@ async def github_callback(request: Request, code: str, db: AsyncSession = Depend
     )
     jwt_token = create_access_token(user.id)
     response = RedirectResponse(f"{settings.FRONTEND_URL}/#/auth/callback?token={jwt_token}")
-    response.set_cookie("access_token", jwt_token, httponly=True, samesite="lax", max_age=604800)
+    response.set_cookie("access_token", jwt_token, httponly=True, secure=True, samesite="lax", max_age=604800)
     return response
 
 
@@ -266,8 +274,7 @@ async def email_register(payload: EmailRegisterRequest, db: AsyncSession = Depen
     db.add(user)
     await db.commit()
 
-    import asyncio as _asyncio
-    _asyncio.create_task(send_verification_email(email, payload.display_name.strip(), code))
+    spawn(send_verification_email(email, payload.display_name.strip(), code))
     return {"message": "Código enviado a tu correo", "email": email}
 
 
@@ -300,17 +307,26 @@ async def verify_email_endpoint(payload: VerifyEmailRequest, db: AsyncSession = 
         token = create_access_token(user.id)
         return {"token": token, "user": user}
 
-    if (
-        not user.email_verification_code
-        or user.email_verification_code != payload.code.strip()
-        or not user.email_verification_expires
-        or datetime.now(timezone.utc) > user.email_verification_expires
-    ):
+    # Brute-force guard: after too many wrong tries, invalidate the code (forces resend).
+    if (user.email_verification_attempts or 0) >= 5:
+        user.email_verification_code = None
+        user.email_verification_expires = None
+        await db.commit()
+        raise HTTPException(status_code=429, detail="Demasiados intentos. Solicita un código nuevo.")
+
+    code_ok = bool(user.email_verification_code) and secrets.compare_digest(
+        user.email_verification_code, payload.code.strip()
+    )
+    expired = not user.email_verification_expires or datetime.now(timezone.utc) > user.email_verification_expires
+    if not code_ok or expired:
+        user.email_verification_attempts = (user.email_verification_attempts or 0) + 1
+        await db.commit()
         raise HTTPException(status_code=400, detail="Código inválido o expirado")
 
     user.email_verified = True
     user.email_verification_code = None
     user.email_verification_expires = None
+    user.email_verification_attempts = 0
     await db.commit()
     await db.refresh(user)
 

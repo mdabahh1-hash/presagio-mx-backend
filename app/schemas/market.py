@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from app.models.market import MarketStatus, MarketCategory
 
 
@@ -52,14 +52,14 @@ class MarketDetail(MarketBase):
 
 
 class MarketCreate(BaseModel):
-    id: str
-    question: str
-    description: str
+    id: str = Field(min_length=1, max_length=100)
+    question: str = Field(min_length=1, max_length=500)
+    description: str = Field(min_length=1, max_length=4000)
     category: MarketCategory
-    resolution_criteria: str
+    resolution_criteria: str = Field(min_length=1, max_length=4000)
     ends_at: datetime
-    b: float = 100.0
-    initial_yes_price: float = 50.0  # percentage 0-100
+    b: float = Field(default=100.0, gt=0)  # LMSR liquidity; must be positive
+    initial_yes_price: float = Field(default=50.0, ge=1, le=99)  # percentage
 
 
 class MarketResolve(BaseModel):

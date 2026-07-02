@@ -7,7 +7,7 @@ from app.database import get_db
 from app.models.market import Market, MarketStatus, MarketCategory
 from app.models.price_history import PriceHistory
 from app.schemas.market import MarketList, MarketDetail, MarketCreate, PricePoint
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, require_admin
 from app.core import lmsr
 from app.models.user import User
 
@@ -40,15 +40,15 @@ async def list_markets(
         stmt = stmt.where(Market.question.ilike(f"%{q}%"))
 
     if sort == "volume":
-        stmt = stmt.order_by(desc(Market.volume))
+        stmt = stmt.order_by(desc(Market.volume), Market.id)
     elif sort == "liquidity":
-        stmt = stmt.order_by(desc(Market.b))
+        stmt = stmt.order_by(desc(Market.b), Market.id)
     elif sort == "trending":
-        stmt = stmt.order_by(desc(Market.trending), desc(Market.volume))
+        stmt = stmt.order_by(desc(Market.trending), desc(Market.volume), Market.id)
     elif sort == "ending":
-        stmt = stmt.order_by(Market.ends_at)
+        stmt = stmt.order_by(Market.ends_at, Market.id)
     else:
-        stmt = stmt.order_by(desc(Market.volume))
+        stmt = stmt.order_by(desc(Market.volume), Market.id)
 
     stmt = stmt.limit(limit).offset(offset).options(selectinload(Market.outcomes))
     result = await db.execute(stmt)
@@ -89,6 +89,7 @@ async def create_market(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    require_admin(current_user)
     # Check slug unique
     exists = await db.execute(select(Market).where(Market.id == payload.id))
     if exists.scalar_one_or_none():
@@ -122,5 +123,9 @@ async def create_market(
     db.add(ph)
 
     await db.commit()
-    await db.refresh(market)
-    return market
+    # Re-fetch with outcomes eager-loaded; the MarketDetail response serializes
+    # the (lazy) outcomes relationship, which would otherwise error in async.
+    result = await db.execute(
+        select(Market).where(Market.id == market.id).options(selectinload(Market.outcomes))
+    )
+    return result.scalar_one()

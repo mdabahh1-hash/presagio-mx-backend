@@ -22,6 +22,7 @@ class User(Base):
     email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
     email_verification_code: Mapped[str | None] = mapped_column(String(10), nullable=True)
     email_verification_expires: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    email_verification_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
 
     # Balance
     points: Mapped[float] = mapped_column(Float, default=1000.0, nullable=False)

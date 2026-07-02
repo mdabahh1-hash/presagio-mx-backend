@@ -62,6 +62,7 @@ async def migrate_columns() -> None:
         "CREATE UNIQUE INDEX IF NOT EXISTS ix_users_referral_code ON users (referral_code)",
         "ALTER TABLE markets ADD COLUMN IF NOT EXISTS closing_notified_at TIMESTAMPTZ",
         "ALTER TABLE markets ADD COLUMN IF NOT EXISTS resolution_reminded_at TIMESTAMPTZ",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_attempts INTEGER NOT NULL DEFAULT 0",
     ]
     async with engine.begin() as conn:
         for s in stmts:

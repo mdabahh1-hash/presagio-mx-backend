@@ -5,9 +5,10 @@ Idempotency is guarded by Market.closing_notified_at / Market.resolution_reminde
 so emails are sent at most once per market.
 """
 import asyncio
+from app.core.background import spawn
 from datetime import datetime, timezone, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import AsyncSessionLocal
@@ -62,7 +63,7 @@ async def _notify_closing_soon(db: AsyncSession, now: datetime) -> int:
             .distinct()
         )
         for email, display_name in holders.all():
-            asyncio.create_task(
+            spawn(
                 send_closing_soon_email(email, display_name, m.question, m.ends_at, m.id)
             )
             emails += 1
@@ -72,14 +73,17 @@ async def _notify_closing_soon(db: AsyncSession, now: datetime) -> int:
 
 
 async def _close_expired(db: AsyncSession, now: datetime) -> int:
-    """Flip OPEN markets past their end date to PENDING_RESOLUTION. Returns count."""
+    """Flip OPEN markets past their end date to PENDING_RESOLUTION. Returns count.
+
+    Uses a single conditional UPDATE (WHERE status=OPEN) so it can never revert a
+    market an admin resolved concurrently between our read and write.
+    """
     res = await db.execute(
-        select(Market).where(Market.status == MarketStatus.OPEN, Market.ends_at < now)
+        update(Market)
+        .where(Market.status == MarketStatus.OPEN, Market.ends_at < now)
+        .values(status=MarketStatus.PENDING_RESOLUTION)
     )
-    expired = res.scalars().all()
-    for m in expired:
-        m.status = MarketStatus.PENDING_RESOLUTION
-    return len(expired)
+    return res.rowcount or 0
 
 
 async def _remind_admin(db: AsyncSession, now: datetime) -> int:
@@ -95,7 +99,7 @@ async def _remind_admin(db: AsyncSession, now: datetime) -> int:
     if not pending:
         return 0
     digest = [(m.id, m.question, m.ends_at) for m in pending]
-    asyncio.create_task(send_admin_resolution_reminder(digest))
+    spawn(send_admin_resolution_reminder(digest))
     for m in pending:
         m.resolution_reminded_at = now
     return len(pending)

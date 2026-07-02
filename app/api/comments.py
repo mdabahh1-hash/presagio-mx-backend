@@ -9,6 +9,7 @@ from app.schemas.comment import CommentCreate, CommentOut
 from app.core.auth import get_current_user
 from app.core.websocket_manager import ws_manager
 import asyncio
+from app.core.background import spawn
 
 router = APIRouter(prefix="/markets", tags=["comments"])
 
@@ -50,7 +51,7 @@ async def create_comment(
     # Eagerly load user for response
     await db.refresh(comment, ["user"])
 
-    asyncio.create_task(ws_manager.broadcast_market_update(market_id, {
+    spawn(ws_manager.broadcast_market_update(market_id, {
         "market_id": market_id,
         "event": "new_comment",
         "comment": {

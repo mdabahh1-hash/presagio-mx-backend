@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone, timedelta
+from html import escape as _esc
 
 import httpx
 
@@ -59,7 +60,7 @@ def _wrap(body_html: str) -> str:
 
 async def send_verification_email(to_email: str, display_name: str, code: str) -> None:
     body = f"""
-      <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">Hola {display_name},</p>
+      <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">Hola {_esc(display_name)},</p>
       <p style="margin: 0 0 28px; font-size: 14px; color: rgba(245,240,232,0.6);">
         Tu código de verificación es:
       </p>
@@ -89,13 +90,13 @@ async def send_resolution_email(
         detail = "Esta vez tu predicción no acertó. ¡Va la próxima!"
 
     body = f"""
-      <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">Hola {display_name},</p>
+      <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">Hola {_esc(display_name)},</p>
       <p style="margin: 0 0 18px; font-size: 14px; color: rgba(245,240,232,0.6);">
         El mercado en el que participaste ya se resolvió:
       </p>
       <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,215,0,0.18);
                   border-radius: 12px; padding: 20px; margin-bottom: 22px;">
-        <div style="font-size: 15px; font-weight: 700; color: #F5F0E8; margin-bottom: 12px;">{question}</div>
+        <div style="font-size: 15px; font-weight: 700; color: #F5F0E8; margin-bottom: 12px;">{_esc(question)}</div>
         <div style="font-size: 18px; font-weight: 800; color: {color}; margin-bottom: 6px;">{headline}</div>
         <div style="font-size: 14px; color: rgba(245,240,232,0.7);">{detail}</div>
       </div>
@@ -117,13 +118,13 @@ async def send_closing_soon_email(
     """Heads-up to an open-position holder that their market closes within ~24h."""
     market_url = f"{_SITE}/#/mercado/{market_id}"
     body = f"""
-      <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">Hola {display_name},</p>
+      <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">Hola {_esc(display_name)},</p>
       <p style="margin: 0 0 18px; font-size: 14px; color: rgba(245,240,232,0.6);">
         Un mercado en el que tienes una posición abierta está por cerrar:
       </p>
       <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,215,0,0.18);
                   border-radius: 12px; padding: 20px; margin-bottom: 22px;">
-        <div style="font-size: 15px; font-weight: 700; color: #F5F0E8; margin-bottom: 12px;">{question}</div>
+        <div style="font-size: 15px; font-weight: 700; color: #F5F0E8; margin-bottom: 12px;">{_esc(question)}</div>
         <div style="font-size: 14px; font-weight: 800; color: #FFD700;">⏰ Cierra el {_fmt_mx(ends_at)}</div>
       </div>
       <p style="margin: 0 0 22px; font-size: 13px; color: rgba(245,240,232,0.6);">
@@ -152,8 +153,8 @@ async def send_admin_resolution_reminder(markets: list[tuple[str, str, datetime]
         f"""
         <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,215,0,0.18);
                     border-radius: 10px; padding: 14px 16px; margin-bottom: 10px;">
-          <div style="font-size: 14px; font-weight: 700; color: #F5F0E8; margin-bottom: 4px;">{question}</div>
-          <div style="font-size: 12px; color: rgba(245,240,232,0.55);">Cerró el {_fmt_mx(ends_at)} · <span style="font-family:'Courier New',monospace">{market_id}</span></div>
+          <div style="font-size: 14px; font-weight: 700; color: #F5F0E8; margin-bottom: 4px;">{_esc(question)}</div>
+          <div style="font-size: 12px; color: rgba(245,240,232,0.55);">Cerró el {_fmt_mx(ends_at)} · <span style="font-family:'Courier New',monospace">{_esc(market_id)}</span></div>
         </div>
         """
         for market_id, question, ends_at in markets

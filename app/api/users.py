@@ -54,6 +54,10 @@ async def claim_daily_bonus(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    # Lock the user row so two concurrent claims can't both pass the "already
+    # claimed today" check and double-award.
+    await db.execute(select(User).where(User.id == current_user.id).with_for_update())
+
     today = datetime.now(MX_TZ).date()
     created = current_user.created_at.astimezone(MX_TZ).date() if current_user.created_at else today
     last = current_user.last_bonus_at.astimezone(MX_TZ).date() if current_user.last_bonus_at else None
@@ -253,9 +257,11 @@ async def _period_leaderboard(db: AsyncSession, start: datetime, limit: int) -> 
     from sqlalchemy import func as safunc
     from app.models.points_ledger import PointsLedger
 
+    # Trading P&L only — exclude daily_bonus / referral so bonus claimers don't
+    # top the board over actual traders.
     pnl_res = await db.execute(
         select(PointsLedger.user_id, safunc.sum(PointsLedger.delta))
-        .where(PointsLedger.created_at >= start)
+        .where(PointsLedger.created_at >= start, PointsLedger.reason.in_(("trade", "payout")))
         .group_by(PointsLedger.user_id)
     )
     pnl_by_user = {uid: float(d or 0.0) for uid, d in pnl_res.all()}

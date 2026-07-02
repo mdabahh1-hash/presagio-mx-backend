@@ -65,7 +65,15 @@ def shares_for_cost(
     Binary search: how many shares can you buy with `points` points?
     Returns the number of shares purchasable.
     """
-    lo, hi = 0.0, points * 10  # upper bound: can't get more shares than points * 10
+    lo, hi = 0.0, max(points * 10, 1.0)
+    # Grow the upper bound until it actually overshoots the target cost. At low
+    # prices (long shots) `points * 10` shares can cost far less than `points`,
+    # which would otherwise cap the fill and undercharge the user.
+    for _ in range(60):
+        if (trade_cost(q_yes, q_no, b, hi, 0.0) if buy_yes
+                else trade_cost(q_yes, q_no, b, 0.0, hi)) >= points:
+            break
+        hi *= 2
 
     for _ in range(max_iter):
         mid = (lo + hi) / 2
@@ -155,7 +163,13 @@ def shares_for_cost_multi(
     max_iter: int = 100,
 ) -> float:
     """Binary search: how many shares of `outcome_key` can you buy with `points`?"""
-    lo, hi = 0.0, points * 10
+    lo, hi = 0.0, max(points * 10, 1.0)
+    # Grow the upper bound until it overshoots the target cost (long-shot outcomes
+    # under ~10% otherwise cap the fill and undercharge — common in multi markets).
+    for _ in range(60):
+        if trade_cost_multi(q, b, outcome_key, hi) >= points:
+            break
+        hi *= 2
     for _ in range(max_iter):
         mid = (lo + hi) / 2
         c = trade_cost_multi(q, b, outcome_key, mid)

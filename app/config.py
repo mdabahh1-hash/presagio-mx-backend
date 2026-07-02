@@ -18,6 +18,20 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change-me-in-production-at-least-32-characters-long"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 days
 
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def secret_key_not_default(cls, v: str) -> str:
+        # Warn loudly (don't crash boot) if running with the known-default / weak
+        # key — a forgeable key means anyone can mint tokens. Set a strong SECRET_KEY.
+        if v == "change-me-in-production-at-least-32-characters-long" or len(v) < 32:
+            import warnings
+            warnings.warn(
+                "SECRET_KEY is the default placeholder or too short (<32 chars). "
+                "Set a strong SECRET_KEY env var — tokens are forgeable otherwise.",
+                stacklevel=2,
+            )
+        return v
+
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
     GITHUB_CLIENT_ID: str = ""

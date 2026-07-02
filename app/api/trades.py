@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 import asyncio
+from app.core.background import spawn
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -39,6 +40,10 @@ async def execute_trade(
         market.status = MarketStatus.PENDING_RESOLUTION
         await db.commit()
         raise HTTPException(status_code=400, detail="Este mercado cerró y está pendiente de resolución")
+
+    # Lock the acting user's row so concurrent trades / bonus / referral crediting
+    # can't read-modify-write the balance and lose an update (double-spend).
+    await db.execute(select(User).where(User.id == current_user.id).with_for_update())
 
     if current_user.points < payload.points:
         raise HTTPException(
@@ -132,7 +137,7 @@ async def execute_trade(
         await db.commit()
         await db.refresh(trade)
 
-        asyncio.create_task(ws_manager.broadcast_market_update(market_id, {
+        spawn(ws_manager.broadcast_market_update(market_id, {
             "market_id": market_id,
             "yes_price": target_outcome.price,
             "volume": market.volume,
@@ -146,7 +151,7 @@ async def execute_trade(
                 "user": current_user.display_name,
             },
         }))
-        asyncio.create_task(ws_manager.broadcast_feed({
+        spawn(ws_manager.broadcast_feed({
             "market_id": market_id,
             "question": market.question[:80],
             "outcome_key": payload.outcome_key,
@@ -243,7 +248,7 @@ async def execute_trade(
         await db.commit()
         await db.refresh(trade)
 
-        asyncio.create_task(ws_manager.broadcast_market_update(market_id, {
+        spawn(ws_manager.broadcast_market_update(market_id, {
             "market_id": market_id,
             "yes_price": market.yes_price,
             "no_price": round(100 - market.yes_price, 2),
@@ -256,7 +261,7 @@ async def execute_trade(
                 "user": current_user.display_name,
             },
         }))
-        asyncio.create_task(ws_manager.broadcast_feed({
+        spawn(ws_manager.broadcast_feed({
             "market_id": market_id,
             "question": market.question[:80],
             "side": payload.side.value,

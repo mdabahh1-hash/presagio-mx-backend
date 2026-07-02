@@ -102,18 +102,3 @@ async def maintenance_health():
         "interval_seconds": MAINTENANCE_INTERVAL_SECONDS,
         "healthy": healthy,
     }
-
-@app.get("/api/debug/oauth")
-async def debug_oauth():
-    g_id = settings.GOOGLE_CLIENT_ID
-    g_sec = settings.GOOGLE_CLIENT_SECRET
-    gh_id = settings.GITHUB_CLIENT_ID
-    return {
-        "google_client_id_len": len(g_id),
-        "google_client_id_preview": f"{g_id[:20]}...{g_id[-10:]}" if len(g_id) > 30 else g_id,
-        "google_secret_len": len(g_sec),
-        "google_secret_preview": f"{g_sec[:8]}...{g_sec[-4:]}" if len(g_sec) > 12 else "(empty)",
-        "github_client_id": gh_id,
-        "frontend_url": settings.FRONTEND_URL,
-        "backend_url": settings.BACKEND_URL,
-    }

@@ -1,5 +1,6 @@
 """Admin endpoints to seed markets and resolve them."""
 import asyncio
+from app.core.background import spawn
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,19 +11,12 @@ from app.models.outcome import Outcome
 from app.models.position import Position
 from app.models.user import User
 from app.schemas.market import MarketResolve
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, require_admin as _require_admin
 from app.core import lmsr
 from app.services.email import send_resolution_email
 from app.services import ledger
 
 router = APIRouter(prefix="/admin", tags=["admin"])
-
-ADMIN_EMAIL = "mdabahh@atid.edu.mx"
-
-
-def _require_admin(current_user: User) -> None:
-    if current_user.email != ADMIN_EMAIL:
-        raise HTTPException(status_code=403, detail="No autorizado")
 
 
 @router.post("/markets/{market_id}/resolve")
@@ -90,7 +84,7 @@ async def resolve_market(
         question = market.question
         for entry in notify.values():
             won = entry["payout"] > 0
-            asyncio.create_task(
+            spawn(
                 send_resolution_email(entry["email"], entry["name"], question, won, entry["payout"])
             )
 
@@ -145,7 +139,7 @@ async def resolve_market(
         question = market.question
         for entry in notify.values():
             won = entry["payout"] > 0
-            asyncio.create_task(
+            spawn(
                 send_resolution_email(entry["email"], entry["name"], question, won, entry["payout"])
             )
 
