@@ -21,14 +21,13 @@ class Settings(BaseSettings):
     @field_validator("SECRET_KEY")
     @classmethod
     def secret_key_not_default(cls, v: str) -> str:
-        # Warn loudly (don't crash boot) if running with the known-default / weak
-        # key — a forgeable key means anyone can mint tokens. Set a strong SECRET_KEY.
+        # Fail hard at boot if running with the known-default / weak key — a
+        # forgeable key means anyone can mint tokens. Prod has a strong key set,
+        # so this guard just prevents ever silently shipping a weak one again.
         if v == "change-me-in-production-at-least-32-characters-long" or len(v) < 32:
-            import warnings
-            warnings.warn(
+            raise ValueError(
                 "SECRET_KEY is the default placeholder or too short (<32 chars). "
-                "Set a strong SECRET_KEY env var — tokens are forgeable otherwise.",
-                stacklevel=2,
+                "Set a strong SECRET_KEY env var — tokens are forgeable otherwise."
             )
         return v
 
