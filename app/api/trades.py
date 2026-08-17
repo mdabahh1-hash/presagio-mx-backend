@@ -187,9 +187,12 @@ async def execute_trade(
 
         if buy_yes:
             actual_cost = lmsr.trade_cost(market.q_yes, market.q_no, market.b, shares, 0.0)
-            market.q_yes += shares
         else:
             actual_cost = lmsr.trade_cost(market.q_yes, market.q_no, market.b, 0.0, shares)
+
+        if buy_yes:
+            market.q_yes += shares
+        else:
             market.q_no += shares
 
         market.yes_price = lmsr.yes_price_pct(market.q_yes, market.q_no, market.b)
