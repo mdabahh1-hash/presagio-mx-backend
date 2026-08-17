@@ -45,6 +45,10 @@ class Settings(BaseSettings):
 
     NEW_USER_POINTS: int = 1000
 
+    # Quote → execution price protection
+    PRICE_TOLERANCE: float = 0.01     # max relative deviation of avg fill vs quoted before 409 PRICE_MOVED
+    QUOTE_TTL_SECONDS: int = 10       # quote_expires_at horizon
+
     # Referral bonus (PT) granted to BOTH inviter and invitee after the
     # invitee's first trade.
     REFERRAL_BONUS: int = 200

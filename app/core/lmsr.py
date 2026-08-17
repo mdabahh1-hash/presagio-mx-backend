@@ -144,6 +144,18 @@ def prices_multi(q: dict[str, float], b: float) -> dict[str, float]:
     return {k: round(e / total * 100, 4) for k, e in exps.items()}
 
 
+def outcome_price(q: dict[str, float], b: float, outcome_key: str) -> float:
+    """Unrounded probability in [0, 1] for one outcome (softmax, LSE trick).
+
+    Same math as prices_multi but without the *100 scaling or rounding —
+    for quote computations where rounding happens only at serialization.
+    """
+    vals = {k: v / b for k, v in q.items()}
+    a = max(vals.values())
+    exps = {k: math.exp(v - a) for k, v in vals.items()}
+    return exps[outcome_key] / sum(exps.values())
+
+
 def trade_cost_multi(
     q: dict[str, float], b: float, outcome_key: str, delta: float
 ) -> float:
