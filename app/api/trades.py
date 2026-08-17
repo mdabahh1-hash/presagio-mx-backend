@@ -1,17 +1,19 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 import asyncio
 from app.core.background import spawn
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from app.config import settings
 from app.database import get_db
 from app.models.market import Market, MarketStatus
 from app.models.outcome import Outcome
-from app.models.trade import Trade
+from app.models.trade import Trade, TradeSide
 from app.models.position import Position
 from app.models.price_history import PriceHistory
 from app.models.user import User
-from app.schemas.trade import TradeRequest, TradeResponse, PositionOut
+from app.schemas.trade import TradeRequest, TradeResponse, PositionOut, QuoteOut
 from app.schemas.market import OutcomeOut
 from app.core.auth import get_current_user
 from app.core import lmsr
@@ -285,6 +287,125 @@ async def execute_trade(
             new_yes_price=market.yes_price,
             new_balance=current_user.points,
         )
+
+
+def _build_quote(
+    *,
+    market: Market,
+    side: TradeSide | None,
+    outcome_key: str | None,
+    amount: float,
+    spot: float,          # unrounded 0-1 for the chosen side/outcome
+    mid_yes_raw: float,   # unrounded 0-1: binary YES spot / multi chosen-outcome spot
+    shares: float,
+    cost: float,
+    price_after: float,   # unrounded 0-1 for the chosen side/outcome, post-trade
+) -> QuoteOut:
+    """Single rounding boundary: all math upstream is raw float; every displayed
+    field is rounded exactly once here. potential_gain and mid_no_price are
+    DERIVED from the already-rounded fields with Decimal so the invariants
+    gain == payout − loss and yes + no == 100 hold exactly."""
+    avg_fill = cost / shares
+    slip_frac = (avg_fill - spot) / spot if spot > 0 else 0.0
+
+    max_loss = round(cost, 2)
+    potential_payout = round(shares, 2)
+    potential_gain = float(Decimal(str(potential_payout)) - Decimal(str(max_loss)))
+    mid_yes_price = round(mid_yes_raw * 100, 2)
+    mid_no_price = float(Decimal("100") - Decimal(str(mid_yes_price)))
+
+    return QuoteOut(
+        market_id=market.id,
+        market_type=market.market_type,
+        side=side,
+        outcome_key=outcome_key,
+        amount=amount,
+        mid_price=round(spot * 100, 2),
+        mid_yes_price=mid_yes_price,
+        mid_no_price=mid_no_price,
+        avg_fill_price=round(avg_fill * 100, 2),
+        price_after=round(price_after * 100, 2),
+        shares=round(shares, 4),
+        potential_payout=potential_payout,
+        potential_gain=potential_gain,
+        max_loss=max_loss,
+        slippage_cost=round(cost - shares * spot, 2),
+        spread_pct=0.0,
+        slippage_pct=round(slip_frac * 100, 2),
+        liquidity_warning=slip_frac > 0.02,
+        quote_expires_at=datetime.now(timezone.utc) + timedelta(seconds=settings.QUOTE_TTL_SECONDS),
+    )
+
+
+@router.get("/{market_id}/quote", response_model=QuoteOut)
+async def get_quote(
+    market_id: str,
+    amount: float,
+    side: TradeSide | None = None,
+    outcome_key: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Simulate a buy of `amount` PT against the live LMSR state (read-only).
+
+    The single source of truth for execution pricing: the UI's potential gain,
+    payout and avg fill price must all come from here. Partial fills cannot
+    happen (LMSR has unbounded liquidity); large orders pay increasing marginal
+    prices, reported as slippage_pct / liquidity_warning. spread_pct is always
+    0.0 — LMSR quotes one marginal price, not a bid/ask pair.
+    """
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="points debe ser mayor a 0")
+    if amount > 100_000:
+        raise HTTPException(status_code=400, detail="Máximo 100,000 PT por operación")
+
+    result = await db.execute(select(Market).where(Market.id == market_id))
+    market = result.scalar_one_or_none()
+    if not market:
+        raise HTTPException(status_code=404, detail="Mercado no encontrado")
+    # Read-only: report closed markets but never flip status here (the trade path does that).
+    if market.status != MarketStatus.OPEN or market.ends_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Este mercado ya no acepta operaciones")
+
+    if market.market_type == "multi":
+        if not outcome_key:
+            raise HTTPException(status_code=400, detail="Este es un mercado multi-resultado; debes especificar 'outcome_key'")
+        outcomes_res = await db.execute(select(Outcome).where(Outcome.market_id == market_id))
+        outcomes = outcomes_res.scalars().all()
+        q_dict = {o.outcome_key: o.q for o in outcomes}
+        if outcome_key not in q_dict:
+            raise HTTPException(status_code=400, detail="outcome_key inválido")
+
+        spot = lmsr.outcome_price(q_dict, market.b, outcome_key)
+        shares = lmsr.shares_for_cost_multi(q_dict, market.b, outcome_key, amount)
+        cost = lmsr.trade_cost_multi(q_dict, market.b, outcome_key, shares)
+        q_after = {k: (v + shares if k == outcome_key else v) for k, v in q_dict.items()}
+        price_after = lmsr.outcome_price(q_after, market.b, outcome_key)
+
+        return _build_quote(
+            market=market, side=None, outcome_key=outcome_key, amount=amount,
+            spot=spot, mid_yes_raw=spot, shares=shares, cost=cost, price_after=price_after,
+        )
+
+    # Binary
+    if not side:
+        raise HTTPException(status_code=400, detail="Este es un mercado binario; debes especificar 'side'")
+    buy_yes = side == TradeSide.YES
+    mid_yes_raw = lmsr.yes_price(market.q_yes, market.q_no, market.b)  # unrounded, not the cached 2dp column
+    spot = mid_yes_raw if buy_yes else 1.0 - mid_yes_raw
+
+    shares = lmsr.shares_for_cost(market.q_yes, market.q_no, market.b, amount, buy_yes)
+    if buy_yes:
+        cost = lmsr.trade_cost(market.q_yes, market.q_no, market.b, shares, 0.0)
+        after_yes = lmsr.yes_price(market.q_yes + shares, market.q_no, market.b)
+    else:
+        cost = lmsr.trade_cost(market.q_yes, market.q_no, market.b, 0.0, shares)
+        after_yes = lmsr.yes_price(market.q_yes, market.q_no + shares, market.b)
+    price_after = after_yes if buy_yes else 1.0 - after_yes
+
+    return _build_quote(
+        market=market, side=side, outcome_key=None, amount=amount,
+        spot=spot, mid_yes_raw=mid_yes_raw, shares=shares, cost=cost, price_after=price_after,
+    )
 
 
 @router.get("/{market_id}/outcomes", response_model=list[OutcomeOut])

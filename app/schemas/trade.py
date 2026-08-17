@@ -7,6 +7,10 @@ class TradeRequest(BaseModel):
     side: TradeSide | None = None          # binary markets
     outcome_key: str | None = None         # multi-outcome markets
     points: float
+    # Avg fill price (pct 0-100) the client was quoted. If present, execution
+    # rejects with 409 PRICE_MOVED when the real avg fill deviates more than
+    # settings.PRICE_TOLERANCE (relative).
+    quoted_avg_price: float | None = None
 
     @field_validator("points")
     @classmethod
@@ -43,6 +47,39 @@ class TradeResponse(BaseModel):
     new_balance: float
 
     model_config = {"from_attributes": True}
+
+
+class QuoteOut(BaseModel):
+    """Simulated execution against the live LMSR state — the single source of
+    truth for what a buy of `amount` PT would actually get.
+
+    All price fields are on the 0-100 percent scale (repo convention).
+    LMSR notes: there is no bid/ask, so spread_pct is always 0.0 (kept for
+    API-shape compatibility), and partial fills are impossible (the AMM has
+    unbounded liquidity) — big orders surface as slippage instead.
+    """
+    market_id: str
+    market_type: str                       # "binary" | "multi"
+    side: TradeSide | None = None
+    outcome_key: str | None = None
+    amount: float                          # requested PT
+
+    mid_price: float                       # spot for the chosen side/outcome (2dp)
+    mid_yes_price: float                   # binary: YES spot; multi: chosen outcome spot (2dp)
+    mid_no_price: float                    # exactly 100 - mid_yes_price (derived, never rounded independently)
+    avg_fill_price: float                  # cost/shares — "Precio promedio de ejecución" (2dp)
+    price_after: float                     # spot after the simulated trade (2dp)
+
+    shares: float                          # 4dp
+    potential_payout: float                # PT if it resolves in your favor (= shares, 2dp)
+    potential_gain: float                  # potential_payout - max_loss (Decimal-exact vs those two)
+    max_loss: float                        # PT spent (2dp)
+    slippage_cost: float                   # PT paid above spot for order size (2dp)
+
+    spread_pct: float                      # always 0.0 in LMSR
+    slippage_pct: float                    # (avg_fill - mid)/mid * 100 (2dp)
+    liquidity_warning: bool                # unrounded slippage fraction > 0.02
+    quote_expires_at: datetime
 
 
 class PositionOut(BaseModel):
