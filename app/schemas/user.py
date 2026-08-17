@@ -1,5 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, EmailStr
+from app.schemas.trade import PositionOut
 
 
 class UserPublic(BaseModel):
@@ -52,5 +53,15 @@ class ProfilePublic(BaseModel):
     markets_traded: int
     accuracy: float
     created_at: datetime
+    followers_count: int = 0
+    following_count: int = 0
+    is_following: bool | None = None  # null: viewer anónimo o perfil propio
 
     model_config = {"from_attributes": True}
+
+
+class FollowedUserOut(LeaderboardEntry):
+    points: float
+    followed_at: datetime
+    positions_count: int
+    top_positions: list[PositionOut] = []

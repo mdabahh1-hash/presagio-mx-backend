@@ -1,15 +1,17 @@
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, func as safunc
+from sqlalchemy.exc import IntegrityError
 from app.database import get_db
 from app.models.user import User
 from app.models.position import Position
 from app.models.market import Market, MarketStatus
 from app.models.trade import Trade
-from app.schemas.user import UserMe, UserPublic, UserUpdate, LeaderboardEntry, ProfilePublic
+from app.models.follow import Follow
+from app.schemas.user import UserMe, UserPublic, UserUpdate, LeaderboardEntry, ProfilePublic, FollowedUserOut
 from app.schemas.trade import PositionOut
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, get_current_user_optional
 from app.config import settings
 from app.services import ledger, referral
 from pydantic import BaseModel
@@ -194,6 +196,45 @@ async def get_points_history(
     return history
 
 
+@router.get("/me/following", response_model=list[FollowedUserOut])
+async def get_my_following(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Users the current user follows, with their P&L, points and top open
+    positions. 2 queries per followed user — fine at current scale; if it ever
+    matters, batch like the leaderboard's invested_by_user dict."""
+    res = await db.execute(
+        select(User, Follow.created_at)
+        .join(Follow, Follow.followed_id == User.id)
+        .where(Follow.follower_id == current_user.id)
+        .order_by(desc(Follow.created_at))
+    )
+    out = []
+    for u, followed_at in res.all():
+        pnl, volume = await _pnl_and_volume(db, u)
+        pos_res = await db.execute(
+            select(Position, Market.question)
+            .join(Market, Market.id == Position.market_id)
+            .where(Position.user_id == u.id, Position.shares > 0)
+            .order_by(desc(Position.updated_at))
+        )
+        pos_rows = pos_res.all()
+        top_positions = []
+        for pos, question in pos_rows[:3]:
+            data = PositionOut.model_validate(pos)
+            data.market_question = question
+            top_positions.append(data)
+        out.append(FollowedUserOut(
+            id=u.id, username=u.username, display_name=u.display_name,
+            avatar_url=u.avatar_url, pnl=pnl, volume=volume,
+            markets_traded=u.markets_traded, accuracy=u.accuracy,
+            points=round(u.points, 2), followed_at=followed_at,
+            positions_count=len(pos_rows), top_positions=top_positions,
+        ))
+    return out
+
+
 def _period_start(period: str) -> datetime | None:
     """Window start (UTC) for a leaderboard period, anchored to Mexico time.
     Returns None for 'all' / unknown → caller uses the all-time formula.
@@ -316,18 +357,93 @@ async def _pnl_and_volume(db: AsyncSession, user: User) -> tuple[float, float]:
     return round(pnl, 2), round(invested, 2)
 
 
+async def _followers_count(db: AsyncSession, user_id: int) -> int:
+    res = await db.execute(
+        select(safunc.count()).select_from(Follow).where(Follow.followed_id == user_id)
+    )
+    return res.scalar_one()
+
+
 @router.get("/{username}", response_model=ProfilePublic)
-async def get_user(username: str, db: AsyncSession = Depends(get_db)):
+async def get_user(
+    username: str,
+    db: AsyncSession = Depends(get_db),
+    viewer: User | None = Depends(get_current_user_optional),
+):
     result = await db.execute(select(User).where(User.username == username))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     pnl, volume = await _pnl_and_volume(db, user)
+
+    followers_count = await _followers_count(db, user.id)
+    following_res = await db.execute(
+        select(safunc.count()).select_from(Follow).where(Follow.follower_id == user.id)
+    )
+    following_count = following_res.scalar_one()
+
+    is_following = None  # anónimo o perfil propio
+    if viewer is not None and viewer.id != user.id:
+        pair = await db.execute(
+            select(Follow.id).where(Follow.follower_id == viewer.id, Follow.followed_id == user.id)
+        )
+        is_following = pair.scalar_one_or_none() is not None
+
     return ProfilePublic(
         id=user.id, username=user.username, display_name=user.display_name,
         avatar_url=user.avatar_url, pnl=pnl, volume=volume,
         markets_traded=user.markets_traded, accuracy=user.accuracy, created_at=user.created_at,
+        followers_count=followers_count, following_count=following_count, is_following=is_following,
     )
+
+
+@router.post("/{username}/follow")
+async def follow_user(
+    username: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(User).where(User.username == username))
+    target = result.scalar_one_or_none()
+    if not target:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if target.id == current_user.id:
+        raise HTTPException(status_code=400, detail="No puedes seguirte a ti mismo")
+
+    exists = await db.execute(
+        select(Follow.id).where(Follow.follower_id == current_user.id, Follow.followed_id == target.id)
+    )
+    if exists.scalar_one_or_none() is None:
+        db.add(Follow(follower_id=current_user.id, followed_id=target.id))
+        try:
+            await db.commit()
+        except IntegrityError:
+            # Doble tap concurrente contra uq_follow_pair → ya siguiendo.
+            await db.rollback()
+
+    return {"following": True, "followers_count": await _followers_count(db, target.id)}
+
+
+@router.delete("/{username}/follow")
+async def unfollow_user(
+    username: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(User).where(User.username == username))
+    target = result.scalar_one_or_none()
+    if not target:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    pair = await db.execute(
+        select(Follow).where(Follow.follower_id == current_user.id, Follow.followed_id == target.id)
+    )
+    follow = pair.scalar_one_or_none()
+    if follow is not None:
+        await db.delete(follow)
+        await db.commit()
+
+    return {"following": False, "followers_count": await _followers_count(db, target.id)}
 
 
 @router.get("/{username}/positions", response_model=list[PositionOut])
