@@ -23,6 +23,25 @@ from app.services import ledger, referral
 router = APIRouter(prefix="/markets", tags=["trades"])
 
 
+def _check_price_moved(quoted_avg_price: float | None, actual_cost: float, shares: float) -> None:
+    """Stateless quote→execution protection: reject with 409 PRICE_MOVED when
+    the real avg fill (pct) deviates from the client's quoted one by more than
+    settings.PRICE_TOLERANCE (relative). Must run BEFORE any state mutation."""
+    if not quoted_avg_price or shares <= 0:
+        return
+    actual_avg = actual_cost / shares * 100
+    if abs(actual_avg - quoted_avg_price) / quoted_avg_price > settings.PRICE_TOLERANCE:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "PRICE_MOVED",
+                "message": "El precio cambió desde tu cotización. Revisa tu orden.",
+                "quoted_avg_price": quoted_avg_price,
+                "current_avg_price": round(actual_avg, 2),
+            },
+        )
+
+
 @router.post("/{market_id}/trade", response_model=TradeResponse)
 async def execute_trade(
     market_id: str,
@@ -74,6 +93,8 @@ async def execute_trade(
 
         shares = lmsr.shares_for_cost_multi(q_dict, market.b, payload.outcome_key, payload.points)
         actual_cost = lmsr.trade_cost_multi(q_dict, market.b, payload.outcome_key, shares)
+
+        _check_price_moved(payload.quoted_avg_price, actual_cost, shares)
 
         # Update LMSR state
         target_outcome.q += shares
@@ -191,6 +212,8 @@ async def execute_trade(
             actual_cost = lmsr.trade_cost(market.q_yes, market.q_no, market.b, shares, 0.0)
         else:
             actual_cost = lmsr.trade_cost(market.q_yes, market.q_no, market.b, 0.0, shares)
+
+        _check_price_moved(payload.quoted_avg_price, actual_cost, shares)
 
         if buy_yes:
             market.q_yes += shares
