@@ -65,3 +65,22 @@ class FollowedUserOut(LeaderboardEntry):
     followed_at: datetime
     positions_count: int
     top_positions: list[PositionOut] = []
+
+
+class FeedTradeOut(BaseModel):
+    """A trade by a followed user, for the activity feed."""
+    id: int
+    created_at: datetime
+    side: str | None            # YES/NO for binary markets
+    outcome_key: str | None
+    outcome_label: str | None   # human label for multi-outcome markets
+    shares: float
+    cost: float
+    price_after: float          # 0-100, price the trade moved the outcome to
+    username: str
+    display_name: str
+    avatar_url: str | None
+    market_id: str
+    market_question: str
+    market_status: str
+    market_type: str

@@ -9,7 +9,11 @@ from app.models.position import Position
 from app.models.market import Market, MarketStatus
 from app.models.trade import Trade
 from app.models.follow import Follow
-from app.schemas.user import UserMe, UserPublic, UserUpdate, LeaderboardEntry, ProfilePublic, FollowedUserOut
+from app.models.outcome import Outcome
+from app.schemas.user import (
+    UserMe, UserPublic, UserUpdate, LeaderboardEntry, ProfilePublic,
+    FollowedUserOut, FeedTradeOut,
+)
 from app.schemas.trade import PositionOut
 from app.core.auth import get_current_user, get_current_user_optional
 from app.config import settings
@@ -233,6 +237,38 @@ async def get_my_following(
             positions_count=len(pos_rows), top_positions=top_positions,
         ))
     return out
+
+
+@router.get("/me/feed", response_model=list[FeedTradeOut])
+async def get_my_feed(
+    limit: int = 50,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Recent trades by the users the current user follows, newest first."""
+    limit = max(1, min(limit, 100))
+    res = await db.execute(
+        select(Trade, User, Market, Outcome.label)
+        .join(Follow, Follow.followed_id == Trade.user_id)
+        .join(User, User.id == Trade.user_id)
+        .join(Market, Market.id == Trade.market_id)
+        .outerjoin(Outcome, (Outcome.market_id == Trade.market_id) & (Outcome.outcome_key == Trade.outcome_key))
+        .where(Follow.follower_id == current_user.id)
+        .order_by(desc(Trade.created_at))
+        .limit(limit)
+    )
+    return [
+        FeedTradeOut(
+            id=t.id, created_at=t.created_at,
+            side=t.side.value if t.side else None,
+            outcome_key=t.outcome_key, outcome_label=outcome_label,
+            shares=round(t.shares, 2), cost=round(t.cost, 2), price_after=round(t.price_after, 1),
+            username=u.username, display_name=u.display_name, avatar_url=u.avatar_url,
+            market_id=m.id, market_question=m.question,
+            market_status=m.status.value, market_type=m.market_type,
+        )
+        for t, u, m, outcome_label in res.all()
+    ]
 
 
 def _period_start(period: str) -> datetime | None:
