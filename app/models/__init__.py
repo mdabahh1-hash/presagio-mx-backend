@@ -7,9 +7,10 @@ from app.models.price_history import PriceHistory
 from app.models.outcome import Outcome
 from app.models.points_ledger import PointsLedger
 from app.models.follow import Follow
+from app.models.market_proposal import MarketProposal
 
 __all__ = [
     "User", "Market", "MarketStatus", "MarketCategory",
     "Trade", "TradeSide", "Position", "Comment", "PriceHistory", "Outcome",
-    "PointsLedger", "Follow",
+    "PointsLedger", "Follow", "MarketProposal",
 ]

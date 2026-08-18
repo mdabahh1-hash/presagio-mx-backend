@@ -173,3 +173,32 @@ async def send_admin_resolution_reminder(markets: list[tuple[str, str, datetime]
       </a>
     """
     await _send(_ADMIN_EMAIL, f"🔔 {n} {plural} por resolver en VEREDIKT", _wrap(body))
+
+
+async def send_proposal_notification(
+    question: str,
+    category: str,
+    description: str | None,
+    contact: str | None,
+    created_at: datetime,
+) -> None:
+    """Notify the admin that a visitor proposed a new market."""
+    body = f"""
+      <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">💡 Nueva propuesta de mercado</p>
+      <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,215,0,0.18);
+                  border-radius: 12px; padding: 20px; margin-bottom: 22px;">
+        <div style="font-size: 15px; font-weight: 700; color: #F5F0E8; margin-bottom: 12px;">{_esc(question)}</div>
+        <div style="font-size: 13px; color: rgba(245,240,232,0.7); margin-bottom: 6px;">
+          <b style="color:#FFD700">Categoría:</b> {_esc(category)}
+        </div>
+        <div style="font-size: 13px; color: rgba(245,240,232,0.7); margin-bottom: 6px;">
+          <b style="color:#FFD700">Criterio / descripción:</b> {_esc(description) if description else "—"}
+        </div>
+        <div style="font-size: 13px; color: rgba(245,240,232,0.7); margin-bottom: 6px;">
+          <b style="color:#FFD700">Contacto:</b> {_esc(contact) if contact else "Anónimo"}
+        </div>
+        <div style="font-size: 12px; color: rgba(245,240,232,0.55);">Recibida el {_fmt_mx(created_at)}</div>
+      </div>
+    """
+    subject_q = question if len(question) <= 80 else question[:77] + "…"
+    await _send(_ADMIN_EMAIL, f"Nueva propuesta de mercado: {subject_q}", _wrap(body))
