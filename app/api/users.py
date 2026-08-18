@@ -28,8 +28,15 @@ MX_TZ = timezone(timedelta(hours=-6))
 
 
 @router.get("/me", response_model=UserMe)
-async def get_me(current_user: User = Depends(get_current_user)):
-    return current_user
+async def get_me(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    from app.models.passkey import Passkey
+    me = UserMe.model_validate(current_user)
+    pk = await db.execute(select(Passkey.id).where(Passkey.user_id == current_user.id).limit(1))
+    me.has_passkey = pk.scalar_one_or_none() is not None
+    return me
 
 
 @router.patch("/me", response_model=UserMe)

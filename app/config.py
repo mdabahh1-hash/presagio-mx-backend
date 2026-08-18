@@ -38,7 +38,11 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:5175"
     BACKEND_URL: str = "http://localhost:8000"
 
-    @field_validator("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET", "FRONTEND_URL", "BACKEND_URL", mode="before")
+    # WebAuthn (passkeys). RP ID must match the domain the frontend runs on.
+    WEBAUTHN_RP_ID: str = "veredikt.mx"
+    WEBAUTHN_RP_NAME: str = "VEREDIKT"
+
+    @field_validator("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET", "FRONTEND_URL", "BACKEND_URL", "WEBAUTHN_RP_ID", "WEBAUTHN_RP_NAME", mode="before")
     @classmethod
     def strip_whitespace(cls, v: str) -> str:
         return v.strip() if isinstance(v, str) else v

@@ -24,6 +24,7 @@ class UserMe(UserPublic):
     last_bonus_at: datetime | None
     email_notifications: bool
     referral_code: str | None = None
+    has_passkey: bool = False
 
 
 class UserUpdate(BaseModel):
