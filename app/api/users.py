@@ -53,7 +53,7 @@ async def update_me(
             select(User).where(User.username == username, User.id != current_user.id)
         )
         if exists.scalar_one_or_none():
-            raise HTTPException(status_code=409, detail="Username ya en uso")
+            raise HTTPException(status_code=409, detail={"code": "USERNAME_TAKEN", "message": "Username ya en uso"})
         current_user.username = username
     if payload.email_notifications is not None:
         current_user.email_notifications = payload.email_notifications
@@ -77,9 +77,9 @@ async def claim_daily_bonus(
 
     # No bonus on the day you register — first bonus is the next day you connect.
     if created == today:
-        raise HTTPException(status_code=409, detail="Tu primer bono estará disponible mañana")
+        raise HTTPException(status_code=409, detail={"code": "BONUS_FIRST_DAY", "message": "Tu primer bono estará disponible mañana"})
     if last == today:
-        raise HTTPException(status_code=409, detail="Ya reclamaste tu bono de hoy")
+        raise HTTPException(status_code=409, detail={"code": "BONUS_ALREADY_CLAIMED", "message": "Ya reclamaste tu bono de hoy"})
 
     streak = current_user.streak + 1 if last == today - timedelta(days=1) else 1
     amount = min(100 + (streak - 1) * 20, 300)
@@ -416,7 +416,7 @@ async def get_user(
     result = await db.execute(select(User).where(User.username == username))
     user = result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(status_code=404, detail={"code": "USER_NOT_FOUND", "message": "Usuario no encontrado"})
     pnl, volume = await _pnl_and_volume(db, user)
 
     followers_count = await _followers_count(db, user.id)
@@ -449,9 +449,9 @@ async def follow_user(
     result = await db.execute(select(User).where(User.username == username))
     target = result.scalar_one_or_none()
     if not target:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(status_code=404, detail={"code": "USER_NOT_FOUND", "message": "Usuario no encontrado"})
     if target.id == current_user.id:
-        raise HTTPException(status_code=400, detail="No puedes seguirte a ti mismo")
+        raise HTTPException(status_code=400, detail={"code": "CANNOT_FOLLOW_SELF", "message": "No puedes seguirte a ti mismo"})
 
     exists = await db.execute(
         select(Follow.id).where(Follow.follower_id == current_user.id, Follow.followed_id == target.id)
@@ -476,7 +476,7 @@ async def unfollow_user(
     result = await db.execute(select(User).where(User.username == username))
     target = result.scalar_one_or_none()
     if not target:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(status_code=404, detail={"code": "USER_NOT_FOUND", "message": "Usuario no encontrado"})
 
     pair = await db.execute(
         select(Follow).where(Follow.follower_id == current_user.id, Follow.followed_id == target.id)
@@ -494,7 +494,7 @@ async def get_user_positions(username: str, db: AsyncSession = Depends(get_db)):
     user_res = await db.execute(select(User).where(User.username == username))
     user = user_res.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(status_code=404, detail={"code": "USER_NOT_FOUND", "message": "Usuario no encontrado"})
     result = await db.execute(
         select(Position, Market.question)
         .join(Market, Market.id == Position.market_id)

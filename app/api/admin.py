@@ -30,9 +30,9 @@ async def resolve_market(
     result = await db.execute(select(Market).where(Market.id == market_id).with_for_update())
     market = result.scalar_one_or_none()
     if not market:
-        raise HTTPException(status_code=404, detail="Mercado no encontrado")
+        raise HTTPException(status_code=404, detail={"code": "MARKET_NOT_FOUND", "message": "Mercado no encontrado"})
     if market.status not in (MarketStatus.OPEN, MarketStatus.PENDING_RESOLUTION, MarketStatus.CLOSED):
-        raise HTTPException(status_code=400, detail="Mercado ya resuelto o cancelado")
+        raise HTTPException(status_code=400, detail={"code": "MARKET_ALREADY_RESOLVED", "message": "Mercado ya resuelto o cancelado"})
 
     positions_result = await db.execute(
         select(Position).where(Position.market_id == market_id, Position.shares > 0)
@@ -43,14 +43,14 @@ async def resolve_market(
     if market.market_type == "multi":
         # ── Multi-outcome resolution ─────────────────────────────────────────
         if not payload.outcome_key:
-            raise HTTPException(status_code=400, detail="Especifica 'outcome_key' para mercados multi-resultado")
+            raise HTTPException(status_code=400, detail={"code": "OUTCOME_KEY_REQUIRED", "message": "Especifica 'outcome_key' para mercados multi-resultado"})
 
         outcomes_res = await db.execute(
             select(Outcome).where(Outcome.market_id == market_id)
         )
         valid_keys = {o.outcome_key for o in outcomes_res.scalars().all()}
         if payload.outcome_key not in valid_keys:
-            raise HTTPException(status_code=400, detail=f"outcome_key inválido: {payload.outcome_key}")
+            raise HTTPException(status_code=400, detail={"code": "INVALID_OUTCOME_KEY", "message": f"outcome_key inválido: {payload.outcome_key}"})
 
         market.status = MarketStatus.RESOLVED
         market.resolved_outcome_key = payload.outcome_key
@@ -97,11 +97,11 @@ async def resolve_market(
     else:
         # ── Binary resolution (unchanged) ────────────────────────────────────
         if not payload.resolution:
-            raise HTTPException(status_code=400, detail="Especifica 'resolution' (YES o NO) para mercados binarios")
+            raise HTTPException(status_code=400, detail={"code": "RESOLUTION_REQUIRED", "message": "Especifica 'resolution' (YES o NO) para mercados binarios"})
 
         resolution = payload.resolution.upper()
         if resolution not in ("YES", "NO"):
-            raise HTTPException(status_code=400, detail="Resolución debe ser YES o NO")
+            raise HTTPException(status_code=400, detail={"code": "INVALID_RESOLUTION", "message": "Resolución debe ser YES o NO"})
 
         market.status = MarketStatus.RESOLVED_YES if resolution == "YES" else MarketStatus.RESOLVED_NO
         market.resolved_at = datetime.now(timezone.utc)
@@ -156,7 +156,7 @@ async def toggle_trending(
     result = await db.execute(select(Market).where(Market.id == market_id).with_for_update())
     market = result.scalar_one_or_none()
     if not market:
-        raise HTTPException(status_code=404, detail="Mercado no encontrado")
+        raise HTTPException(status_code=404, detail={"code": "MARKET_NOT_FOUND", "message": "Mercado no encontrado"})
     market.trending = not market.trending
     await db.commit()
     return {"ok": True, "trending": market.trending}

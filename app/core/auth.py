@@ -17,7 +17,7 @@ ADMIN_EMAIL = "mdabahh@atid.edu.mx"
 def require_admin(current_user) -> None:
     """Raise 403 unless the user is the admin. Shared by admin + market-creation routes."""
     if current_user.email != ADMIN_EMAIL:
-        raise HTTPException(status_code=403, detail="No autorizado")
+        raise HTTPException(status_code=403, detail={"code": "NOT_AUTHORIZED", "message": "No autorizado"})
 
 
 def create_access_token(subject: int | str, extra: dict[str, Any] | None = None) -> str:
@@ -30,7 +30,7 @@ def decode_token(token: str) -> dict:
     try:
         return jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido o expirado")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={"code": "INVALID_TOKEN", "message": "Token inválido o expirado"})
 
 
 async def get_current_user(
@@ -47,7 +47,7 @@ async def get_current_user(
         token = access_token
 
     if not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No autenticado")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={"code": "NOT_AUTHENTICATED", "message": "No autenticado"})
 
     payload = decode_token(token)
     user_id = int(payload.get("sub", 0))
@@ -55,7 +55,7 @@ async def get_current_user(
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no encontrado")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail={"code": "USER_NOT_FOUND", "message": "Usuario no encontrado"})
     return user
 
 

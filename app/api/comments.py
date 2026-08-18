@@ -38,7 +38,7 @@ async def create_comment(
 ):
     market_exists = await db.execute(select(Market.id).where(Market.id == market_id))
     if not market_exists.scalar_one_or_none():
-        raise HTTPException(status_code=404, detail="Mercado no encontrado")
+        raise HTTPException(status_code=404, detail={"code": "MARKET_NOT_FOUND", "message": "Mercado no encontrado"})
 
     comment = Comment(
         user_id=current_user.id,
@@ -77,7 +77,7 @@ async def like_comment(
     )
     comment = result.scalar_one_or_none()
     if not comment:
-        raise HTTPException(status_code=404, detail="Comentario no encontrado")
+        raise HTTPException(status_code=404, detail={"code": "COMMENT_NOT_FOUND", "message": "Comentario no encontrado"})
     comment.likes += 1
     await db.commit()
     await db.refresh(comment, ["user"])

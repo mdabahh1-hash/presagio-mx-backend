@@ -154,7 +154,7 @@ async def google_callback(request: Request, code: str, db: AsyncSession = Depend
             },
         )
         if not token_resp.is_success:
-            raise HTTPException(status_code=400, detail=f"Google token error {token_resp.status_code}: {token_resp.text}")
+            raise HTTPException(status_code=400, detail={"code": "OAUTH_TOKEN_ERROR", "message": f"Google token error {token_resp.status_code}: {token_resp.text}"})
         access_token = token_resp.json()["access_token"]
 
         user_resp = await client.get(
@@ -245,7 +245,7 @@ async def email_register(payload: EmailRegisterRequest, db: AsyncSession = Depen
     email = payload.email.strip().lower()
     result = await db.execute(select(User).where(User.email == email))
     if result.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail="Este correo ya está registrado")
+        raise HTTPException(status_code=409, detail={"code": "EMAIL_ALREADY_REGISTERED", "message": "Este correo ya está registrado"})
 
     base_username = slugify_username(payload.display_name)
     username = base_username
@@ -285,10 +285,10 @@ async def email_login(payload: EmailLoginRequest, db: AsyncSession = Depends(get
     user = result.scalar_one_or_none()
 
     if not user or not user.password_hash or not _verify_password(payload.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Correo o contraseña incorrectos")
+        raise HTTPException(status_code=401, detail={"code": "INVALID_CREDENTIALS", "message": "Correo o contraseña incorrectos"})
 
     if not user.email_verified:
-        raise HTTPException(status_code=403, detail="Verifica tu correo antes de entrar")
+        raise HTTPException(status_code=403, detail={"code": "EMAIL_NOT_VERIFIED", "message": "Verifica tu correo antes de entrar"})
 
     token = create_access_token(user.id)
     # UserMe (not the raw ORM object): the raw object would serialize
@@ -303,7 +303,7 @@ async def verify_email_endpoint(payload: VerifyEmailRequest, db: AsyncSession = 
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(status_code=404, detail={"code": "USER_NOT_FOUND", "message": "Usuario no encontrado"})
 
     if user.email_verified:
         token = create_access_token(user.id)
@@ -314,7 +314,7 @@ async def verify_email_endpoint(payload: VerifyEmailRequest, db: AsyncSession = 
         user.email_verification_code = None
         user.email_verification_expires = None
         await db.commit()
-        raise HTTPException(status_code=429, detail="Demasiados intentos. Solicita un código nuevo.")
+        raise HTTPException(status_code=429, detail={"code": "TOO_MANY_ATTEMPTS", "message": "Demasiados intentos. Solicita un código nuevo."})
 
     code_ok = bool(user.email_verification_code) and secrets.compare_digest(
         user.email_verification_code, payload.code.strip()
@@ -323,7 +323,7 @@ async def verify_email_endpoint(payload: VerifyEmailRequest, db: AsyncSession = 
     if not code_ok or expired:
         user.email_verification_attempts = (user.email_verification_attempts or 0) + 1
         await db.commit()
-        raise HTTPException(status_code=400, detail="Código inválido o expirado")
+        raise HTTPException(status_code=400, detail={"code": "INVALID_CODE", "message": "Código inválido o expirado"})
 
     user.email_verified = True
     user.email_verification_code = None

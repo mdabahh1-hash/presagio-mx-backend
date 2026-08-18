@@ -121,7 +121,7 @@ async def passkey_register_verify(
 ):
     popped = _pop_challenge(payload.state)
     if popped is None or popped[1] != current_user.id:
-        raise HTTPException(status_code=400, detail="Sesión de passkey expirada, intenta de nuevo")
+        raise HTTPException(status_code=400, detail={"code": "PASSKEY_SESSION_EXPIRED", "message": "Sesión de passkey expirada, intenta de nuevo"})
     challenge, _ = popped
 
     rp_id, origins = _rp_for_request(request)
@@ -133,14 +133,14 @@ async def passkey_register_verify(
             expected_rp_id=rp_id,
         )
     except Exception:
-        raise HTTPException(status_code=400, detail="No se pudo verificar la passkey")
+        raise HTTPException(status_code=400, detail={"code": "PASSKEY_VERIFY_FAILED", "message": "No se pudo verificar la passkey"})
 
     credential_id = bytes_to_base64url(verification.credential_id)
     dup = (await db.execute(
         select(Passkey.id).where(Passkey.credential_id == credential_id)
     )).scalar_one_or_none()
     if dup is not None:
-        raise HTTPException(status_code=409, detail="Esta passkey ya está registrada")
+        raise HTTPException(status_code=409, detail={"code": "PASSKEY_ALREADY_REGISTERED", "message": "Esta passkey ya está registrada"})
 
     transports = payload.credential.get("response", {}).get("transports") or []
     db.add(Passkey(
@@ -174,7 +174,7 @@ async def passkey_login_verify(
 ):
     popped = _pop_challenge(payload.state)
     if popped is None:
-        raise HTTPException(status_code=400, detail="Sesión de passkey expirada, intenta de nuevo")
+        raise HTTPException(status_code=400, detail={"code": "PASSKEY_SESSION_EXPIRED", "message": "Sesión de passkey expirada, intenta de nuevo"})
     challenge, _ = popped
 
     credential_id = payload.credential.get("id", "")
@@ -182,7 +182,7 @@ async def passkey_login_verify(
         select(Passkey).where(Passkey.credential_id == credential_id)
     )).scalar_one_or_none()
     if pk is None:
-        raise HTTPException(status_code=401, detail="Passkey no reconocida")
+        raise HTTPException(status_code=401, detail={"code": "PASSKEY_NOT_RECOGNIZED", "message": "Passkey no reconocida"})
 
     rp_id, origins = _rp_for_request(request)
     try:
@@ -196,14 +196,14 @@ async def passkey_login_verify(
             require_user_verification=False,
         )
     except Exception:
-        raise HTTPException(status_code=401, detail="No se pudo verificar la passkey")
+        raise HTTPException(status_code=401, detail={"code": "PASSKEY_VERIFY_FAILED", "message": "No se pudo verificar la passkey"})
 
     pk.sign_count = verification.new_sign_count
     pk.last_used_at = datetime.now(timezone.utc)
 
     user = (await db.execute(select(User).where(User.id == pk.user_id))).scalar_one_or_none()
     if user is None:
-        raise HTTPException(status_code=401, detail="Passkey no reconocida")
+        raise HTTPException(status_code=401, detail={"code": "PASSKEY_NOT_RECOGNIZED", "message": "Passkey no reconocida"})
     await db.commit()
 
     # No email_verified check needed: registering a passkey required an

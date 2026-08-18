@@ -57,7 +57,7 @@ async def create_proposal(
 ):
     ip = _client_ip(request)
     if not _check_rate_limit(ip):
-        raise HTTPException(status_code=429, detail="Demasiadas propuestas. Intenta de nuevo en una hora.")
+        raise HTTPException(status_code=429, detail={"code": "PROPOSAL_RATE_LIMITED", "message": "Demasiadas propuestas. Intenta de nuevo en una hora."})
 
     proposal = MarketProposal(
         question=payload.question,

@@ -62,7 +62,7 @@ async def get_market(market_id: str, db: AsyncSession = Depends(get_db)):
     )
     market = result.scalar_one_or_none()
     if not market:
-        raise HTTPException(status_code=404, detail="Mercado no encontrado")
+        raise HTTPException(status_code=404, detail={"code": "MARKET_NOT_FOUND", "message": "Mercado no encontrado"})
     return market
 
 
@@ -93,7 +93,7 @@ async def create_market(
     # Check slug unique
     exists = await db.execute(select(Market).where(Market.id == payload.id))
     if exists.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail="ID de mercado ya existe")
+        raise HTTPException(status_code=409, detail={"code": "MARKET_ID_EXISTS", "message": "ID de mercado ya existe"})
 
     # Compute initial LMSR state for desired starting price
     initial_price = max(1.0, min(99.0, payload.initial_yes_price)) / 100.0

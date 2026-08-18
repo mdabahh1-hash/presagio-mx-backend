@@ -54,13 +54,13 @@ async def execute_trade(
     )
     market = result.scalar_one_or_none()
     if not market:
-        raise HTTPException(status_code=404, detail="Mercado no encontrado")
+        raise HTTPException(status_code=404, detail={"code": "MARKET_NOT_FOUND", "message": "Mercado no encontrado"})
     if market.status != MarketStatus.OPEN:
-        raise HTTPException(status_code=400, detail="Este mercado ya no acepta operaciones")
+        raise HTTPException(status_code=400, detail={"code": "MARKET_CLOSED", "message": "Este mercado ya no acepta operaciones"})
     if market.ends_at < datetime.now(timezone.utc):
         market.status = MarketStatus.PENDING_RESOLUTION
         await db.commit()
-        raise HTTPException(status_code=400, detail="Este mercado cerró y está pendiente de resolución")
+        raise HTTPException(status_code=400, detail={"code": "MARKET_PENDING_RESOLUTION", "message": "Este mercado cerró y está pendiente de resolución"})
 
     # Lock the acting user's row so concurrent trades / bonus / referral crediting
     # can't read-modify-write the balance and lose an update (double-spend).
@@ -69,24 +69,29 @@ async def execute_trade(
     if current_user.points < payload.points:
         raise HTTPException(
             status_code=400,
-            detail=f"Saldo insuficiente. Tienes {current_user.points:.0f} PT, necesitas {payload.points:.0f} PT",
+            detail={
+                "code": "INSUFFICIENT_BALANCE",
+                "message": f"Saldo insuficiente. Tienes {current_user.points:.0f} PT, necesitas {payload.points:.0f} PT",
+                "available": round(current_user.points),
+                "required": round(payload.points),
+            },
         )
 
     if market.market_type == "multi":
         # ── Multi-outcome LMSR path ──────────────────────────────────────────
         if not payload.outcome_key:
-            raise HTTPException(status_code=400, detail="Este es un mercado multi-resultado; debes especificar 'outcome_key'")
+            raise HTTPException(status_code=400, detail={"code": "OUTCOME_KEY_REQUIRED", "message": "Este es un mercado multi-resultado; debes especificar 'outcome_key'"})
 
         outcomes_res = await db.execute(
             select(Outcome).where(Outcome.market_id == market_id).with_for_update()
         )
         outcomes: list[Outcome] = list(outcomes_res.scalars().all())
         if not outcomes:
-            raise HTTPException(status_code=500, detail="Mercado mal configurado: sin resultados")
+            raise HTTPException(status_code=500, detail={"code": "MARKET_MISCONFIGURED", "message": "Mercado mal configurado: sin resultados"})
 
         target_outcome = next((o for o in outcomes if o.outcome_key == payload.outcome_key), None)
         if not target_outcome:
-            raise HTTPException(status_code=400, detail=f"Resultado desconocido: {payload.outcome_key}")
+            raise HTTPException(status_code=400, detail={"code": "INVALID_OUTCOME_KEY", "message": f"Resultado desconocido: {payload.outcome_key}"})
 
         q_dict = {o.outcome_key: o.q for o in outcomes}
         price_before = target_outcome.price
@@ -199,7 +204,7 @@ async def execute_trade(
     else:
         # ── Binary LMSR path (unchanged) ─────────────────────────────────────
         if not payload.side:
-            raise HTTPException(status_code=400, detail="Este es un mercado binario; debes especificar 'side'")
+            raise HTTPException(status_code=400, detail={"code": "SIDE_REQUIRED", "message": "Este es un mercado binario; debes especificar 'side'"})
 
         buy_yes = payload.side.value == "YES"
         price_before = market.yes_price
@@ -377,26 +382,26 @@ async def get_quote(
     0.0 — LMSR quotes one marginal price, not a bid/ask pair.
     """
     if amount <= 0:
-        raise HTTPException(status_code=400, detail="points debe ser mayor a 0")
+        raise HTTPException(status_code=400, detail={"code": "INVALID_AMOUNT", "message": "points debe ser mayor a 0"})
     if amount > 100_000:
-        raise HTTPException(status_code=400, detail="Máximo 100,000 PT por operación")
+        raise HTTPException(status_code=400, detail={"code": "AMOUNT_TOO_LARGE", "message": "Máximo 100,000 PT por operación"})
 
     result = await db.execute(select(Market).where(Market.id == market_id))
     market = result.scalar_one_or_none()
     if not market:
-        raise HTTPException(status_code=404, detail="Mercado no encontrado")
+        raise HTTPException(status_code=404, detail={"code": "MARKET_NOT_FOUND", "message": "Mercado no encontrado"})
     # Read-only: report closed markets but never flip status here (the trade path does that).
     if market.status != MarketStatus.OPEN or market.ends_at < datetime.now(timezone.utc):
-        raise HTTPException(status_code=400, detail="Este mercado ya no acepta operaciones")
+        raise HTTPException(status_code=400, detail={"code": "MARKET_CLOSED", "message": "Este mercado ya no acepta operaciones"})
 
     if market.market_type == "multi":
         if not outcome_key:
-            raise HTTPException(status_code=400, detail="Este es un mercado multi-resultado; debes especificar 'outcome_key'")
+            raise HTTPException(status_code=400, detail={"code": "OUTCOME_KEY_REQUIRED", "message": "Este es un mercado multi-resultado; debes especificar 'outcome_key'"})
         outcomes_res = await db.execute(select(Outcome).where(Outcome.market_id == market_id))
         outcomes = outcomes_res.scalars().all()
         q_dict = {o.outcome_key: o.q for o in outcomes}
         if outcome_key not in q_dict:
-            raise HTTPException(status_code=400, detail="outcome_key inválido")
+            raise HTTPException(status_code=400, detail={"code": "INVALID_OUTCOME_KEY", "message": "outcome_key inválido"})
 
         spot = lmsr.outcome_price(q_dict, market.b, outcome_key)
         shares = lmsr.shares_for_cost_multi(q_dict, market.b, outcome_key, amount)
@@ -411,7 +416,7 @@ async def get_quote(
 
     # Binary
     if not side:
-        raise HTTPException(status_code=400, detail="Este es un mercado binario; debes especificar 'side'")
+        raise HTTPException(status_code=400, detail={"code": "SIDE_REQUIRED", "message": "Este es un mercado binario; debes especificar 'side'"})
     buy_yes = side == TradeSide.YES
     mid_yes_raw = lmsr.yes_price(market.q_yes, market.q_no, market.b)  # unrounded, not the cached 2dp column
     spot = mid_yes_raw if buy_yes else 1.0 - mid_yes_raw
