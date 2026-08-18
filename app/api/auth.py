@@ -291,7 +291,9 @@ async def email_login(payload: EmailLoginRequest, db: AsyncSession = Depends(get
         raise HTTPException(status_code=403, detail="Verifica tu correo antes de entrar")
 
     token = create_access_token(user.id)
-    return {"token": token, "user": user}
+    # UserMe (not the raw ORM object): the raw object would serialize
+    # password_hash and the verification code into the response.
+    return {"token": token, "user": UserMe.model_validate(user)}
 
 
 @router.post("/verify-email")
@@ -305,7 +307,7 @@ async def verify_email_endpoint(payload: VerifyEmailRequest, db: AsyncSession = 
 
     if user.email_verified:
         token = create_access_token(user.id)
-        return {"token": token, "user": user}
+        return {"token": token, "user": UserMe.model_validate(user)}
 
     # Brute-force guard: after too many wrong tries, invalidate the code (forces resend).
     if (user.email_verification_attempts or 0) >= 5:
@@ -331,7 +333,7 @@ async def verify_email_endpoint(payload: VerifyEmailRequest, db: AsyncSession = 
     await db.refresh(user)
 
     token = create_access_token(user.id)
-    return {"token": token, "user": user}
+    return {"token": token, "user": UserMe.model_validate(user)}
 
 
 @router.post("/logout")
