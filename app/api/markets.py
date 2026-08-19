@@ -17,6 +17,7 @@ router = APIRouter(prefix="/markets", tags=["markets"])
 @router.get("", response_model=list[MarketList])
 async def list_markets(
     category: MarketCategory | None = Query(None),
+    subcategory: str | None = Query(None, max_length=50),
     status: str = Query("open"),
     trending: bool | None = Query(None),
     q: str | None = Query(None),
@@ -34,6 +35,8 @@ async def list_markets(
             stmt = stmt.where(Market.status == MarketStatus.OPEN)
     if category:
         stmt = stmt.where(Market.category == category)
+    if subcategory:
+        stmt = stmt.where(Market.subcategory == subcategory)
     if trending is not None:
         stmt = stmt.where(Market.trending == trending)
     if q:
@@ -104,6 +107,7 @@ async def create_market(
         question=payload.question,
         description=payload.description,
         category=payload.category,
+        subcategory=payload.subcategory,
         resolution_criteria=payload.resolution_criteria,
         ends_at=payload.ends_at,
         b=payload.b,

@@ -16,7 +16,8 @@ class MarketStatus(str, enum.Enum):
 
 
 class MarketCategory(str, enum.Enum):
-    POLITICA_MX = "Política MX"
+    # DB stores enum NAMES (POLITICA_MX); this value is only the API display string.
+    POLITICA_MX = "Política"
     ECONOMIA = "Economía"
     DEPORTES = "Deportes"
     GLOBAL = "Global"
@@ -38,6 +39,9 @@ class Market(Base):
     question: Mapped[str] = mapped_column(String(500), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     category: Mapped[MarketCategory] = mapped_column(Enum(MarketCategory), nullable=False, index=True)
+    # Free-text subcategory within a category (e.g. "Liga MX", "F1", "Elecciones");
+    # deliberately not an enum so new ones need no DDL.
+    subcategory: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
     resolution_criteria: Mapped[str] = mapped_column(Text, nullable=False)
 
     # LMSR parameters

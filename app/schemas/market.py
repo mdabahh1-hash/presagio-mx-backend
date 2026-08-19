@@ -25,6 +25,7 @@ class MarketBase(BaseModel):
     question: str
     description: str
     category: MarketCategory
+    subcategory: str | None = None
     resolution_criteria: str
     yes_price: float
     volume: float
@@ -56,6 +57,7 @@ class MarketCreate(BaseModel):
     question: str = Field(min_length=1, max_length=500)
     description: str = Field(min_length=1, max_length=4000)
     category: MarketCategory
+    subcategory: str | None = Field(default=None, max_length=50)
     resolution_criteria: str = Field(min_length=1, max_length=4000)
     ends_at: datetime
     b: float = Field(default=100.0, gt=0)  # LMSR liquidity; must be positive
