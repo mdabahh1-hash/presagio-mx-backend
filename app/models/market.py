@@ -43,6 +43,9 @@ class Market(Base):
     # deliberately not an enum so new ones need no DDL.
     subcategory: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
     resolution_criteria: Mapped[str] = mapped_column(Text, nullable=False)
+    # Optional link to the official source that decides the outcome
+    # (e.g. formula1.com results). Piloted on F1 markets 2026-08.
+    resolution_source_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     # LMSR parameters
     # b controls liquidity: higher b = less price movement per trade
