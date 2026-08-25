@@ -48,8 +48,10 @@ class Market(Base):
     resolution_source_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     # LMSR parameters
-    # b controls liquidity: higher b = less price movement per trade
-    b: Mapped[float] = mapped_column(Float, default=100.0, nullable=False)
+    # b controls liquidity: higher b = less price movement per trade.
+    # 1000 matches the 10,000 PT economy (a 1,000 PT bet moves prices like a
+    # 100 PT bet did under b=100).
+    b: Mapped[float] = mapped_column(Float, default=1000.0, nullable=False)
     # Outstanding shares for each outcome (LMSR state)
     q_yes: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     q_no: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
