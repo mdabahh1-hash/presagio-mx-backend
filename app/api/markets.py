@@ -1,7 +1,7 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, case
 from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.models.market import Market, MarketStatus, MarketCategory
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/markets", tags=["markets"])
 async def list_markets(
     category: MarketCategory | None = Query(None),
     subcategory: str | None = Query(None, max_length=50),
-    status: str = Query("open"),
+    status: str = Query("active"),  # "active" = open + pending_resolution
     trending: bool | None = Query(None),
     q: str | None = Query(None),
     sort: str = Query("volume"),
@@ -27,12 +27,17 @@ async def list_markets(
     db: AsyncSession = Depends(get_db),
 ):
     stmt = select(Market)
-    if status != "all":
+    # "active" keeps expired-but-unresolved markets visible (they can't be
+    # traded — the trade/quote guards reject non-OPEN); resolved ones drop out.
+    _ACTIVE = (MarketStatus.OPEN, MarketStatus.PENDING_RESOLUTION)
+    if status == "active":
+        stmt = stmt.where(Market.status.in_(_ACTIVE))
+    elif status != "all":
         try:
             status_enum = MarketStatus(status)
             stmt = stmt.where(Market.status == status_enum)
         except ValueError:
-            stmt = stmt.where(Market.status == MarketStatus.OPEN)
+            stmt = stmt.where(Market.status.in_(_ACTIVE))  # fallback = default
     if category:
         stmt = stmt.where(Market.category == category)
     if subcategory:
@@ -49,7 +54,10 @@ async def list_markets(
     elif sort == "trending":
         stmt = stmt.order_by(desc(Market.trending), desc(Market.volume), Market.id)
     elif sort == "ending":
-        stmt = stmt.order_by(Market.ends_at, Market.id)
+        # "Closing soon" = open markets by closest close; already-expired
+        # (pending_resolution) ones go last instead of topping the list.
+        pending_last = case((Market.status == MarketStatus.PENDING_RESOLUTION, 1), else_=0)
+        stmt = stmt.order_by(pending_last, Market.ends_at, Market.id)
     else:
         stmt = stmt.order_by(desc(Market.volume), Market.id)
 
