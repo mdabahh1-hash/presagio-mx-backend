@@ -25,7 +25,7 @@ class User(Base):
     email_verification_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
 
     # Balance
-    points: Mapped[float] = mapped_column(Float, default=1000.0, nullable=False)
+    points: Mapped[float] = mapped_column(Float, default=10000.0, nullable=False)
 
     # Stats (denormalized for speed)
     markets_traded: Mapped[int] = mapped_column(Integer, default=0)

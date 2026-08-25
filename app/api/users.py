@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, time, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, func as safunc
@@ -10,9 +10,10 @@ from app.models.market import Market, MarketStatus
 from app.models.trade import Trade
 from app.models.follow import Follow
 from app.models.outcome import Outcome
+from app.models.points_ledger import PointsLedger
 from app.schemas.user import (
     UserMe, UserPublic, UserUpdate, LeaderboardEntry, ProfilePublic,
-    FollowedUserOut, FeedTradeOut,
+    FollowedUserOut, FeedTradeOut, HistoryEventOut,
 )
 from app.schemas.trade import PositionOut
 from app.core.auth import get_current_user, get_current_user_optional
@@ -82,7 +83,7 @@ async def claim_daily_bonus(
         raise HTTPException(status_code=409, detail={"code": "BONUS_ALREADY_CLAIMED", "message": "Ya reclamaste tu bono de hoy"})
 
     streak = current_user.streak + 1 if last == today - timedelta(days=1) else 1
-    amount = min(100 + (streak - 1) * 20, 300)
+    amount = min(1000 + (streak - 1) * 200, 3000)
 
     current_user.points += amount
     ledger.record(db, current_user.id, amount, "daily_bonus")
@@ -141,69 +142,44 @@ async def get_points_history(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Daily points balance over the last 30 days.
+    """Daily points balance over the last 30 days (Mexico-time days).
 
-    Reconstructed from real events so the line starts at the 1000 PT sign-up
-    grant and moves only when something actually changes the balance:
-      • sign-up      → +1000 PT
-      • each trade   → −cost (points spent on shares)
-      • a resolution → +winning shares (1 PT each) for markets the user got right
-    Any leftover (e.g. daily bonuses, whose exact timing we don't store) is
-    folded in so today's value matches the real current balance.
+    Walks BACKWARD from the live balance subtracting points_ledger deltas per
+    day: exact for any window the ledger covers, and never invents a zero
+    balance. The sign-up grant has no ledger row — it's implicitly part of the
+    balance — and days before the account existed are not emitted.
     """
-    now = datetime.now(timezone.utc)
-    today = now.date()
-    base = float(settings.NEW_USER_POINTS)
+    today_mx = datetime.now(MX_TZ).date()
+    created_mx = current_user.created_at.astimezone(MX_TZ).date() if current_user.created_at else today_mx
+    start_day = max(today_mx - timedelta(days=29), created_mx)
 
-    # All of the user's trades, with the market's resolution state.
+    window_start_utc = datetime.combine(start_day, time.min, MX_TZ).astimezone(timezone.utc)
     res = await db.execute(
-        select(
-            Trade.created_at, Trade.cost, Trade.shares, Trade.side, Trade.outcome_key,
-            Trade.market_id, Market.status, Market.resolved_at, Market.resolved_outcome_key,
+        select(PointsLedger.created_at, PointsLedger.delta)
+        .where(
+            PointsLedger.user_id == current_user.id,
+            PointsLedger.created_at >= window_start_utc,
         )
-        .join(Market, Market.id == Trade.market_id)
-        .where(Trade.user_id == current_user.id)
     )
-    rows = res.all()
+    delta_by_day: dict[date, float] = {}
+    for created_at, delta in res.all():
+        d = created_at.astimezone(MX_TZ).date()
+        delta_by_day[d] = delta_by_day.get(d, 0.0) + delta
 
-    # (timestamp, delta) events. Start from the sign-up grant.
-    events: list[tuple[datetime, float]] = [(current_user.created_at or now, base)]
-    per_market: dict[str, dict] = {}
-    for created_at, cost, shares, side, outcome_key, market_id, status, resolved_at, resolved_outcome_key in rows:
-        events.append((created_at, -cost))
-        effective_key = outcome_key or (side.value if side else "")
-        m = per_market.setdefault(
-            market_id,
-            {"status": status, "resolved_at": resolved_at, "resolved_outcome_key": resolved_outcome_key, "shares_by_key": {}},
-        )
-        m["shares_by_key"][effective_key] = m["shares_by_key"].get(effective_key, 0.0) + shares
+    # Balance at close of day D−1 = balance at close of D − deltas during D.
+    history: list[dict] = []
+    bal = current_user.points
+    day = today_mx
+    while day >= start_day:
+        history.append({"date": day.isoformat(), "price": round(bal, 2)})
+        bal -= delta_by_day.get(day, 0.0)
+        day -= timedelta(days=1)
+    history.reverse()
 
-    # Resolution payouts: winning shares pay 1 PT each.
-    from app.models.market import MarketStatus as MS
-    for m in per_market.values():
-        if not m["resolved_at"]:
-            continue
-        sbk = m["shares_by_key"]
-        if m["status"] == MS.RESOLVED_YES:
-            events.append((m["resolved_at"], sbk.get("YES", 0.0)))
-        elif m["status"] == MS.RESOLVED_NO:
-            events.append((m["resolved_at"], sbk.get("NO", 0.0)))
-        elif m["status"] == MS.RESOLVED and m["resolved_outcome_key"]:
-            events.append((m["resolved_at"], sbk.get(m["resolved_outcome_key"], 0.0)))
-
-    # Fold any residual (bonuses, manual adjustments) so the chart ends on the
-    # real current balance.
-    residual = current_user.points - sum(d for _, d in events)
-    if abs(residual) > 0.01:
-        events.append((current_user.last_bonus_at or now, residual))
-
-    events.sort(key=lambda e: e[0])
-
-    history = []
-    for i in range(29, -1, -1):
-        day = today - timedelta(days=i)
-        balance = sum(d for t, d in events if t.date() <= day)
-        history.append({"date": day.isoformat(), "price": round(balance, 2)})
+    # The chart needs ≥2 points; on sign-up day, pad with a flat previous day.
+    if len(history) == 1:
+        history.insert(0, {"date": (start_day - timedelta(days=1)).isoformat(),
+                           "price": history[0]["price"]})
     return history
 
 
@@ -278,6 +254,113 @@ async def get_my_feed(
     ]
 
 
+async def _build_history(
+    db: AsyncSession, user_id: int, limit: int, include_grants: bool,
+) -> list[HistoryEventOut]:
+    """Chronological account activity, newest first: buys, resolved markets
+    (won/lost) and — for the owner — bonus/referral/adjustment credits.
+
+    Resolutions are rebuilt by aggregating trades per (market, outcome):
+    resolving zeroes Position.shares and losing payouts never reach the ledger,
+    so neither of those sources can tell the full story on its own.
+    """
+    events: list[HistoryEventOut] = []
+
+    # Buys (the platform is buy-only).
+    res = await db.execute(
+        select(Trade, Market, Outcome.label)
+        .join(Market, Market.id == Trade.market_id)
+        .outerjoin(Outcome, (Outcome.market_id == Trade.market_id) & (Outcome.outcome_key == Trade.outcome_key))
+        .where(Trade.user_id == user_id)
+        .order_by(desc(Trade.created_at))
+        .limit(limit)
+    )
+    for t, m, outcome_label in res.all():
+        events.append(HistoryEventOut(
+            type="trade", created_at=t.created_at, amount=round(-t.cost, 2),
+            market_id=m.id, market_question=m.question,
+            side=t.side.value if t.side else None,
+            outcome_key=t.outcome_key, outcome_label=outcome_label,
+            shares=round(t.shares, 2), price_after=round(t.price_after, 1),
+        ))
+
+    # Resolutions: aggregate this user's trades per (market, effective outcome)
+    # and compare against the winning key — same pattern as ledger_backfill.
+    res = await db.execute(
+        select(
+            Trade.market_id, Trade.outcome_key, Trade.side, Trade.shares, Trade.cost,
+            Market.question, Market.status, Market.resolved_at, Market.resolved_outcome_key,
+            Outcome.label,
+        )
+        .join(Market, Market.id == Trade.market_id)
+        .outerjoin(Outcome, (Outcome.market_id == Trade.market_id) & (Outcome.outcome_key == Trade.outcome_key))
+        .where(
+            Trade.user_id == user_id,
+            Market.resolved_at.is_not(None),
+            Market.status.in_((MarketStatus.RESOLVED_YES, MarketStatus.RESOLVED_NO, MarketStatus.RESOLVED)),
+        )
+    )
+    groups: dict[tuple[str, str], dict] = {}
+    for (market_id, outcome_key, side, shares, cost, question,
+         status, resolved_at, resolved_key, outcome_label) in res.all():
+        effective_key = outcome_key or (side.value if side else "")
+        g = groups.setdefault((market_id, effective_key), {
+            "shares": 0.0, "cost": 0.0, "question": question, "status": status,
+            "resolved_at": resolved_at, "resolved_key": resolved_key,
+            "side": None, "outcome_key": None, "outcome_label": None,
+        })
+        g["shares"] += shares
+        g["cost"] += cost
+        g["side"] = g["side"] or (side.value if side else None)
+        g["outcome_key"] = g["outcome_key"] or outcome_key
+        g["outcome_label"] = g["outcome_label"] or outcome_label
+    for (market_id, effective_key), g in groups.items():
+        winning_key = (
+            "YES" if g["status"] == MarketStatus.RESOLVED_YES
+            else "NO" if g["status"] == MarketStatus.RESOLVED_NO
+            else g["resolved_key"]
+        )
+        won = bool(winning_key) and effective_key == winning_key
+        events.append(HistoryEventOut(
+            type="win" if won else "loss",
+            created_at=g["resolved_at"],
+            amount=round(g["shares"], 2) if won else round(-g["cost"], 2),
+            market_id=market_id, market_question=g["question"],
+            side=g["side"], outcome_key=g["outcome_key"],
+            outcome_label=g["outcome_label"],
+            shares=round(g["shares"], 2) if won else None,
+        ))
+
+    # Credits straight from the ledger (owner only). "trade"/"payout" rows are
+    # already represented by the buy/resolution events above.
+    if include_grants:
+        res = await db.execute(
+            select(PointsLedger.delta, PointsLedger.reason, PointsLedger.created_at)
+            .where(
+                PointsLedger.user_id == user_id,
+                PointsLedger.reason.in_(("daily_bonus", "referral", "adjustment")),
+            )
+            .order_by(desc(PointsLedger.created_at))
+            .limit(limit)
+        )
+        for delta, reason, created_at in res.all():
+            events.append(HistoryEventOut(type=reason, created_at=created_at, amount=round(delta, 2)))
+
+    events.sort(key=lambda e: e.created_at, reverse=True)
+    return events[:limit]
+
+
+@router.get("/me/history", response_model=list[HistoryEventOut])
+async def get_my_history(
+    limit: int = 50,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Own account activity: buys + resolutions + bonus/referral/adjustment credits."""
+    limit = max(1, min(limit, 100))
+    return await _build_history(db, current_user.id, limit, include_grants=True)
+
+
 def _period_start(period: str) -> datetime | None:
     """Window start (UTC) for a leaderboard period, anchored to Mexico time.
     Returns None for 'all' / unknown → caller uses the all-time formula.
@@ -338,9 +421,6 @@ async def get_leaderboard(limit: int = 50, period: str = "all", db: AsyncSession
 
 async def _period_leaderboard(db: AsyncSession, start: datetime, limit: int) -> list[LeaderboardEntry]:
     """Per-period board: realized P&L = Σ ledger deltas in window; volume = Σ trade cost."""
-    from sqlalchemy import func as safunc
-    from app.models.points_ledger import PointsLedger
-
     # Trading P&L only — exclude daily_bonus / referral so bonus claimers don't
     # top the board over actual traders.
     pnl_res = await db.execute(
@@ -507,3 +587,15 @@ async def get_user_positions(username: str, db: AsyncSession = Depends(get_db)):
         data.market_question = question
         out.append(data)
     return out
+
+
+@router.get("/{username}/history", response_model=list[HistoryEventOut])
+async def get_user_history(username: str, limit: int = 50, db: AsyncSession = Depends(get_db)):
+    """Public activity for a profile: buys and resolutions only — no credits
+    (bonuses/referrals/adjustments stay private to the owner)."""
+    limit = max(1, min(limit, 100))
+    user_res = await db.execute(select(User).where(User.username == username))
+    user = user_res.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail={"code": "USER_NOT_FOUND", "message": "Usuario no encontrado"})
+    return await _build_history(db, user.id, limit, include_grants=False)

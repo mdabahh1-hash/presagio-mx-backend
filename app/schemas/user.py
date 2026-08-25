@@ -85,3 +85,17 @@ class FeedTradeOut(BaseModel):
     market_question: str
     market_status: str
     market_type: str
+
+
+class HistoryEventOut(BaseModel):
+    """One profile-history event: a buy, a resolved market (won/lost) or a credit."""
+    type: str                        # "trade" | "win" | "loss" | "daily_bonus" | "referral" | "adjustment"
+    created_at: datetime
+    amount: float                    # signed PT: trade −cost · win +shares · loss −cost · credits +delta
+    market_id: str | None = None
+    market_question: str | None = None
+    side: str | None = None          # YES/NO for binary markets
+    outcome_key: str | None = None
+    outcome_label: str | None = None # human label for multi-outcome markets
+    shares: float | None = None      # buy: shares bought · win: winning shares
+    price_after: float | None = None # buys only; 0-100 YES-price after the trade

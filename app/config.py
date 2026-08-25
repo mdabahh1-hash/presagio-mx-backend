@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     def strip_whitespace(cls, v: str) -> str:
         return v.strip() if isinstance(v, str) else v
 
-    NEW_USER_POINTS: int = 1000
+    NEW_USER_POINTS: int = 10000
 
     # Quote → execution price protection
     PRICE_TOLERANCE: float = 0.01     # max relative deviation of avg fill vs quoted before 409 PRICE_MOVED
@@ -55,7 +55,7 @@ class Settings(BaseSettings):
 
     # Referral bonus (PT) granted to BOTH inviter and invitee after the
     # invitee's first trade.
-    REFERRAL_BONUS: int = 200
+    REFERRAL_BONUS: int = 2000
 
     GMAIL_USER: str = ""
     GMAIL_APP_PASSWORD: str = ""
