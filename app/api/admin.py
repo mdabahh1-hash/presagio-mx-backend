@@ -15,6 +15,7 @@ from app.core.auth import get_current_user, require_admin as _require_admin
 from app.core import lmsr
 from app.services.email import send_resolution_email
 from app.services import ledger
+from app.services.league_engine import process_market_resolution_for_leagues
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -48,8 +49,8 @@ async def resolve_market(
         outcomes_res = await db.execute(
             select(Outcome).where(Outcome.market_id == market_id)
         )
-        valid_keys = {o.outcome_key for o in outcomes_res.scalars().all()}
-        if payload.outcome_key not in valid_keys:
+        outcome_ids = {o.outcome_key: o.id for o in outcomes_res.scalars().all()}
+        if payload.outcome_key not in outcome_ids:
             raise HTTPException(status_code=400, detail={"code": "INVALID_OUTCOME_KEY", "message": f"outcome_key inválido: {payload.outcome_key}"})
 
         market.status = MarketStatus.RESOLVED
@@ -79,6 +80,10 @@ async def resolve_market(
                 )
                 entry["payout"] += payout
 
+        # Ligas privadas: liquidar picks de este mercado en la misma transacción.
+        await process_market_resolution_for_leagues(
+            db, market_id, winning_outcome_id=outcome_ids[payload.outcome_key], winning_binary_side=None
+        )
         await db.commit()
 
         question = market.question
@@ -134,6 +139,10 @@ async def resolve_market(
                 )
                 entry["payout"] += payout
 
+        # Ligas privadas: liquidar picks de este mercado en la misma transacción.
+        await process_market_resolution_for_leagues(
+            db, market_id, winning_outcome_id=None, winning_binary_side=resolution.lower()
+        )
         await db.commit()
 
         question = market.question

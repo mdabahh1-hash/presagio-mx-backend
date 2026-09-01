@@ -68,6 +68,7 @@ from app.core.auth import create_access_token  # noqa: E402
 from app.core import lmsr  # noqa: E402
 
 ALL_TABLES = (
+    "league_predictions, league_cycle_standings, league_cycle_markets, league_cycles, league_members, leagues, "
     "passkeys, market_proposals, points_ledger, follows, price_history, comments, positions, trades, market_outcomes, markets, users"
 )
 
