@@ -91,5 +91,9 @@ class PositionOut(BaseModel):
     shares: float
     avg_cost: float
     updated_at: datetime
+    # Live LMSR mark: price in 0-1 (same scale as avg_cost), value in PT.
+    # None when the market is no longer tradeable.
+    current_price: float | None = None
+    current_value: float | None = None
 
     model_config = {"from_attributes": True}

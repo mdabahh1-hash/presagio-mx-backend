@@ -1,5 +1,5 @@
 from datetime import date, datetime, time, timezone, timedelta
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, func as safunc
 from sqlalchemy.exc import IntegrityError
@@ -7,7 +7,7 @@ from app.database import get_db
 from app.models.user import User
 from app.models.position import Position
 from app.models.market import Market, MarketStatus
-from app.models.trade import Trade
+from app.models.trade import Trade, TradeSide
 from app.models.follow import Follow
 from app.models.outcome import Outcome
 from app.models.points_ledger import PointsLedger
@@ -16,6 +16,7 @@ from app.schemas.user import (
     FollowedUserOut, FeedTradeOut, HistoryEventOut,
 )
 from app.schemas.trade import PositionOut
+from app.core import lmsr
 from app.core.auth import get_current_user, get_current_user_optional
 from app.config import settings
 from app.services import ledger, referral
@@ -117,32 +118,68 @@ async def attach_referral(
     return {"ok": True}
 
 
+async def _enrich_positions(
+    db: AsyncSession, rows: list[tuple[Position, Market]]
+) -> list[PositionOut]:
+    """PositionOut list with live LMSR marks (current_price 0-1, current_value PT).
+
+    Prices come from q_* via app.core.lmsr — never the cached Market.yes_price
+    column (0-100 scale). Markets past trading keep None marks.
+    """
+    tradeable = {MarketStatus.OPEN, MarketStatus.PENDING_RESOLUTION}
+
+    multi_ids = {
+        m.id for _, m in rows if m.market_type == "multi" and m.status in tradeable
+    }
+    q_by_market: dict[str, dict[str, float]] = {}
+    if multi_ids:
+        res = await db.execute(select(Outcome).where(Outcome.market_id.in_(multi_ids)))
+        for o in res.scalars().all():
+            q_by_market.setdefault(o.market_id, {})[o.outcome_key] = o.q
+
+    out = []
+    for pos, market in rows:
+        data = PositionOut.model_validate(pos)
+        data.market_question = market.question
+
+        price: float | None = None
+        if market.status in tradeable:
+            if market.market_type == "multi":
+                q_dict = q_by_market.get(market.id)
+                if q_dict and pos.outcome_key in q_dict:
+                    price = lmsr.outcome_price(q_dict, market.b, pos.outcome_key)
+            elif pos.side is not None:
+                p_yes = lmsr.yes_price(market.q_yes, market.q_no, market.b)
+                price = p_yes if pos.side == TradeSide.YES else 1.0 - p_yes
+
+        if price is not None:
+            data.current_price = round(price, 4)
+            data.current_value = round(pos.shares * price, 2)
+        out.append(data)
+    return out
+
+
 @router.get("/me/positions", response_model=list[PositionOut])
 async def get_my_positions(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
-        select(Position, Market.question)
+        select(Position, Market)
         .join(Market, Market.id == Position.market_id)
         .where(Position.user_id == current_user.id, Position.shares > 0)
         .order_by(desc(Position.updated_at))
     )
-    rows = result.all()
-    out = []
-    for pos, question in rows:
-        data = PositionOut.model_validate(pos)
-        data.market_question = question
-        out.append(data)
-    return out
+    return await _enrich_positions(db, result.all())
 
 
 @router.get("/me/points-history")
 async def get_points_history(
+    days: int = Query(30, ge=2, le=366),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Daily points balance over the last 30 days (Mexico-time days).
+    """Daily points balance over the last `days` days (Mexico-time days).
 
     Walks BACKWARD from the live balance subtracting points_ledger deltas per
     day: exact for any window the ledger covers, and never invents a zero
@@ -151,7 +188,7 @@ async def get_points_history(
     """
     today_mx = datetime.now(MX_TZ).date()
     created_mx = current_user.created_at.astimezone(MX_TZ).date() if current_user.created_at else today_mx
-    start_day = max(today_mx - timedelta(days=29), created_mx)
+    start_day = max(today_mx - timedelta(days=days - 1), created_mx)
 
     window_start_utc = datetime.combine(start_day, time.min, MX_TZ).astimezone(timezone.utc)
     res = await db.execute(
@@ -576,17 +613,12 @@ async def get_user_positions(username: str, db: AsyncSession = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail={"code": "USER_NOT_FOUND", "message": "Usuario no encontrado"})
     result = await db.execute(
-        select(Position, Market.question)
+        select(Position, Market)
         .join(Market, Market.id == Position.market_id)
         .where(Position.user_id == user.id, Position.shares > 0)
         .order_by(desc(Position.updated_at))
     )
-    out = []
-    for pos, question in result.all():
-        data = PositionOut.model_validate(pos)
-        data.market_question = question
-        out.append(data)
-    return out
+    return await _enrich_positions(db, result.all())
 
 
 @router.get("/{username}/history", response_model=list[HistoryEventOut])
