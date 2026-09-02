@@ -17,7 +17,7 @@ import asyncio
 import math
 import sys
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -175,6 +175,13 @@ async def main() -> None:
                 continue
 
             ends_at = datetime.fromisoformat(ends_at_iso.replace("Z", "+00:00"))
+
+            # Nunca sembrar un mercado ya cerrado: si fue borrado a propósito
+            # (cleanup-mercados-vencidos-sin-predicciones-*), no debe resucitar.
+            if ends_at < datetime.now(timezone.utc):
+                print(f"  SKIP  {mid} (ya vencido: ends_at={ends_at_iso}; no se siembran mercados cerrados)")
+                skipped += 1
+                continue
             b = B_TRENDING if trending else B_DEFAULT
 
             market = Market(

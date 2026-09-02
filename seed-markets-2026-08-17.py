@@ -123,6 +123,13 @@ async def main() -> None:
                 skipped += 1
                 continue
 
+            # Nunca sembrar un mercado ya cerrado: si fue borrado a propósito
+            # (cleanup-mercados-vencidos-sin-predicciones-*), no debe resucitar.
+            if data["ends_at"] < datetime.now(timezone.utc):
+                print(f"  SKIP  {data['id']} (ya vencido: {data['ends_at']:%Y-%m-%d %H:%M} UTC; no se siembran mercados cerrados)")
+                skipped += 1
+                continue
+
             b = data["b"]
             initial_price = data["initial_yes_price"] / 100.0
             q_yes, q_no = lmsr.init_q_for_price(initial_price, b)

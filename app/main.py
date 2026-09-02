@@ -60,7 +60,14 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL, "https://veredikt.mx", "http://localhost:5173", "http://localhost:5174", "http://localhost:5175"],
+    allow_origins=[
+        settings.FRONTEND_URL,
+        "https://veredikt.mx",
+        "https://presagio-mx.vercel.app",  # alias automático de Vercel; sin esto cae al mock del frontend
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
