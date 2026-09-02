@@ -1,6 +1,11 @@
-"""Seed the database with initial markets on first run."""
+"""Bootstrap seed: puebla una tabla `markets` VACÍA (BD nueva / local).
+
+Con datos existentes `seed_markets()` es no-op. Las listas de abajo son
+históricas (junio 2026, b=100); los mercados nuevos se siembran con los
+scripts `seed-markets-*.py` de la raíz, nunca desde aquí.
+"""
 from datetime import datetime, timezone
-from sqlalchemy import select
+from sqlalchemy import func, select
 from app.database import AsyncSessionLocal
 from app.models.market import Market, MarketCategory, MarketStatus
 from app.models.price_history import PriceHistory
@@ -368,6 +373,14 @@ SEED_MARKETS = [
 
 async def seed_markets() -> None:
     async with AsyncSessionLocal() as db:
+        # Solo bootstrap de BD vacía. Con mercados existentes es no-op: así un
+        # mercado borrado a propósito (p. ej. cleanup-mercados-vencidos-sin-
+        # predicciones-*.py) no resucita en el siguiente arranque.
+        existing = (await db.execute(select(func.count()).select_from(Market))).scalar_one()
+        if existing:
+            print(f"[seed] markets ya poblada ({existing} filas) — bootstrap omitido")
+            return
+
         for data in JUNE_2026_MARKETS + SEED_MARKETS:
             exists = await db.execute(select(Market).where(Market.id == data["id"]))
             if exists.scalar_one_or_none():
