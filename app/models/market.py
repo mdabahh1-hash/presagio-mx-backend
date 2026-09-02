@@ -46,6 +46,10 @@ class Market(Base):
     # Optional link to the official source that decides the outcome
     # (e.g. formula1.com results). Piloted on F1 markets 2026-08.
     resolution_source_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Imagen cuadrada del mercado: URL absoluta https:// o ruta relativa al
+    # frontend (p. ej. "/img/markets/sub/liga-mx.svg"). Sin imagen el frontend
+    # cae a la de la subcategoría/categoría.
+    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     # LMSR parameters
     # b controls liquidity: higher b = less price movement per trade.
