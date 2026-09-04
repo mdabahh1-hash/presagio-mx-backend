@@ -43,6 +43,8 @@ SUB_IMAGES: dict[str, str] = {
     "Ligue 1": "/img/markets/sub/ligue-1.svg",
     "Liga Portugal": "/img/markets/sub/liga-portugal.svg",
     "MLS": "/img/markets/sub/mls.svg",
+    "Champions League": "/img/markets/sub/champions-league.svg",
+    "Saudi Pro League": "/img/markets/sub/saudi-pro-league.svg",
     "NFL": "/img/markets/sub/nfl.svg",
     "F1": "/img/markets/sub/f1.svg",
     "Boxeo": "/img/markets/sub/boxeo.svg",

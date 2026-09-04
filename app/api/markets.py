@@ -6,7 +6,7 @@ from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.models.market import Market, MarketStatus, MarketCategory
 from app.models.price_history import PriceHistory
-from app.schemas.market import MarketList, MarketDetail, MarketCreate, PricePoint
+from app.schemas.market import MarketList, MarketDetail, MarketCreate, MarketKind, PricePoint
 from app.core.auth import get_current_user, require_admin
 from app.core import lmsr
 from app.models.user import User
@@ -18,6 +18,7 @@ router = APIRouter(prefix="/markets", tags=["markets"])
 async def list_markets(
     category: MarketCategory | None = Query(None),
     subcategory: str | None = Query(None, max_length=50),
+    kind: MarketKind | None = Query(None),  # 'partido' | 'accesorio' (Deportes)
     status: str = Query("active"),  # "active" = open + pending_resolution
     trending: bool | None = Query(None),
     q: str | None = Query(None),
@@ -42,6 +43,8 @@ async def list_markets(
         stmt = stmt.where(Market.category == category)
     if subcategory:
         stmt = stmt.where(Market.subcategory == subcategory)
+    if kind:
+        stmt = stmt.where(Market.kind == kind)
     if trending is not None:
         stmt = stmt.where(Market.trending == trending)
     if q:
@@ -119,6 +122,7 @@ async def create_market(
         resolution_criteria=payload.resolution_criteria,
         resolution_source_url=payload.resolution_source_url,
         image_url=payload.image_url,
+        kind=payload.kind,
         ends_at=payload.ends_at,
         b=payload.b,
         q_yes=q_yes,

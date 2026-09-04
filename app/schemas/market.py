@@ -1,6 +1,10 @@
 from datetime import datetime
+from typing import Literal
 from pydantic import BaseModel, Field
 from app.models.market import MarketStatus, MarketCategory
+
+# Tercer nivel del rail de Deportes (deporte → liga → tipo). Ver Market.kind.
+MarketKind = Literal["partido", "accesorio"]
 
 
 class PricePoint(BaseModel):
@@ -29,6 +33,7 @@ class MarketBase(BaseModel):
     resolution_criteria: str
     resolution_source_url: str | None = None
     image_url: str | None = None
+    kind: str | None = None
     yes_price: float
     volume: float
     num_trades: int
@@ -63,6 +68,7 @@ class MarketCreate(BaseModel):
     resolution_criteria: str = Field(min_length=1, max_length=4000)
     resolution_source_url: str | None = Field(default=None, max_length=500)
     image_url: str | None = Field(default=None, max_length=500)
+    kind: MarketKind | None = None
     ends_at: datetime
     b: float = Field(default=1000.0, gt=0)  # LMSR liquidity; must be positive
     initial_yes_price: float = Field(default=50.0, ge=1, le=99)  # percentage

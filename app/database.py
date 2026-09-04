@@ -67,6 +67,8 @@ async def migrate_columns() -> None:
         "CREATE INDEX IF NOT EXISTS ix_markets_subcategory ON markets (subcategory)",
         "ALTER TABLE markets ADD COLUMN IF NOT EXISTS resolution_source_url VARCHAR(500)",
         "ALTER TABLE markets ADD COLUMN IF NOT EXISTS image_url VARCHAR(500)",
+        "ALTER TABLE markets ADD COLUMN IF NOT EXISTS kind VARCHAR(20)",
+        "CREATE INDEX IF NOT EXISTS ix_markets_kind ON markets (kind)",
     ]
     async with engine.begin() as conn:
         for s in stmts:

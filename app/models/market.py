@@ -50,6 +50,11 @@ class Market(Base):
     # frontend (p. ej. "/img/markets/sub/liga-mx.svg"). Sin imagen el frontend
     # cae a la de la subcategoría/categoría.
     image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Tipo de mercado dentro de un deporte: 'partido' (ganador del juego / 1X2)
+    # o 'accesorio' (props de jugador, premios, futuros, fantasy). NULL en
+    # deportes sin la división (F1, Boxeo) y fuera de DEPORTES. String, no
+    # enum, igual que subcategory: valores nuevos no requieren DDL.
+    kind: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
 
     # LMSR parameters
     # b controls liquidity: higher b = less price movement per trade.
