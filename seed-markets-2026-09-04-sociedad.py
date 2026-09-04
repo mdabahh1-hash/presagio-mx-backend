@@ -1,4 +1,15 @@
 # seed-markets-2026-09-04-sociedad.py
+#
+# PLANTILLA PARA SEEDS NUEVOS (desde 2026-09-04): cada dict debe traer, además
+# de resolution_criteria, los tres campos del bloque "Criterios | Normas |
+# Contexto" del detalle del mercado:
+#   "resolution_source_url": URL https de la página oficial que decide (o None),
+#   "rules":   Normas (aplazamientos, zona horaria, qué fuente manda; si no hay
+#              URL, el primer párrafo empieza con "Cómo se resuelve:"),
+#   "context": Contexto del mercado (antecedentes, por qué importa).
+# Los 13 mercados de este archivo se cubrieron con el backfill
+# backfill-normas-contexto-fuente-2026-09-04.py (paquete market_content/), por
+# eso aquí van vacíos; en un seed nuevo van inline en cada dict.
 import asyncio, sys, os
 from datetime import datetime, timezone
 sys.path.insert(0, os.path.dirname(__file__))
@@ -182,6 +193,8 @@ async def main():
                 id=d["id"], question=d["question"], description=d["description"],
                 category=d["category"], subcategory=d.get("subcategory"),
                 resolution_criteria=d["resolution_criteria"],
+                resolution_source_url=d.get("resolution_source_url"),
+                rules=d.get("rules"), context=d.get("context"),
                 ends_at=d["ends_at"], b=d["b"], q_yes=q_yes, q_no=q_no, yes_price=yp,
                 volume=0.0, num_trades=0, status=MarketStatus.OPEN,
                 trending=d.get("trending", False), market_type="binary",

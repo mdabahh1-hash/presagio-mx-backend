@@ -46,6 +46,13 @@ class Market(Base):
     # Optional link to the official source that decides the outcome
     # (e.g. formula1.com results). Piloted on F1 markets 2026-08.
     resolution_source_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Normas (estilo Polymarket "Rules"): reglas generales del mercado —
+    # aplazamientos/cancelaciones, zona horaria, empates, qué fuente manda si
+    # hay discrepancia y, cuando no hay resolution_source_url, un párrafo
+    # "Cómo se resuelve". Párrafos separados por "\n\n". Solo en el detalle.
+    rules: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Contexto del mercado ("Market context"): antecedentes y por qué importa.
+    context: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Imagen cuadrada del mercado: URL absoluta https:// o ruta relativa al
     # frontend (p. ej. "/img/markets/sub/liga-mx.svg"). Sin imagen el frontend
     # cae a la de la subcategoría/categoría.

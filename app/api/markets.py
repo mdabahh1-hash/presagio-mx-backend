@@ -121,6 +121,8 @@ async def create_market(
         subcategory=payload.subcategory,
         resolution_criteria=payload.resolution_criteria,
         resolution_source_url=payload.resolution_source_url,
+        rules=payload.rules,
+        context=payload.context,
         image_url=payload.image_url,
         kind=payload.kind,
         ends_at=payload.ends_at,

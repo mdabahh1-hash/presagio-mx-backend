@@ -57,6 +57,9 @@ class MarketDetail(MarketBase):
     q_no: float
     resolved_at: datetime | None
     resolved_outcome_key: str | None = None
+    # Textos largos: solo en el detalle, no en los listados (100+ filas).
+    rules: str | None = None
+    context: str | None = None
 
 
 class MarketCreate(BaseModel):
@@ -67,6 +70,8 @@ class MarketCreate(BaseModel):
     subcategory: str | None = Field(default=None, max_length=50)
     resolution_criteria: str = Field(min_length=1, max_length=4000)
     resolution_source_url: str | None = Field(default=None, max_length=500)
+    rules: str | None = Field(default=None, max_length=6000)
+    context: str | None = Field(default=None, max_length=6000)
     image_url: str | None = Field(default=None, max_length=500)
     kind: MarketKind | None = None
     ends_at: datetime
