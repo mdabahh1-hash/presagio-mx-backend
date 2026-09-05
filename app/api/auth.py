@@ -1,3 +1,4 @@
+import logging
 import re
 import secrets
 import string
@@ -18,6 +19,25 @@ from app.schemas.user import UserMe
 from app.services.email import send_verification_email
 from app.services import referral
 from app.core.background import spawn
+
+logger = logging.getLogger(__name__)
+
+# OAuth callbacks are top-level browser navigations: any exception must end in a
+# redirect back to the app, never in Starlette's plain-text "Internal Server Error".
+OAUTH_HTTP_TIMEOUT = 15.0
+
+
+def _oauth_success_redirect(user: User) -> RedirectResponse:
+    jwt_token = create_access_token(user.id)
+    response = RedirectResponse(f"{settings.FRONTEND_URL}/#/auth/callback?token={jwt_token}")
+    response.set_cookie("access_token", jwt_token, httponly=True, secure=True, samesite="lax", max_age=604800)
+    return response
+
+
+def _oauth_error_redirect(provider: str) -> RedirectResponse:
+    logger.exception("OAuth %s callback failed", provider)
+    return RedirectResponse(f"{settings.FRONTEND_URL}/#/auth/callback?error=oauth_failed&provider={provider}")
+
 
 def _hash_password(password: str) -> str:
     return _bcrypt.hashpw(password.encode(), _bcrypt.gensalt(12)).decode()
@@ -142,40 +162,41 @@ async def google_login(request: Request):
 @router.get("/google/callback")
 async def google_callback(request: Request, code: str, db: AsyncSession = Depends(get_db)):
     cb = _callback_url(request, "/api/auth/google/callback")
-    async with httpx.AsyncClient() as client:
-        token_resp = await client.post(
-            "https://oauth2.googleapis.com/token",
-            data={
-                "code": code,
-                "client_id": settings.GOOGLE_CLIENT_ID,
-                "client_secret": settings.GOOGLE_CLIENT_SECRET,
-                "redirect_uri": cb,
-                "grant_type": "authorization_code",
-            },
-        )
-        if not token_resp.is_success:
-            raise HTTPException(status_code=400, detail={"code": "OAUTH_TOKEN_ERROR", "message": f"Google token error {token_resp.status_code}: {token_resp.text}"})
-        access_token = token_resp.json()["access_token"]
+    try:
+        async with httpx.AsyncClient(timeout=OAUTH_HTTP_TIMEOUT) as client:
+            token_resp = await client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "code": code,
+                    "client_id": settings.GOOGLE_CLIENT_ID,
+                    "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                    "redirect_uri": cb,
+                    "grant_type": "authorization_code",
+                },
+            )
+            if not token_resp.is_success:
+                raise RuntimeError(f"Google token error {token_resp.status_code}: {token_resp.text}")
+            access_token = token_resp.json()["access_token"]
 
-        user_resp = await client.get(
-            "https://www.googleapis.com/oauth2/v3/userinfo",
-            headers={"Authorization": f"Bearer {access_token}"},
-        )
-        user_resp.raise_for_status()
-        info = user_resp.json()
+            user_resp = await client.get(
+                "https://www.googleapis.com/oauth2/v3/userinfo",
+                headers={"Authorization": f"Bearer {access_token}"},
+            )
+            user_resp.raise_for_status()
+            info = user_resp.json()
 
-    user = await get_or_create_user(
-        db,
-        email=info["email"],
-        display_name=info.get("name", info["email"]),
-        avatar_url=info.get("picture"),
-        provider="google",
-        provider_id=info["sub"],
-    )
-    jwt_token = create_access_token(user.id)
-    response = RedirectResponse(f"{settings.FRONTEND_URL}/#/auth/callback?token={jwt_token}")
-    response.set_cookie("access_token", jwt_token, httponly=True, secure=True, samesite="lax", max_age=604800)
-    return response
+        email = info["email"]
+        user = await get_or_create_user(
+            db,
+            email=email,
+            display_name=info.get("name") or email,
+            avatar_url=info.get("picture"),
+            provider="google",
+            provider_id=info["sub"],
+        )
+    except Exception:
+        return _oauth_error_redirect("google")
+    return _oauth_success_redirect(user)
 
 
 # ── GitHub OAuth ──────────────────────────────────────────────────────────────
@@ -194,50 +215,50 @@ async def github_login(request: Request):
 @router.get("/github/callback")
 async def github_callback(request: Request, code: str, db: AsyncSession = Depends(get_db)):
     cb = _callback_url(request, "/api/auth/github/callback")
-    async with httpx.AsyncClient() as client:
-        token_resp = await client.post(
-            "https://github.com/login/oauth/access_token",
-            headers={"Accept": "application/json"},
-            data={
-                "client_id": settings.GITHUB_CLIENT_ID,
-                "client_secret": settings.GITHUB_CLIENT_SECRET,
-                "code": code,
-                "redirect_uri": cb,
-            },
-        )
-        token_resp.raise_for_status()
-        access_token = token_resp.json()["access_token"]
+    try:
+        async with httpx.AsyncClient(timeout=OAUTH_HTTP_TIMEOUT) as client:
+            token_resp = await client.post(
+                "https://github.com/login/oauth/access_token",
+                headers={"Accept": "application/json"},
+                data={
+                    "client_id": settings.GITHUB_CLIENT_ID,
+                    "client_secret": settings.GITHUB_CLIENT_SECRET,
+                    "code": code,
+                    "redirect_uri": cb,
+                },
+            )
+            token_resp.raise_for_status()
+            access_token = token_resp.json()["access_token"]
 
-        user_resp = await client.get(
-            "https://api.github.com/user",
-            headers={"Authorization": f"Bearer {access_token}"},
-        )
-        user_resp.raise_for_status()
-        gh_user = user_resp.json()
-
-        # Get primary email if not public
-        email = gh_user.get("email")
-        if not email:
-            email_resp = await client.get(
-                "https://api.github.com/user/emails",
+            user_resp = await client.get(
+                "https://api.github.com/user",
                 headers={"Authorization": f"Bearer {access_token}"},
             )
-            emails = email_resp.json()
-            primary = next((e for e in emails if e.get("primary")), None)
-            email = primary["email"] if primary else f"{gh_user['login']}@github.invalid"
+            user_resp.raise_for_status()
+            gh_user = user_resp.json()
 
-    user = await get_or_create_user(
-        db,
-        email=email,
-        display_name=gh_user.get("name") or gh_user["login"],
-        avatar_url=gh_user.get("avatar_url"),
-        provider="github",
-        provider_id=str(gh_user["id"]),
-    )
-    jwt_token = create_access_token(user.id)
-    response = RedirectResponse(f"{settings.FRONTEND_URL}/#/auth/callback?token={jwt_token}")
-    response.set_cookie("access_token", jwt_token, httponly=True, secure=True, samesite="lax", max_age=604800)
-    return response
+            # Get primary email if not public
+            email = gh_user.get("email")
+            if not email:
+                email_resp = await client.get(
+                    "https://api.github.com/user/emails",
+                    headers={"Authorization": f"Bearer {access_token}"},
+                )
+                emails = email_resp.json()
+                primary = next((e for e in emails if e.get("primary")), None)
+                email = primary["email"] if primary else f"{gh_user['login']}@github.invalid"
+
+        user = await get_or_create_user(
+            db,
+            email=email,
+            display_name=gh_user.get("name") or gh_user["login"],
+            avatar_url=gh_user.get("avatar_url"),
+            provider="github",
+            provider_id=str(gh_user["id"]),
+        )
+    except Exception:
+        return _oauth_error_redirect("github")
+    return _oauth_success_redirect(user)
 
 
 @router.post("/register")

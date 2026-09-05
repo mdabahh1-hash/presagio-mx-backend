@@ -71,6 +71,9 @@ async def migrate_columns() -> None:
         "CREATE INDEX IF NOT EXISTS ix_markets_kind ON markets (kind)",
         "ALTER TABLE markets ADD COLUMN IF NOT EXISTS rules TEXT",
         "ALTER TABLE markets ADD COLUMN IF NOT EXISTS context TEXT",
+        # Google avatar URLs can exceed 1,000 chars; VARCHAR(500) broke Google signups.
+        # varchar -> text is a metadata-only change in Postgres (no table rewrite).
+        "ALTER TABLE users ALTER COLUMN avatar_url TYPE TEXT",
     ]
     async with engine.begin() as conn:
         for s in stmts:

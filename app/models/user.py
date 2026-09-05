@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, Integer, Float, DateTime, Boolean, ForeignKey, func
+from sqlalchemy import String, Text, Integer, Float, DateTime, Boolean, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
@@ -11,7 +11,9 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     username: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
     display_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # TEXT, not VARCHAR(500): Google profile-picture URLs regularly exceed 1,000
+    # chars and a truncation error here 500s the whole OAuth signup.
+    avatar_url: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # OAuth
     google_id: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True)
