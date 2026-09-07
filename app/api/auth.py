@@ -327,8 +327,10 @@ async def verify_email_endpoint(payload: VerifyEmailRequest, db: AsyncSession = 
         raise HTTPException(status_code=404, detail={"code": "USER_NOT_FOUND", "message": "Usuario no encontrado"})
 
     if user.email_verified:
-        token = create_access_token(user.id)
-        return {"token": token, "user": UserMe.model_validate(user)}
+        # Ya verificado: nunca emitir token aquí — este endpoint no valida
+        # contraseña, así que devolver un JWT permitiría suplantar a cualquier
+        # usuario verificado conociendo solo su correo.
+        raise HTTPException(status_code=400, detail={"code": "ALREADY_VERIFIED", "message": "Este correo ya está verificado. Inicia sesión."})
 
     # Brute-force guard: after too many wrong tries, invalidate the code (forces resend).
     if (user.email_verification_attempts or 0) >= 5:
