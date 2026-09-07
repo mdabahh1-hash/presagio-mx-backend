@@ -178,12 +178,19 @@ class TestLeagueFlow:
         assert r.status_code == 200
         assert r.json()["member_count"] == 1
         assert r.json()["creator_name"] == "Solo A"
+        assert r.json()["member_names"] == ["Solo A"]
+        assert r.json()["market_count"] == 0
 
         # se une el segundo y la liga se activa (min_members=2)
         r = await client.post(f"/api/leagues/invite/{code}/join", headers=user_b)
         assert r.status_code == 200
         assert r.json()["status"] == "active"
         assert r.json()["member_count"] == 2
+
+        # la landing lista a ambos en orden de alta
+        r = await client.get(f"/api/leagues/invite/{code}")
+        assert r.json()["member_names"][0] == "Solo A"
+        assert len(r.json()["member_names"]) == 2
 
         # unirse dos veces es idempotente
         r = await client.post(f"/api/leagues/invite/{code}/join", headers=user_b)
@@ -338,6 +345,9 @@ class TestLeagueFlow:
         assert m["predicted_count"] == 2
         assert {o["side"] for o in m["outcomes"]} == {"yes", "no"}
         assert m["my_prediction"]["binary_side"] == "yes"
+        # datos para la miniatura del frontend
+        assert isinstance(m["category"], str) and m["category"]
+        assert "subcategory" in m and "image_url" in m
         # los picks ajenos NO se exponen aquí
         assert "predictions" not in m
 

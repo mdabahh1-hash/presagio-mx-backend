@@ -86,12 +86,21 @@ class InvitePreview(BaseModel):
     status: str
     cycle_name: str | None = None
     cycle_ends_at: datetime | None = None
+    # Para la landing pública: iniciales/nombres de quienes ya están (máx. 8,
+    # orden de alta; los display_name ya son públicos en la clasificación) y
+    # cuántos mercados trae la jornada abierta (0 si no hay).
+    member_names: list[str] = []
+    market_count: int = 0
 
 
 class CycleMarketOut(BaseModel):
     market_id: str
     question: str
     market_type: str  # binary | multi
+    # Para la miniatura del frontend (escudos "A vs B", caras, imagen de liga).
+    category: str
+    subcategory: str | None = None
+    image_url: str | None = None
     closes_at: datetime
     is_open: bool
     outcomes: list[dict]  # [{id, outcome_key, label, price}] o [{side, price}] en binarios

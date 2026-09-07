@@ -221,6 +221,28 @@ async def invite_preview(code: str, db: AsyncSession = Depends(get_db)):
         )
     ).scalar_one_or_none()
 
+    member_names = list(
+        (
+            await db.execute(
+                select(User.display_name)
+                .join(LeagueMember, LeagueMember.user_id == User.id)
+                .where(LeagueMember.league_id == league.id)
+                .order_by(LeagueMember.joined_at.asc(), LeagueMember.id.asc())
+                .limit(8)
+            )
+        ).scalars().all()
+    )
+
+    market_count = 0
+    if cycle:
+        market_count = (
+            await db.execute(
+                select(func.count()).select_from(LeagueCycleMarket).where(
+                    LeagueCycleMarket.cycle_id == cycle.id
+                )
+            )
+        ).scalar_one()
+
     return InvitePreview(
         name=league.name,
         creator_name=creator.display_name,
@@ -229,6 +251,8 @@ async def invite_preview(code: str, db: AsyncSession = Depends(get_db)):
         status=league.status,
         cycle_name=cycle.name if cycle else None,
         cycle_ends_at=cycle.ends_at if cycle else None,
+        member_names=member_names,
+        market_count=market_count,
     )
 
 
@@ -408,6 +432,9 @@ async def league_detail(
                     market_id=m.id,
                     question=m.question,
                     market_type=m.market_type,
+                    category=m.category.value,
+                    subcategory=m.subcategory,
+                    image_url=m.image_url,
                     closes_at=m.ends_at,
                     is_open=market_is_open(m),
                     outcomes=await serialize_outcomes(db, m),
