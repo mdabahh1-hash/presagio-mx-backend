@@ -13,7 +13,7 @@ import secrets
 from datetime import datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import lmsr
@@ -58,17 +58,23 @@ def _to_price(p: float) -> Decimal:
 
 # ---------------------------------------------------------------- precio
 
-async def snapshot_prices(db: AsyncSession, market: Market) -> dict:
+async def snapshot_prices(
+    db: AsyncSession, market: Market, outcomes: list[Outcome] | None = None
+) -> dict:
     """
     Precios marginales ACTUALES del mercado, misma fuente que /quote.
 
     binario → {"yes": Decimal, "no": Decimal}
     multi   → {outcome.id: (Outcome, Decimal)}
+
+    `outcomes` permite pasar las salidas ya cargadas (batch en league_detail)
+    para no hacer una query por mercado.
     """
     if market.market_type == "multi":
-        outcomes = (
-            await db.execute(select(Outcome).where(Outcome.market_id == market.id))
-        ).scalars().all()
+        if outcomes is None:
+            outcomes = (
+                await db.execute(select(Outcome).where(Outcome.market_id == market.id))
+            ).scalars().all()
         q_dict = {o.outcome_key: o.q for o in outcomes}
         return {
             o.id: (o, _to_price(lmsr.outcome_price(q_dict, market.b, o.outcome_key)))
@@ -144,6 +150,28 @@ async def create_standings_for_members(
 
 # ---------------------------------------------------------------- resolución
 
+async def _locked_standing(
+    db: AsyncSession, cycle_id: int, user_id: int
+) -> LeagueCycleStanding:
+    return (
+        await db.execute(
+            select(LeagueCycleStanding)
+            .where(
+                LeagueCycleStanding.cycle_id == cycle_id,
+                LeagueCycleStanding.user_id == user_id,
+            )
+            .with_for_update()
+        )
+    ).scalar_one()
+
+
+def _void_prediction(p: LeaguePrediction, standing: LeagueCycleStanding) -> None:
+    """Anula el pick y devuelve el stake al balance de liga."""
+    p.status = "void"
+    p.payout = q2(p.stake)
+    standing.balance = q2(standing.balance + p.stake)
+
+
 async def process_market_resolution_for_leagues(
     db: AsyncSession,
     market_id: str,
@@ -157,7 +185,24 @@ async def process_market_resolution_for_leagues(
 
     Paga/liquida todos los picks de liga abiertos de ese mercado y cierra
     los ciclos que hayan quedado completos.
+
+    Los ciclos a revisar salen de league_cycle_markets, NO de los picks: si
+    el último mercado de la jornada no tuvo picks, el ciclo igual se cierra.
     """
+    touched_cycles: set[int] = set(
+        (
+            await db.execute(
+                select(LeagueCycleMarket.cycle_id).where(
+                    LeagueCycleMarket.market_id == market_id
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    if not touched_cycles:
+        return
+
     preds = (
         (
             await db.execute(
@@ -170,27 +215,12 @@ async def process_market_resolution_for_leagues(
         .scalars()
         .all()
     )
-    if not preds:
-        return
-
-    touched_cycles: set[int] = set()
 
     for p in preds:
-        standing = (
-            await db.execute(
-                select(LeagueCycleStanding)
-                .where(
-                    LeagueCycleStanding.cycle_id == p.cycle_id,
-                    LeagueCycleStanding.user_id == p.user_id,
-                )
-                .with_for_update()
-            )
-        ).scalar_one()
+        standing = await _locked_standing(db, p.cycle_id, p.user_id)
 
         if voided:
-            p.status = "void"
-            p.payout = q2(p.stake)
-            standing.balance = q2(standing.balance + p.stake)
+            _void_prediction(p, standing)
         else:
             won = (
                 p.outcome_id is not None and p.outcome_id == winning_outcome_id
@@ -205,17 +235,20 @@ async def process_market_resolution_for_leagues(
                 p.status = "lost"
                 p.payout = Decimal("0.00")
 
-        touched_cycles.add(p.cycle_id)
-
     for cycle_id in touched_cycles:
         await maybe_resolve_cycle(db, cycle_id)
 
 
-async def maybe_resolve_cycle(db: AsyncSession, cycle_id: int) -> bool:
+async def maybe_resolve_cycle(
+    db: AsyncSession, cycle_id: int, force: bool = False
+) -> bool:
     """
     Si TODOS los mercados del ciclo ya están resueltos globalmente, cierra
     el ciclo, calcula final_rank por balance descendente (empates comparten
     rank) y marca resolved. Regresa True si lo resolvió.
+
+    `force` (palanca admin): cierra aunque queden mercados sin resolver;
+    los picks abiertos de esos mercados se anulan y devuelven su stake.
     """
     cycle = (
         await db.execute(select(LeagueCycle).where(LeagueCycle.id == cycle_id))
@@ -223,21 +256,40 @@ async def maybe_resolve_cycle(db: AsyncSession, cycle_id: int) -> bool:
     if cycle.status == "resolved":
         return False
 
-    unresolved = (
-        await db.execute(
-            select(func.count())
-            .select_from(LeagueCycleMarket)
-            .join(Market, Market.id == LeagueCycleMarket.market_id)
-            .where(
-                LeagueCycleMarket.cycle_id == cycle_id,
-                Market.status.notin_(RESOLVED_STATUSES),
+    unresolved_ids = (
+        (
+            await db.execute(
+                select(LeagueCycleMarket.market_id)
+                .join(Market, Market.id == LeagueCycleMarket.market_id)
+                .where(
+                    LeagueCycleMarket.cycle_id == cycle_id,
+                    Market.status.notin_(RESOLVED_STATUSES),
+                )
             )
         )
-    ).scalar_one()
-    if unresolved > 0:
-        if cycle.status == "open" and now_utc() > cycle.ends_at:
-            cycle.status = "scoring"
-        return False
+        .scalars()
+        .all()
+    )
+    if unresolved_ids:
+        if not force:
+            if cycle.status == "open" and now_utc() > cycle.ends_at:
+                cycle.status = "scoring"
+            return False
+        open_preds = (
+            (
+                await db.execute(
+                    select(LeaguePrediction).where(
+                        LeaguePrediction.cycle_id == cycle_id,
+                        LeaguePrediction.market_id.in_(unresolved_ids),
+                        LeaguePrediction.status == "open",
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+        for p in open_preds:
+            _void_prediction(p, await _locked_standing(db, cycle_id, p.user_id))
 
     standings = (
         (

@@ -4,13 +4,19 @@ Schemas Pydantic de Ligas Privadas v1.
 Decimales se serializan como string para no perder precisión en el frontend.
 market_id es el slug String(100) de markets.id.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 STAKE_MIN = Decimal("100")
 PAYOUT_CAP_MULT = Decimal("20")
+
+
+def _aware_utc(v: datetime) -> datetime:
+    """Las columnas son timestamptz: un datetime naive rompe la comparación en
+    asyncpg. Sin zona se asume UTC (es lo que manda el frontend con `Z`)."""
+    return v if v.tzinfo is not None else v.replace(tzinfo=timezone.utc)
 
 
 # ---------- requests ----------
@@ -25,14 +31,22 @@ class CycleCreate(BaseModel):
     subcategory: str | None = None
     starts_at: datetime
     ends_at: datetime
-    initial_stack: Decimal = Field(default=Decimal("10000"), gt=0)
+    initial_stack: Decimal = Field(default=Decimal("10000"), gt=0, decimal_places=2)
+
+    @field_validator("starts_at")
+    @classmethod
+    def starts_aware(cls, v: datetime):
+        return _aware_utc(v)
 
     @field_validator("ends_at")
     @classmethod
     def ends_after_starts(cls, v: datetime, info):
+        v = _aware_utc(v)
         starts = info.data.get("starts_at")
         if starts and v <= starts:
             raise ValueError("ends_at debe ser posterior a starts_at")
+        if v <= datetime.now(timezone.utc):
+            raise ValueError("ends_at debe estar en el futuro")
         return v
 
 
@@ -40,7 +54,7 @@ class PredictionCreate(BaseModel):
     market_id: str
     outcome_id: int | None = None
     binary_side: str | None = None  # "yes" | "no"
-    stake: Decimal = Field(ge=STAKE_MIN)
+    stake: Decimal = Field(ge=STAKE_MIN, decimal_places=2)
 
     @field_validator("binary_side")
     @classmethod
@@ -103,6 +117,9 @@ class CycleMarketOut(BaseModel):
     image_url: str | None = None
     closes_at: datetime
     is_open: bool
+    # El mercado global ya tiene resultado (o se canceló): la tabla deja de
+    # ser provisional para este mercado aunque el usuario no haya jugado.
+    is_resolved: bool = False
     outcomes: list[dict]  # [{id, outcome_key, label, price}] o [{side, price}] en binarios
     predicted_count: int
     my_prediction: dict | None = None  # {outcome_id|binary_side, stake, price_at_prediction, status, payout}

@@ -74,6 +74,10 @@ async def migrate_columns() -> None:
         # Google avatar URLs can exceed 1,000 chars; VARCHAR(500) broke Google signups.
         # varchar -> text is a metadata-only change in Postgres (no table rewrite).
         "ALTER TABLE users ALTER COLUMN avatar_url TYPE TEXT",
+        # Ligas privadas: las tablas ya existían en prod sin índice por usuario
+        # (/leagues/mine, _require_member y predict filtran por user_id).
+        "CREATE INDEX IF NOT EXISTS ix_league_members_user_id ON league_members (user_id)",
+        "CREATE INDEX IF NOT EXISTS ix_league_cycle_standings_user_id ON league_cycle_standings (user_id)",
     ]
     async with engine.begin() as conn:
         for s in stmts:

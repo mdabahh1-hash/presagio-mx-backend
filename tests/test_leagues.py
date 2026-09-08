@@ -304,6 +304,63 @@ class TestLeagueFlow:
         )).scalars().all())
         assert n_picks == 1
 
+    async def test_stake_con_tres_decimales_cuadra(self, client, league_with_cycle):
+        """El stake se cuantiza a 2 decimales antes de descontar (schema lo
+        rechaza con 422) — y un stake válido descuenta exactamente lo guardado."""
+        cycle_id, market_id, ha = league_with_cycle
+        r = await client.post(
+            f"/api/cycles/{cycle_id}/predict",
+            json={"market_id": market_id, "binary_side": "yes", "stake": "100.005"},
+            headers=ha,
+        )
+        assert r.status_code == 422
+        r = await client.post(
+            f"/api/cycles/{cycle_id}/predict",
+            json={"market_id": market_id, "binary_side": "yes", "stake": "100.25"},
+            headers=ha,
+        )
+        assert r.status_code == 200, r.text
+        assert Decimal(r.json()["new_balance"]) == Decimal("9899.75")
+
+    async def test_pending_picks_ignora_mercados_cerrados(self, client, db, make_user, make_binary_market):
+        """/leagues/mine: 'picks pendientes' solo cuenta mercados en los que
+        todavía se puede jugar."""
+        s = await _setup_league(client, make_user, make_binary_market, 2)
+        m1, m2 = s["market_ids"]
+        r = await client.get("/api/leagues/mine", headers=s["ha"])
+        assert r.json()[0]["pending_picks"] == 2
+
+        await _pick(client, s["cycle_id"], m1, "yes", 500, s["ha"])
+        r = await client.get("/api/leagues/mine", headers=s["ha"])
+        assert r.json()[0]["pending_picks"] == 1
+
+        # m2 vence sin pick → ya no está pendiente
+        m = (await db.execute(select(Market).where(Market.id == m2))).scalar_one()
+        m.ends_at = datetime.now(timezone.utc) - timedelta(minutes=1)
+        await db.commit()
+        r = await client.get("/api/leagues/mine", headers=s["ha"])
+        assert r.json()[0]["pending_picks"] == 0
+
+    async def test_crear_ciclo_rechaza_fechas_invalidas(self, client, user_a):
+        r = await client.post("/api/leagues", json={"name": "Fechas", "min_members": 2}, headers=user_a)
+        league_id = r.json()["id"]
+        past = datetime.now(timezone.utc) - timedelta(days=2)
+        r = await client.post(
+            f"/api/leagues/{league_id}/cycles",
+            json={"name": "Vieja", "starts_at": (past - timedelta(days=1)).isoformat(), "ends_at": past.isoformat()},
+            headers=user_a,
+        )
+        assert r.status_code == 422
+
+    async def test_detalle_marca_is_resolved(self, client, db, seeded_cycle_with_picks):
+        s = seeded_cycle_with_picks
+        m1, m2 = s["market_ids"]
+        await _resolve_binary_direct(db, m1, "yes")
+        d = (await client.get(f"/api/leagues/{s['league_id']}", headers=s["hb"])).json()
+        by_id = {m["market_id"]: m for m in d["current_cycle"]["markets"]}
+        assert by_id[m1]["is_resolved"] is True and by_id[m1]["is_open"] is False
+        assert by_id[m2]["is_resolved"] is False and by_id[m2]["is_open"] is True
+
     async def test_reveal_bloqueado_antes_del_cierre(self, client, league_with_cycle):
         cycle_id, market_id, ha = league_with_cycle
         r = await client.get(f"/api/cycles/{cycle_id}/reveal/{market_id}", headers=ha)
@@ -407,6 +464,55 @@ class TestResolution:
         # A: 8000+2000+2000 = 12000 ; B: 8000+0+2000 = 10000
         assert (await _balances(db, s["cycle_id"])) == {a: Decimal("12000.00"), b: Decimal("10000.00")}
         assert (await _ranks(db, s["cycle_id"])) == {a: 1, b: 2}
+
+    async def test_ciclo_resuelve_aunque_ultimo_mercado_no_tenga_picks(
+        self, client, db, make_user, make_binary_market
+    ):
+        """Regresión: el hook salía temprano si el mercado no tenía picks y el
+        ciclo se quedaba 'open' para siempre cuando ese era el último."""
+        s = await _setup_league(client, make_user, make_binary_market, 2)
+        m1, m2 = s["market_ids"]
+        await _pick(client, s["cycle_id"], m1, "yes", 1000, s["ha"])
+
+        await _resolve_binary_direct(db, m1, "yes")
+        assert (await _cycle(db, s["cycle_id"])).status == "open"
+
+        await _resolve_binary_direct(db, m2, "no")  # nadie hizo pick en m2
+        cycle = await _cycle(db, s["cycle_id"])
+        assert cycle.status == "resolved"
+        assert (await _ranks(db, s["cycle_id"])) == {s["a"].id: 1, s["b"].id: 2}
+
+    async def test_admin_force_anula_picks_pendientes(self, client, db, seeded_cycle_with_picks):
+        """force=true cierra el ciclo con m2 sin resolver: los picks de m2 se
+        anulan (stake de vuelta) y se rankea con lo que hay."""
+        s = seeded_cycle_with_picks
+        m1, m2 = s["market_ids"]
+        a, b = s["a"].id, s["b"].id
+        await _resolve_binary_direct(db, m1, "yes")  # A won (+2000), B lost
+
+        admin = User(email=ADMIN_EMAIL, username="admin", display_name="Admin", email_verified=True, points=0)
+        db.add(admin)
+        await db.commit()
+        await db.refresh(admin)
+
+        r = await client.post(f"/api/admin/cycles/{s['cycle_id']}/resolve", headers=auth_headers(admin))
+        assert r.status_code == 200 and r.json() == {"resolved": False}
+        assert (await _cycle(db, s["cycle_id"])).status == "open"
+
+        r = await client.post(
+            f"/api/admin/cycles/{s['cycle_id']}/resolve", params={"force": "true"}, headers=auth_headers(admin)
+        )
+        assert r.status_code == 200 and r.json() == {"resolved": True}
+        assert (await _cycle(db, s["cycle_id"])).status == "resolved"
+        # A: 8000 + 2000 (m1) + 1000 (m2 void) ; B: 8000 + 0 + 1000
+        assert (await _balances(db, s["cycle_id"])) == {a: Decimal("11000.00"), b: Decimal("9000.00")}
+        voided = (await db.execute(_fresh(
+            select(LeaguePrediction).where(LeaguePrediction.market_id == m2)
+        ))).scalars().all()
+        assert {p.status for p in voided} == {"void"}
+
+        r = await client.post("/api/admin/cycles/999999/resolve", headers=auth_headers(admin))
+        assert r.status_code == 404
 
     async def test_empate_comparte_rank(self, client, db, make_user, make_binary_market):
         s = await _setup_league(client, make_user, make_binary_market, 1)

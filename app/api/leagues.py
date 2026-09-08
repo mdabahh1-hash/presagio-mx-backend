@@ -7,7 +7,7 @@ GET /markets/{id}/quote).
 """
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -76,24 +76,29 @@ async def create_league(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    # user.id se lee antes del loop: un rollback expiraría `user` (misma
+    # sesión) y tocarlo en async dispara MissingGreenlet.
+    user_id = user.id
     for _ in range(5):
         code = generate_invite_code()
         league = League(
             name=body.name.strip(),
-            creator_id=user.id,
+            creator_id=user_id,
             invite_code=code,
             min_members=body.min_members,
         )
-        db.add(league)
+        # SAVEPOINT: una colisión de código solo deshace este insert, no la sesión.
         try:
-            await db.flush()
+            async with db.begin_nested():
+                db.add(league)
+                await db.flush()
             break
         except IntegrityError:
-            await db.rollback()
+            continue
     else:
         raise api_error(500, "INVITE_CODE_COLLISION", "No se pudo generar el código")
 
-    db.add(LeagueMember(league_id=league.id, user_id=user.id, role="creator"))
+    db.add(LeagueMember(league_id=league.id, user_id=user_id, role="creator"))
     await db.commit()
 
     return LeagueSummary(
@@ -124,15 +129,20 @@ async def my_leagues(
         .all()
     )
 
+    league_ids = [lg.id for lg in memberships]
+    member_counts: dict[int, int] = dict(
+        (
+            await db.execute(
+                select(LeagueMember.league_id, func.count())
+                .where(LeagueMember.league_id.in_(league_ids))
+                .group_by(LeagueMember.league_id)
+            )
+        ).all()
+    ) if league_ids else {}
+
     out: list[LeagueSummary] = []
     for league in memberships:
-        member_count = (
-            await db.execute(
-                select(func.count()).select_from(LeagueMember).where(
-                    LeagueMember.league_id == league.id
-                )
-            )
-        ).scalar_one()
+        member_count = member_counts.get(league.id, 0)
 
         cycle = (
             await db.execute(
@@ -157,24 +167,30 @@ async def my_leagues(
             if standing and standing.final_rank:
                 my_rank = standing.final_rank
             if cycle.status == "open":
-                total_markets = (
+                # Solo mercados donde todavía se puede hacer pick: abiertos y
+                # sin vencer, sin predicción mía. Los cerrados ya no cuentan.
+                my_pick = (
+                    select(LeaguePrediction.id)
+                    .where(
+                        LeaguePrediction.cycle_id == cycle.id,
+                        LeaguePrediction.user_id == user.id,
+                        LeaguePrediction.market_id == LeagueCycleMarket.market_id,
+                    )
+                    .exists()
+                )
+                pending = (
                     await db.execute(
                         select(func.count())
                         .select_from(LeagueCycleMarket)
-                        .where(LeagueCycleMarket.cycle_id == cycle.id)
-                    )
-                ).scalar_one()
-                my_picks = (
-                    await db.execute(
-                        select(func.count())
-                        .select_from(LeaguePrediction)
+                        .join(Market, Market.id == LeagueCycleMarket.market_id)
                         .where(
-                            LeaguePrediction.cycle_id == cycle.id,
-                            LeaguePrediction.user_id == user.id,
+                            LeagueCycleMarket.cycle_id == cycle.id,
+                            Market.status == MarketStatus.OPEN,
+                            Market.ends_at > now_utc(),
+                            ~my_pick,
                         )
                     )
                 ).scalar_one()
-                pending = max(total_markets - my_picks, 0)
 
         out.append(
             LeagueSummary(
@@ -325,12 +341,15 @@ async def join_league(
 
 # ================================================================ detalle
 
-async def serialize_outcomes(db: AsyncSession, market: Market) -> list[dict]:
+async def serialize_outcomes(
+    db: AsyncSession, market: Market, outcomes: list[Outcome] | None = None
+) -> list[dict]:
     """
     Precios actuales por outcome para pintar el PickSheet (misma fuente que
     /quote). Binario: [{"side","price"}]; multi: [{"id","outcome_key","label","price"}].
+    `outcomes` ya cargados evita una query por mercado.
     """
-    prices = await snapshot_prices(db, market)
+    prices = await snapshot_prices(db, market, outcomes)
     if market.market_type == "multi":
         rows = sorted(prices.values(), key=lambda t: t[1], reverse=True)
         return [
@@ -424,6 +443,16 @@ async def league_detail(
             ).all()
         )
 
+        # Una sola query de salidas para todos los multi del ciclo (antes: una
+        # por mercado; con 56 mercados eran ~60 queries por carga de la home).
+        multi_ids = [m.id for m in rows if m.market_type == "multi"]
+        outcomes_by_market: dict[str, list[Outcome]] = {mid: [] for mid in multi_ids}
+        if multi_ids:
+            for o in (
+                await db.execute(select(Outcome).where(Outcome.market_id.in_(multi_ids)))
+            ).scalars():
+                outcomes_by_market[o.market_id].append(o)
+
         markets_out = []
         for m in rows:
             mp = my_preds.get(m.id)
@@ -437,7 +466,8 @@ async def league_detail(
                     image_url=m.image_url,
                     closes_at=m.ends_at,
                     is_open=market_is_open(m),
-                    outcomes=await serialize_outcomes(db, m),
+                    is_resolved=m.status in RESOLVED_STATUSES,
+                    outcomes=await serialize_outcomes(db, m, outcomes_by_market.get(m.id)),
                     predicted_count=counts.get(m.id, 0),
                     my_prediction=(
                         {
@@ -539,19 +569,27 @@ async def create_cycle(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    # Lock de la liga: dos POST simultáneos del creador se serializan aquí en
+    # vez de chocar en uq_league_cycle con un 500.
     league = (
-        await db.execute(select(League).where(League.id == league_id))
+        await db.execute(
+            select(League).where(League.id == league_id).with_for_update()
+        )
     ).scalar_one_or_none()
     if not league:
         raise api_error(404, "LEAGUE_NOT_FOUND", "Esta liga no existe")
     if league.creator_id != user.id:
         raise api_error(403, "NOT_CREATOR", "Solo quien creó la liga puede abrir ciclos")
+    if league.status == "archived":
+        raise api_error(409, "LEAGUE_ARCHIVED", "Esta liga ya terminó")
 
     open_cycle = (
         await db.execute(
-            select(LeagueCycle).where(
+            select(LeagueCycle)
+            .where(
                 LeagueCycle.league_id == league_id, LeagueCycle.status.in_(("open", "scoring"))
             )
+            .limit(1)
         )
     ).scalar_one_or_none()
     if open_cycle:
@@ -575,7 +613,11 @@ async def create_cycle(
         ends_at=body.ends_at,
     )
     db.add(cycle)
-    await db.flush()
+    try:
+        await db.flush()
+    except IntegrityError:
+        await db.rollback()
+        raise api_error(409, "CYCLE_ALREADY_OPEN", "Ya hay un ciclo en curso")
 
     seeded = await seed_cycle_markets(db, cycle)
     if seeded == 0:
@@ -669,7 +711,10 @@ async def predict(
     if not standing:
         raise api_error(409, "NO_STANDING", "No estás inscrito en este ciclo")
 
-    if body.stake > standing.balance:
+    # Un solo stake cuantizado para guardar y descontar (si no, 100.005 deja
+    # el pick en 100.01 y el balance en 100.00).
+    stake = q2(body.stake)
+    if stake > standing.balance:
         raise api_error(
             409, "INSUFFICIENT_LEAGUE_BALANCE", "No te alcanzan los puntos de liga"
         )
@@ -687,11 +732,11 @@ async def predict(
         market_id=body.market_id,
         outcome_id=body.outcome_id,
         binary_side=body.binary_side,
-        stake=q2(body.stake),
+        stake=stake,
         price_at_prediction=price,
     )
     db.add(prediction)
-    standing.balance = q2(standing.balance - body.stake)
+    standing.balance = q2(standing.balance - stake)
     new_balance = standing.balance
 
     try:
@@ -855,11 +900,22 @@ async def reveal_market_picks(
 @router.post("/admin/cycles/{cycle_id}/resolve")
 async def admin_resolve_cycle(
     cycle_id: int,
+    force: bool = Query(False),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Palanca manual por si el hook automático falla."""
+    """
+    Palanca manual por si el hook automático falla. Sin `force` solo cierra
+    si todos los mercados ya están resueltos; con `force=true` cierra igual y
+    anula (devuelve el stake) los picks de los mercados que quedaron sin
+    resolver.
+    """
     require_admin(current_user)
-    resolved = await maybe_resolve_cycle(db, cycle_id)
+    exists = (
+        await db.execute(select(LeagueCycle.id).where(LeagueCycle.id == cycle_id))
+    ).scalar_one_or_none()
+    if exists is None:
+        raise api_error(404, "CYCLE_NOT_FOUND", "Este ciclo no existe")
+    resolved = await maybe_resolve_cycle(db, cycle_id, force=force)
     await db.commit()
     return {"resolved": resolved}

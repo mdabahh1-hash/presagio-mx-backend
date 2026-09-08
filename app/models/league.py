@@ -46,7 +46,7 @@ class LeagueMember(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     league_id: Mapped[int] = mapped_column(ForeignKey("leagues.id"), nullable=False, index=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     role: Mapped[str] = mapped_column(Text, nullable=False, default="member")  # creator | member
     joined_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -97,7 +97,7 @@ class LeagueCycleStanding(Base):
     cycle_id: Mapped[int] = mapped_column(
         ForeignKey("league_cycles.id"), nullable=False, index=True
     )
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     balance: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     final_rank: Mapped[int | None] = mapped_column(Integer)
 
