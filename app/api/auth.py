@@ -5,15 +5,16 @@ import string
 import httpx
 from datetime import datetime, timezone, timedelta
 from urllib.parse import urlencode
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import RedirectResponse
 import bcrypt as _bcrypt
+from jose import JWTError, jwt as jose_jwt
 from pydantic import BaseModel, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
 from app.models.user import User
-from app.core.auth import create_access_token
+from app.core.auth import ALGORITHM, create_access_token
 from app.config import settings
 from app.schemas.user import UserMe
 from app.services.email import send_verification_email
@@ -26,17 +27,107 @@ logger = logging.getLogger(__name__)
 # redirect back to the app, never in Starlette's plain-text "Internal Server Error".
 OAUTH_HTTP_TIMEOUT = 15.0
 
+# ── OAuth `state` ─────────────────────────────────────────────────────────────
+# El state es un JWT firmado con SECRET_KEY, de vida corta, ligado al proveedor
+# y con un nonce. El mismo nonce va en la cookie `oauth_nonce`: si la cookie
+# vuelve con el callback debe coincidir (anti login-CSRF). Si no vuelve — el
+# link se abrió en el navegador in-app de WhatsApp/Instagram y Google saltó a
+# Safari — aceptamos el state firmado (ver settings.OAUTH_STATE_REQUIRE_COOKIE).
+# El state también transporta `next`: la ruta hash del SPA a la que volver
+# después del login (p. ej. la invitación a una liga `/l/CODE?join=1`).
+OAUTH_NONCE_COOKIE = "oauth_nonce"
+OAUTH_NONCE_COOKIE_PATH = "/api/auth"
+OAUTH_NEXT_MAX_LEN = 200
+# Caracteres URL imprimibles; sin '#', '\' ni espacios/control.
+_NEXT_ALLOWED = re.compile(r"^[A-Za-z0-9\-._~!$&'()*+,;=:@/?%]+$")
 
-def _oauth_success_redirect(user: User) -> RedirectResponse:
+
+def _safe_next(path: str | None) -> str | None:
+    """Ruta hash relativa del SPA ('/l/abc?join=1') o None si falta o no es segura."""
+    if not path or len(path) > OAUTH_NEXT_MAX_LEN:
+        return None
+    if not path.startswith("/") or path.startswith("//") or path.startswith("/\\"):
+        return None
+    if path.startswith("/auth/callback"):
+        return None  # nunca volver a entrar al propio callback
+    if not _NEXT_ALLOWED.match(path):
+        return None
+    return path
+
+
+def _make_oauth_state(provider: str, next_path: str | None) -> tuple[str, str]:
+    """Devuelve (state_jwt, nonce)."""
+    nonce = secrets.token_urlsafe(16)
+    now = datetime.now(timezone.utc)
+    payload = {
+        "typ": "oauth_state",
+        "p": provider,
+        "n": nonce,
+        "next": next_path,
+        "iat": now,
+        "exp": now + timedelta(seconds=settings.OAUTH_STATE_TTL_SECONDS),
+    }
+    return jose_jwt.encode(payload, settings.SECRET_KEY, algorithm=ALGORITHM), nonce
+
+
+def _verify_oauth_state(state: str | None, provider: str, cookie_nonce: str | None) -> dict | None:
+    """Payload decodificado si el state es válido para este proveedor (y coincide
+    con la cookie cuando la hay); None si hay que rechazar el callback."""
+    if not state:
+        return None
+    try:
+        payload = jose_jwt.decode(state, settings.SECRET_KEY, algorithms=[ALGORITHM])  # valida exp
+    except JWTError:
+        return None
+    nonce = payload.get("n")
+    if payload.get("typ") != "oauth_state" or payload.get("p") != provider or not isinstance(nonce, str) or not nonce:
+        return None
+    if cookie_nonce is not None:
+        if not secrets.compare_digest(cookie_nonce, nonce):
+            return None
+    elif settings.OAUTH_STATE_REQUIRE_COOKIE:
+        return None
+    else:
+        logger.warning("OAuth %s: state aceptado sin cookie de nonce (¿cambio de navegador?)", provider)
+    # Re-validar: el claim viene firmado por nosotros, pero nunca navegar a ciegas.
+    payload["next"] = _safe_next(payload.get("next"))
+    return payload
+
+
+def _start_oauth_redirect(url: str, nonce: str) -> RedirectResponse:
+    resp = RedirectResponse(url)
+    resp.set_cookie(
+        OAUTH_NONCE_COOKIE, nonce, httponly=True, secure=True, samesite="lax",
+        max_age=settings.OAUTH_STATE_TTL_SECONDS, path=OAUTH_NONCE_COOKIE_PATH,
+    )
+    return resp
+
+
+def _callback_redirect(query: dict[str, str]) -> RedirectResponse:
+    resp = RedirectResponse(f"{settings.FRONTEND_URL}/#/auth/callback?{urlencode(query)}")
+    resp.delete_cookie(OAUTH_NONCE_COOKIE, path=OAUTH_NONCE_COOKIE_PATH)
+    return resp
+
+
+def _oauth_success_redirect(user: User, next_path: str | None = None) -> RedirectResponse:
     jwt_token = create_access_token(user.id)
-    response = RedirectResponse(f"{settings.FRONTEND_URL}/#/auth/callback?token={jwt_token}")
+    query = {"token": jwt_token}
+    if next_path:
+        query["next"] = next_path
+    response = _callback_redirect(query)
     response.set_cookie("access_token", jwt_token, httponly=True, secure=True, samesite="lax", max_age=604800)
     return response
 
 
-def _oauth_error_redirect(provider: str) -> RedirectResponse:
-    logger.exception("OAuth %s callback failed", provider)
-    return RedirectResponse(f"{settings.FRONTEND_URL}/#/auth/callback?error=oauth_failed&provider={provider}")
+def _oauth_error_redirect(provider: str, error: str = "oauth_failed", next_path: str | None = None) -> RedirectResponse:
+    if error == "oauth_failed":
+        logger.exception("OAuth %s callback failed", provider)  # se llama desde un except
+    else:
+        logger.warning("OAuth %s rechazado: %s", provider, error)
+    query = {"error": error, "provider": provider}
+    if next_path:
+        query["next"] = next_path
+    return _callback_redirect(query)
 
 
 def _hash_password(password: str) -> str:
@@ -147,20 +238,34 @@ async def get_or_create_user(
 # ── Google OAuth ──────────────────────────────────────────────────────────────
 
 @router.get("/google")
-async def google_login(request: Request):
+async def google_login(request: Request, next: str | None = Query(None, max_length=512)):
     cb = _callback_url(request, "/api/auth/google/callback")
+    state, nonce = _make_oauth_state("google", _safe_next(next))
     url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode({
         "client_id": settings.GOOGLE_CLIENT_ID,
         "redirect_uri": cb,
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
+        "state": state,
     })
-    return RedirectResponse(url)
+    return _start_oauth_redirect(url, nonce)
 
 
 @router.get("/google/callback")
-async def google_callback(request: Request, code: str, db: AsyncSession = Depends(get_db)):
+async def google_callback(
+    request: Request,
+    code: str | None = None,
+    state: str | None = None,
+    oauth_nonce: str | None = Cookie(default=None),
+    db: AsyncSession = Depends(get_db),
+):
+    st = _verify_oauth_state(state, "google", oauth_nonce)
+    if st is None:
+        return _oauth_error_redirect("google", error="oauth_state_invalid")
+    next_path = st["next"]
+    if not code:  # el usuario canceló en Google (?error=access_denied)
+        return _oauth_error_redirect("google", error="oauth_denied", next_path=next_path)
     cb = _callback_url(request, "/api/auth/google/callback")
     try:
         async with httpx.AsyncClient(timeout=OAUTH_HTTP_TIMEOUT) as client:
@@ -195,25 +300,39 @@ async def google_callback(request: Request, code: str, db: AsyncSession = Depend
             provider_id=info["sub"],
         )
     except Exception:
-        return _oauth_error_redirect("google")
-    return _oauth_success_redirect(user)
+        return _oauth_error_redirect("google", next_path=next_path)
+    return _oauth_success_redirect(user, next_path)
 
 
 # ── GitHub OAuth ──────────────────────────────────────────────────────────────
 
 @router.get("/github")
-async def github_login(request: Request):
+async def github_login(request: Request, next: str | None = Query(None, max_length=512)):
     cb = _callback_url(request, "/api/auth/github/callback")
+    state, nonce = _make_oauth_state("github", _safe_next(next))
     url = "https://github.com/login/oauth/authorize?" + urlencode({
         "client_id": settings.GITHUB_CLIENT_ID,
         "redirect_uri": cb,
         "scope": "user:email",
+        "state": state,
     })
-    return RedirectResponse(url)
+    return _start_oauth_redirect(url, nonce)
 
 
 @router.get("/github/callback")
-async def github_callback(request: Request, code: str, db: AsyncSession = Depends(get_db)):
+async def github_callback(
+    request: Request,
+    code: str | None = None,
+    state: str | None = None,
+    oauth_nonce: str | None = Cookie(default=None),
+    db: AsyncSession = Depends(get_db),
+):
+    st = _verify_oauth_state(state, "github", oauth_nonce)
+    if st is None:
+        return _oauth_error_redirect("github", error="oauth_state_invalid")
+    next_path = st["next"]
+    if not code:
+        return _oauth_error_redirect("github", error="oauth_denied", next_path=next_path)
     cb = _callback_url(request, "/api/auth/github/callback")
     try:
         async with httpx.AsyncClient(timeout=OAUTH_HTTP_TIMEOUT) as client:
@@ -257,8 +376,8 @@ async def github_callback(request: Request, code: str, db: AsyncSession = Depend
             provider_id=str(gh_user["id"]),
         )
     except Exception:
-        return _oauth_error_redirect("github")
-    return _oauth_success_redirect(user)
+        return _oauth_error_redirect("github", next_path=next_path)
+    return _oauth_success_redirect(user, next_path)
 
 
 @router.post("/register")

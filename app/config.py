@@ -38,6 +38,13 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:5175"
     BACKEND_URL: str = "http://localhost:8000"
 
+    # OAuth `state`: JWT firmado (anti-CSRF + ruta `next` de retorno). El nonce
+    # también viaja en la cookie `oauth_nonce`; si la cookie llega debe coincidir.
+    # Si NO llega (navegador in-app → Safari), se acepta el state firmado salvo
+    # que REQUIRE_COOKIE sea True.
+    OAUTH_STATE_TTL_SECONDS: int = 600
+    OAUTH_STATE_REQUIRE_COOKIE: bool = False
+
     # WebAuthn (passkeys). RP ID must match the domain the frontend runs on.
     WEBAUTHN_RP_ID: str = "veredikt.mx"
     WEBAUTHN_RP_NAME: str = "VEREDIKT"
