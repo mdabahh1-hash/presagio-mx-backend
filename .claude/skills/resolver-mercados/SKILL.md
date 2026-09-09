@@ -1,6 +1,6 @@
 ---
 name: resolver-mercados
-description: Resuelve los mercados "por resolverse" de Veredikt - investiga resultados con doble fuente, presenta un reporte para aprobación de Mark, y solo tras su aprobación ejecuta las resoluciones vía API. Usar cuando Mark pida resolver mercados, la jornada, o revisar los pendientes de resolución.
+description: Resuelve los mercados "por resolverse" de Veredikt - investiga resultados con doble fuente, arma un plan de resoluciones, lo valida contra el API, presenta un reporte para aprobación de Mark, y solo tras su aprobación lo ejecuta con bitácora. Usar cuando Mark pida resolver mercados, la jornada, o revisar los pendientes de resolución.
 ---
 
 # Resolver mercados de Veredikt
@@ -15,99 +15,131 @@ ledger, liquida ligas privadas y manda correos. La regla de oro es:
 > en esta conversación.**
 
 Herramienta: `agent-resolver.py` en la raíz del repo backend
-(`/Users/markdabah/Desktop/veredikt-mx-backend`). Todos los comandos se corren desde ahí.
+(`/Users/markdabah/Desktop/veredikt/veredikt-mx-backend`). Todos los comandos se corren desde
+ahí con `./venv/bin/python`. Los planes y la bitácora viven en `resoluciones/` (se commitean:
+son el rastro de auditoría de qué se resolvió, con qué evidencia).
 
-## Paso 0 — Verificar el token
+## Paso 0 — Token
 
 ```
 ./venv/bin/python agent-resolver.py check-token
 ```
 
-Si falla, pide a Mark regenerarlo (`./venv/bin/python generate-agent-token.py`) y detente.
+Si el token venció, el comando lo regenera solo (`generate-agent-token.py`, sin contraseña).
+Si aun así falla, avisa a Mark y detente.
 
 ## Paso 1 — Inventario
 
 ```
-./venv/bin/python agent-resolver.py list
+./venv/bin/python agent-resolver.py list --compact --out <scratchpad>/pendientes.json
+./venv/bin/python agent-resolver.py list --out <scratchpad>/pendientes-detalle.json
 ```
 
-Devuelve JSON con todos los pendientes: pregunta, tipo (binary/multi), criterio de
-resolución, fuente oficial, normas, outcomes con sus keys, volumen y núm. de operaciones.
-Guárdalo en un archivo de trabajo (scratchpad) para no volver a pedirlo.
+`--compact` trae id, pregunta, tipo, subcategoría, kind, cierre, volumen, operaciones y los
+`outcome_keys`. El detalle completo agrega criterio de resolución, fuente oficial y normas
+(necesarios para los accesorios). No vuelvas a pedir la lista al API: trabaja con los archivos.
 
-Clasifica los mercados en grupos de investigación:
-- **Partidos** (kind=partido o pregunta "¿Quién gana...?"), agrupados por liga/subcategoría.
-- **Accesorios** (titulares, goles, props NFL, fantasy) — necesitan datos finos (alineaciones,
-  box scores), agrupados por liga.
-- **No deportivos** (política, global, etc.) — investigación caso por caso.
+Agrupa por `subcategory` + `kind`:
+- **Partidos** (`kind=partido`, "¿Quién gana…?"): multi con keys `local` / `empate` / `visitante`.
+- **Accesorios** (`kind=accesorio`): titulares, goles, clasificaciones, props NFL. Binarios `YES`/`NO`
+  (o multi con sus propias keys). Necesitan el criterio y las normas del detalle.
+- **No deportivos**: caso por caso.
 
 ## Paso 2 — Investigación en paralelo (subagentes)
 
-Lanza subagentes de investigación **en paralelo** (uno por liga o grupo, tipo general-purpose
-con búsqueda web). A cada uno pásale en el prompt:
+Lanza subagentes **en paralelo** (uno por liga o grupo, tipo general-purpose con búsqueda web).
+A cada uno pásale un archivo con sus mercados (id, pregunta, tipo, `ends_at`, `outcome_keys`,
+criterio de resolución, `resolution_source_url`, normas si es accesorio) e instrucciones estrictas:
 
-1. La lista de sus mercados: id, pregunta, criterio de resolución, fuente oficial
-   (`resolution_source_url`), normas y los `outcome_key` disponibles (en multi, la resolución
-   se reporta como outcome_key exacto, ej. `home`/`draw`/`away`).
-2. Instrucciones estrictas:
-   - Buscar el resultado en la **fuente oficial** del mercado Y en **al menos otra fuente
-     independiente** (ESPN, BBC Sport, Flashscore, web de la liga, medios serios). Anotar
-     las URLs de ambas.
-   - Aplicar el **criterio de resolución y las normas del mercado al pie de la letra**
-     (ej. "resultado a los 90 minutos" ignora penales; zona horaria CDMX; qué pasa en
-     aplazamientos).
-   - Verificar que el evento realmente ya ocurrió y terminó. Si fue aplazado, suspendido
-     o no encuentra confirmación clara → marcar `ESCALAR` con la razón.
-   - Devolver por cada mercado: `id`, veredicto (`YES`/`NO`/outcome_key exacto o `ESCALAR`),
-     resultado factual (ej. "Bayern 3-0 Schalke"), fuente 1 (URL), fuente 2 (URL),
-     confianza (`alta` solo si ambas fuentes coinciden y el criterio aplica sin
-     interpretación; si no, `media`/`baja`).
+- Buscar el resultado en la **fuente oficial** del mercado Y en **al menos otra fuente
+  independiente de otro dominio** (ESPN, BBC Sport, Flashscore, web de la liga, medios serios).
+  Anotar las URLs exactas de ambas (no portadas: la página del partido o del resultado).
+- Aplicar el **criterio de resolución y las normas al pie de la letra**: partidos de liga se
+  resuelven al minuto 90 (más añadido), sin prórroga ni penales salvo `copa`; hora CDMX;
+  qué pasa en aplazamientos.
+- Guía por tipo de accesorio:
+  - **"¿X será titular…?"** → YES solo si aparece en la alineación inicial oficial (once
+    titular); entrar de cambio es NO. Fuente: alineaciones de la liga/club + ESPN o BBC.
+  - **"¿X anota gol…?"** → según lo que diga el criterio (normalmente cualquier gol en tiempo
+    reglamentario, sin contar autogoles). Confirmar con el resumen oficial del partido.
+  - **Clasificación / eliminatoria** ("¿X elimina a Y?", "¿X avanza a semifinales?") → resultado
+    oficial de la competencia, incluyendo penales si la eliminatoria se define así y el
+    criterio no lo excluye.
+- Verificar que el evento realmente ya ocurrió y terminó. Si fue **aplazado, suspendido o
+  reprogramado fuera de la ventana** de las normas, o no hay confirmación clara → `ESCALAR`
+  con la razón. No proponer veredicto.
+- Devolver por cada mercado exactamente estos campos (JSON):
+  `id`, `veredicto` (`YES`/`NO` en binarios; el `outcome_key` exacto en multi, p. ej.
+  `local`/`empate`/`visitante`; o `ESCALAR`), `resultado` (hecho verificado, p. ej.
+  "Bayern 3-0 Schalke, 30-ago-2026"), `fuente_1` (URL), `fuente_2` (URL de otro dominio),
+  `confianza` (`alta` solo si ambas fuentes coinciden y el criterio aplica sin interpretación;
+  si no, `media`/`baja`) y, si escala, `razon`.
 
-**Regla dura**: cualquier mercado con confianza que no sea `alta`, con fuentes que no
-coinciden, o donde el subagente tuvo que interpretar el criterio → va a ESCALADOS.
+**Regla dura**: confianza distinta de `alta`, fuentes que no coinciden, fuentes del mismo dominio,
+o criterio que hubo que interpretar → va a ESCALADOS, no al plan.
 
-## Paso 3 — Reporte para aprobación
+## Paso 3 — Plan y validación
 
-Presenta a Mark (en el chat, legible):
+Con las respuestas arma `resoluciones/AAAA-MM-DD.json`:
 
-1. **Tabla de propuestas** — mercado (pregunta corta + id), resolución propuesta,
-   resultado factual, las 2 fuentes. Ordenada por liga/categoría. Marca con ⚠️ los que
-   tienen volumen > 0 (afectan posiciones reales) y di cuántos usuarios/PT involucran.
-2. **Escalados** — los que NO se proponen, con la razón (aplazado, fuentes discrepan,
-   criterio ambiguo, sin información).
-3. **Candidatos a limpieza** — vencidos sin ninguna operación que podrían borrarse con el
-   script de limpieza (solo informar; este flujo no borra nada).
+```json
+{"generado": "2026-09-09T20:00:00Z",
+ "resoluciones": [{"id": "pl-city-coventry-j3-2627", "veredicto": "local",
+                   "resultado": "Manchester City 3-0 Coventry (30-ago-2026)",
+                   "fuente_1": "https://www.premierleague.com/match/…",
+                   "fuente_2": "https://www.espn.com/soccer/match/…", "confianza": "alta"}],
+ "escalados": [{"id": "…", "razon": "partido aplazado al 20-sep; tiene volumen → cancelar"}]}
+```
 
-Luego **DETENTE y espera la aprobación explícita de Mark**. Acepta aprobación total
-("aprueba todo") o parcial ("todo menos X y Y"). Si Mark corrige un veredicto, escálalo:
-re-verifica antes de aceptar el cambio.
+```
+./venv/bin/python agent-resolver.py check-plan resoluciones/AAAA-MM-DD.json
+```
+
+Valida contra el API (solo lectura): el mercado sigue pendiente, el veredicto es válido para
+su tipo, las dos fuentes son URLs de dominios distintos, confianza `alta`, evento ya cerrado.
+Corrige el plan hasta que salga `check-plan OK`. Un mercado que no pasa se mueve a escalados.
+
+Presenta a Mark, legible en el chat:
+1. **Tabla de propuestas** por liga: mercado (pregunta corta + id), veredicto, resultado, las
+   2 fuentes. Marca con ⚠️ los que tienen operaciones (afectan posiciones reales) y di el
+   total de PT involucrados (lo imprime `check-plan`).
+2. **Escalados** con la razón. Partido aplazado/suspendido **con volumen** → "pendiente de
+   cancelación" (no existe endpoint aún; Mark decide). **Sin volumen** → candidato al script
+   de limpieza `cleanup-mercados-vencidos-sin-predicciones-2026-09-01.py`.
+3. Cuántos mercados y PT se van a liquidar.
+
+Luego **DETENTE y espera la aprobación explícita de Mark**. Acepta aprobación total ("aprueba
+todo") o parcial ("todo menos X y Y" → usa `--only` o quita los ids del plan). Si Mark corrige
+un veredicto, re-verifica con dos fuentes antes de aceptar el cambio.
 
 ## Paso 4 — Ejecución (solo tras aprobación)
 
-Por cada mercado aprobado:
-
 ```
-./venv/bin/python agent-resolver.py resolve <id> --resolution YES
-./venv/bin/python agent-resolver.py resolve <id> --resolution NO
-./venv/bin/python agent-resolver.py resolve <id> --outcome <outcome_key>
+./venv/bin/python agent-resolver.py apply resoluciones/AAAA-MM-DD.json --yes
+./venv/bin/python agent-resolver.py apply resoluciones/AAAA-MM-DD.json --yes --only id1 id2
 ```
 
-- Ejecuta uno por uno verificando la salida (`RESUELTO ... posiciones liquidadas: N`).
-- Si uno falla, anótalo y continúa con los demás; repórtalo al final.
-- No re-intentes un `MARKET_ALREADY_RESOLVED`: márcalo como ya resuelto.
+`apply` vuelve a correr `check-plan`, resuelve uno por uno y anexa cada resultado a
+`resoluciones/log.jsonl`. Si falla a la mitad, re-ejecuta el mismo comando: los ya registrados
+se saltan. `MARKET_ALREADY_RESOLVED` cuenta como ya resuelto, no como fallo.
 
-## Paso 5 — Reporte final
+**Nunca pases `--yes` sin la aprobación de Mark en esta conversación.**
 
-Resumen: cuántos se resolvieron (y posiciones liquidadas totales), cuáles fallaron y por
-qué, cuáles quedaron escalados y qué necesita Mark decidir. Sugiere correr la limpieza si
-hay candidatos.
+## Paso 5 — Reporte final y commit
+
+Resumen: resueltos (y posiciones liquidadas), fallidos y por qué, escalados y qué decide Mark.
+Después:
+- `git add resoluciones/AAAA-MM-DD.json resoluciones/log.jsonl` y commit
+  (`Resoluciones AAAA-MM-DD: N mercados`). Nunca `git add -A`.
+- Sugerir `sembrar-mercados.py prune` si hay documentos en `mercados-pendientes.yaml`, y el
+  script de limpieza (dry-run primero) si hay vencidos sin actividad escalados.
 
 ## Prohibiciones permanentes
 
 - Nunca resolver sin aprobación de Mark en la conversación actual.
-- Nunca resolver con una sola fuente, con fuentes en desacuerdo, o interpretando un
-  criterio ambiguo por cuenta propia.
+- Nunca resolver con una sola fuente, con fuentes en desacuerdo o del mismo dominio, o
+  interpretando un criterio ambiguo por cuenta propia.
 - Nunca resolver un mercado cuyo evento no haya terminado (cierre ≠ evento terminado:
   los futuros de temporada cierran meses después).
-- Nunca usar `--dangerously-skip-permissions`-style atajos ni tocar la BD directamente
-  para resolver: siempre el endpoint del API, que liquida todo en una transacción.
+- Nunca tocar la BD directamente para resolver: siempre el endpoint del API vía
+  `agent-resolver.py`, que liquida todo en una transacción y deja bitácora.
