@@ -16,6 +16,25 @@ def test_outcome_price_matches_prices_multi():
         assert round(raw * 100, 4) == rounded[key]
 
 
+def test_init_qs_for_targets_reproduces_targets():
+    """El sembrador parte de porcentajes objetivo; prices_multi debe devolverlos."""
+    targets = {"a": 50.0, "b": 30.0, "c": 20.0}
+    for b in (100.0, 1000.0):
+        q = lmsr.init_qs_for_targets(targets, b)
+        prices = lmsr.prices_multi(q, b)
+        for key, pct in targets.items():
+            assert math.isclose(prices[key], pct, abs_tol=1e-3)
+
+
+def test_init_qs_for_targets_rejects_bad_input():
+    with pytest.raises(ValueError):
+        lmsr.init_qs_for_targets({"solo": 100.0}, 1000.0)
+    with pytest.raises(ValueError):
+        lmsr.init_qs_for_targets({"a": 0.0, "b": 100.0}, 1000.0)
+    with pytest.raises(ValueError):
+        lmsr.init_qs_for_targets({"a": 100.0, "b": 0.0}, 1000.0)
+
+
 def test_outcome_prices_sum_to_one():
     q = {"A": 55.0, "B": 10.0, "C": -80.0, "D": 3.25}
     total = sum(lmsr.outcome_price(q, 100.0, k) for k in q)

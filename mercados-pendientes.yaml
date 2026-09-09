@@ -1,0 +1,47 @@
+# mercados-pendientes.yaml — mercados por sembrar en VEREDIKT.
+#
+# Un documento por mercado, separados por una línea `---` a solas. Esta
+# cabecera y los comentarios se conservan al podar. Cuando un mercado se
+# resuelve en /admin (o lo borra el cleanup de vencidos), `prune` lo quita.
+#
+#   ./venv/bin/python sembrar-mercados.py validar          # esquema, sin BD
+#   ./venv/bin/python sembrar-mercados.py                  # dry-run contra la BD
+#   ./venv/bin/python sembrar-mercados.py sembrar --apply  # escribe
+#   ./venv/bin/python sembrar-mercados.py prune [--apply]  # quita los terminados
+#
+# Tipos (ver seeds/schema.py para la validación completa):
+#
+#   tipo: binario   — id, question, description, category (NOMBRE del enum:
+#                     POLITICA_MX, ECONOMIA, DEPORTES, GLOBAL, TECH, ENTRETENIMIENTO,
+#                     CRYPTO, MERCADOS_GLOBALES, MEXICO, CLIMA), subcategory?,
+#                     kind? (solo DEPORTES: partido|accesorio), image_url?,
+#                     resolution_criteria, resolution_source_url?,
+#                     rules (texto completo) O rules_cuerpo + rules_como
+#                     (obligatorio rules_como si no hay resolution_source_url),
+#                     context, ends_at (2026-11-13T05:59:00Z), initial_yes_price (1-99),
+#                     b? (1000), trending? (false)
+#
+#   tipo: multi     — igual que binario sin initial_yes_price, más
+#                     outcomes: [{key, label, pct}]   (los pct suman 100)
+#
+#   tipo: partido   — atajo 1X2 de fútbol: id, competencia (clave de
+#                     seeds/plantillas.py:COMPETENCIAS), local, visitante,
+#                     kickoff (= ends_at), pct: [local, empate, visitante],
+#                     ventana ("la Jornada 10 de LaLiga 2026-27 (23 al 26 de octubre)"),
+#                     context, trending?, copa?, image_url?, b?
+#                     El runner deriva pregunta, criterios, normas y opciones.
+#
+# Ejemplo:
+#
+# ---
+# tipo: partido
+# id: laliga-realmadrid-barcelona-j10-2627
+# competencia: LaLiga
+# local: Real Madrid
+# visitante: Barcelona
+# kickoff: 2026-10-25T20:00:00Z
+# pct: [45, 25, 30]
+# ventana: la Jornada 10 de LaLiga 2026-27 (23 al 26 de octubre de 2026)
+# trending: true
+# context: |
+#   Clásico de la Jornada 10 en el Bernabéu. …

@@ -114,6 +114,23 @@ def init_q_for_price(target_price: float, b: float) -> tuple[float, float]:
     return q_yes, 0.0
 
 
+def init_qs_for_targets(targets: dict[str, float], b: float) -> dict[str, float]:
+    """
+    q tal que prices_multi(q, b) ≈ targets (porcentajes 0-100 que suman 100).
+    q_i = b · ln(p_i / p_ref) con p_ref = 1/n; la constante se cancela en el softmax.
+    (Antes vivía copiado en cada seed-markets-*-multi.py; ahora lo usa seeds/runner.py.)
+    """
+    n = len(targets)
+    if n < 2:
+        raise ValueError("se necesitan al menos 2 opciones")
+    q: dict[str, float] = {}
+    for key, pct in targets.items():
+        if not 0 < pct < 100:
+            raise ValueError(f"{key}: pct debe estar en (0, 100), no {pct}")
+        q[key] = b * math.log((pct / 100.0) * n)
+    return q
+
+
 # ---------------------------------------------------------------------------
 # N-outcome LMSR (generalised)
 #
