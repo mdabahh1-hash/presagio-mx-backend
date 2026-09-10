@@ -3,8 +3,8 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from resolucion import cruce
-from resolucion.fuentes import AET, FT, POSTPONED, SCHEDULED, Partido
+from app.services.resolucion import cruce
+from app.services.resolucion.fuentes import AET, FT, POSTPONED, SCHEDULED, Partido
 
 K = datetime(2026, 9, 5, 16, 0, tzinfo=timezone.utc)
 
@@ -39,7 +39,7 @@ def test_club_distinto(a, b):
 
 
 def test_variantes_nombre():
-    from resolucion.fuentes import variantes_nombre
+    from app.services.resolucion.fuentes import variantes_nombre
     v = variantes_nombre("FC Porto", "Porto")
     assert v[0] == "FC Porto" and "Porto" in v
     v = variantes_nombre("Inter Miami CF")

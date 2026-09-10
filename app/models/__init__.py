@@ -9,6 +9,7 @@ from app.models.points_ledger import PointsLedger
 from app.models.follow import Follow
 from app.models.market_proposal import MarketProposal
 from app.models.passkey import Passkey
+from app.models.resolution_plan import ResolutionPlan
 from app.models.league import (
     League, LeagueMember, LeagueCycle, LeagueCycleMarket, LeagueCycleStanding, LeaguePrediction,
 )
@@ -16,6 +17,6 @@ from app.models.league import (
 __all__ = [
     "User", "Market", "MarketStatus", "MarketCategory",
     "Trade", "TradeSide", "Position", "Comment", "PriceHistory", "Outcome",
-    "PointsLedger", "Follow", "MarketProposal", "Passkey",
+    "PointsLedger", "Follow", "MarketProposal", "Passkey", "ResolutionPlan",
     "League", "LeagueMember", "LeagueCycle", "LeagueCycleMarket", "LeagueCycleStanding", "LeaguePrediction",
 ]

@@ -5,12 +5,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import create_tables, migrate_enums, migrate_columns, AsyncSessionLocal
 from app.config import settings
-from app.api import auth, markets, trades, comments, users, websockets, admin, proposals, passkeys, leagues
+from app.api import auth, markets, trades, comments, users, websockets, admin, proposals, passkeys, leagues, resolucion
 import app.models  # noqa: F401  (registers every table — incl. leagues — on Base.metadata before create_all)
 from app.services.seed import seed_markets
 from app.services.ledger_backfill import backfill_ledger
 from app.services.referral import assign_codes_to_all
 from app.services.market_maintenance import run_market_maintenance, get_maintenance_status
+from app.services.resolucion.nocturno import nightly_loop, get_nightly_status
 
 # How often the background job runs (closing-soon notices, auto-close, admin reminders).
 MAINTENANCE_INTERVAL_SECONDS = 900  # 15 min
@@ -47,8 +48,12 @@ async def lifespan(app: FastAPI):
     except Exception as e:  # noqa: BLE001
         print(f"[startup] market maintenance skipped: {e}")
     task = asyncio.create_task(_maintenance_loop())
+    # Plan de resolución nocturno (ESPN + TheSportsDB → correo con aprobación).
+    nightly = asyncio.create_task(nightly_loop()) if settings.RESOLUCION_NOCTURNA_ENABLED else None
     yield
     task.cancel()
+    if nightly:
+        nightly.cancel()
 
 
 app = FastAPI(
@@ -83,6 +88,7 @@ app.include_router(admin.router, prefix="/api")
 app.include_router(proposals.router, prefix="/api")
 app.include_router(passkeys.router, prefix="/api")
 app.include_router(leagues.router, prefix="/api")
+app.include_router(resolucion.router, prefix="/api")
 
 # WebSocket routes (no prefix — path is /ws/...)
 app.include_router(websockets.router)
@@ -112,4 +118,6 @@ async def maintenance_health():
         "seconds_since_run": seconds_since,
         "interval_seconds": MAINTENANCE_INTERVAL_SECONDS,
         "healthy": healthy,
+        "nightly": {**get_nightly_status(), "enabled": settings.RESOLUCION_NOCTURNA_ENABLED,
+                    "hora_utc": settings.RESOLUCION_NOCTURNA_HORA_UTC},
     }

@@ -175,6 +175,68 @@ async def send_admin_resolution_reminder(markets: list[tuple[str, str, datetime]
     await _send(_ADMIN_EMAIL, f"🔔 {n} {plural} por resolver en VEREDIKT", _wrap(body))
 
 
+async def send_resolution_plan_email(plan_id: int, plan: dict, resumen: dict, url_aprobar: str) -> None:
+    """Plan nocturno al admin: tabla de resoluciones con evidencia, botón de
+    aprobación (enlace firmado, un solo uso) y lista de escalados."""
+    res = sorted(plan.get("resoluciones", []), key=lambda x: (x.get("liga") or "", x["id"]))
+    esc = plan.get("escalados", [])
+    n, con_ops, vol = resumen.get("resoluciones", len(res)), resumen.get("con_operaciones", 0), resumen.get("volumen", 0)
+
+    def fila(r: dict) -> str:
+        warn = f' <span style="color:#FFD700">⚠️ {round(float(r.get("volume") or 0))} PT</span>' if (r.get("num_trades") or 0) else ""
+        return (
+            f'<tr><td style="padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:12px;color:rgba(245,240,232,0.55)">{_esc(r.get("liga") or "")}</td>'
+            f'<td style="padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:12px">{_esc(r.get("pregunta") or r["id"])}{warn}</td>'
+            f'<td style="padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:12px;font-weight:700">{_esc(str(r.get("veredicto")))}</td>'
+            f'<td style="padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:12px">{_esc(r.get("resultado") or "")} '
+            f'<a href="{_esc(r.get("fuente_1") or "#")}" style="color:#8AB4FF">F1</a> <a href="{_esc(r.get("fuente_2") or "#")}" style="color:#8AB4FF">F2</a></td></tr>'
+        )
+
+    tabla = ('<table style="width:100%;border-collapse:collapse;margin:0 0 18px">' + "".join(fila(r) for r in res) + "</table>") if res else \
+        '<p style="font-size:13px;color:rgba(245,240,232,0.6)">Ningún mercado quedó con doble fuente esta noche.</p>'
+
+    def item(e: dict) -> str:
+        sug = f' · sugerido: <b>{_esc(str(e["veredicto_sugerido"]))}</b>' if e.get("veredicto_sugerido") else ""
+        ev = f' <a href="{_esc(e["fuente_1"])}" style="color:#8AB4FF">evidencia</a>' if e.get("fuente_1") else ""
+        warn = f' <span style="color:#FFD700">⚠️ {e.get("volume")} PT</span>' if (e.get("num_trades") or 0) else ""
+        return (f'<li style="margin-bottom:8px;font-size:12px"><b>{_esc(e.get("pregunta") or e["id"])}</b>{warn}<br>'
+                f'<span style="color:rgba(245,240,232,0.55)">{_esc(e.get("razon") or "")}{sug}{ev}</span></li>')
+
+    escalados = (f'<p style="margin:18px 0 6px;font-size:14px;font-weight:700">Escalados ({len(esc)}) — ciérralos en <a href="{_SITE}/#/admin" style="color:#8AB4FF">/admin</a></p>'
+                 f'<ul style="padding-left:18px;margin:0">{"".join(item(e) for e in esc)}</ul>') if esc else ""
+
+    boton = (f'<a href="{_esc(url_aprobar)}" style="display:inline-block; background:#FFD700; color:#07071A; text-decoration:none; '
+             f'font-weight:800; font-size:14px; padding:12px 24px; border-radius:10px; margin:0 0 18px;">Revisar y aprobar {n} resoluciones →</a>'
+             f'<p style="margin:0 0 18px;font-size:11px;color:rgba(245,240,232,0.35)">El enlace abre una página de confirmación y vence en {settings.PLAN_APPROVAL_TTL_HOURS} h.</p>') if res else ""
+
+    body = f"""
+      <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">🧾 Plan de resolución #{plan_id}</p>
+      <p style="margin: 0 0 18px; font-size: 14px; color: rgba(245,240,232,0.6);">
+        {n} mercados con marcador confirmado en dos fuentes · {con_ops} con operaciones · {vol} PT · {len(esc)} escalados
+      </p>
+      {boton}
+      {tabla}
+      {escalados}
+    """
+    subject = f"🧾 Plan de resolución: {n} mercados listos ({con_ops} con operaciones, {vol} PT)" if res else f"🧾 Plan de resolución: 0 listos, {len(esc)} escalados"
+    await _send(_ADMIN_EMAIL, subject, _wrap(body).replace("max-width: 480px", "max-width: 720px"))
+
+
+async def send_resolution_plan_applied_email(plan_id: int, resultado: dict) -> None:
+    r, s, f = resultado.get("resueltos", []), resultado.get("saltados", []), resultado.get("fallidos", [])
+    fallos = "".join(f'<li style="font-size:12px;color:#FF2D55">{_esc(x["id"])}: {_esc(x.get("razon") or "")}</li>' for x in f)
+    body = f"""
+      <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">✅ Plan #{plan_id} aplicado</p>
+      <p style="margin: 0 0 18px; font-size: 14px; color: rgba(245,240,232,0.6);">
+        Resueltos {len(r)} · saltados {len(s)} · fallidos {len(f)} · posiciones liquidadas {resultado.get("posiciones_liquidadas", 0)}
+      </p>
+      {f'<ul style="padding-left:18px">{fallos}</ul>' if fallos else ''}
+      <a href="{_SITE}/#/admin" style="display:inline-block; background:#FFD700; color:#07071A;
+         text-decoration:none; font-weight:800; font-size:14px; padding:12px 24px; border-radius:10px;">Ir al panel de admin →</a>
+    """
+    await _send(_ADMIN_EMAIL, f"✅ Plan #{plan_id} aplicado: {len(r)} resueltos, {len(f)} fallidos", _wrap(body))
+
+
 async def send_proposal_notification(
     question: str,
     category: str,

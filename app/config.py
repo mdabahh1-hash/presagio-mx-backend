@@ -69,5 +69,11 @@ class Settings(BaseSettings):
 
     RESEND_API_KEY: str = ""
 
+    # Plan de resolución nocturno (app/services/resolucion): arma el plan con
+    # ESPN + TheSportsDB, lo manda por correo al admin y un clic lo aplica.
+    RESOLUCION_NOCTURNA_ENABLED: bool = False   # True en Railway
+    RESOLUCION_NOCTURNA_HORA_UTC: int = 12      # 06:00 CDMX
+    PLAN_APPROVAL_TTL_HOURS: int = 48
+
 
 settings = Settings()

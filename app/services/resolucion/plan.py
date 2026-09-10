@@ -7,12 +7,14 @@ haya encontrado y, cuando aplica, un `veredicto_sugerido`).
 """
 from __future__ import annotations
 
-import sys
+import logging
 from collections import defaultdict
 from datetime import datetime, timezone
 
 from . import cruce
 from .fuentes import LIGAS, Http, Partido, espn_scoreboard, espn_summary, tsdb_buscar, variantes_nombre
+
+logger = logging.getLogger(__name__)
 
 
 def _dt(iso: str) -> datetime:
@@ -20,12 +22,12 @@ def _dt(iso: str) -> datetime:
 
 
 def _escalado(m: dict, razon: str, **extra) -> dict:
-    return {"id": m["id"], "razon": razon, "volume": round(float(m.get("volume") or 0)),
-            "num_trades": int(m.get("num_trades") or 0), **extra}
+    return {"id": m["id"], "pregunta": m.get("question"), "liga": m.get("subcategory"), "razon": razon,
+            "volume": round(float(m.get("volume") or 0)), "num_trades": int(m.get("num_trades") or 0), **extra}
 
 
 def _log(msg: str) -> None:
-    print(msg, file=sys.stderr)
+    logger.info(msg)
 
 
 def armar_plan(mercados: list[dict], http: Http | None = None, solo_ligas: set[str] | None = None) -> dict:

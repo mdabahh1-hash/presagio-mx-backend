@@ -19,6 +19,20 @@ Herramienta: `agent-resolver.py` en la raíz del repo backend
 ahí con `./venv/bin/python`. Los planes y la bitácora viven en `resoluciones/` (se commitean:
 son el rastro de auditoría de qué se resolvió, con qué evidencia).
 
+## Modo nocturno (el default desde 2026-09-10)
+
+El backend en Railway arma el plan solo cada día a las 12:00 UTC (06:00 CDMX)
+(`RESOLUCION_NOCTURNA_ENABLED=true`, `app/services/resolucion/nocturno.py`): corre `armar_plan`
+contra la BD, guarda una fila en `resolution_plans` y manda a Mark un correo con la tabla, la
+evidencia y un botón **"Revisar y aprobar"** (enlace firmado, vence en 48 h). El enlace abre una
+página de confirmación; el botón "Confirmar" (POST) aplica el plan una sola vez con
+`app/services/resolution.resolve` y manda un correo de resultado. Los escalados van en el mismo
+correo con veredicto sugerido y enlace a ESPN para cerrarlos en `/admin`.
+
+Comandos útiles: `agent-resolver.py planes` (planes del servidor y estado del job) y
+`agent-resolver.py plan-nocturno` (dispara uno ahora, p. ej. cuando ya terminaron los partidos
+"en vivo"). El flujo manual de abajo sigue vigente para escalados y para cuando Mark lo pida.
+
 ## Paso 0 — Token
 
 ```

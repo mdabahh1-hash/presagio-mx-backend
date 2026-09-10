@@ -213,8 +213,8 @@ def resolver_1x2(mercado: dict, espn: Partido | None, nota_espn: str,
                  tsdb: Partido | None) -> dict:
     """Combina ambas fuentes. Devuelve una entrada de plan (confianza alta) o un
     escalado con la evidencia disponible."""
-    base = {"id": mercado["id"], "volume": round(float(mercado.get("volume") or 0)),
-            "num_trades": int(mercado.get("num_trades") or 0)}
+    base = {"id": mercado["id"], "pregunta": mercado.get("question"), "liga": mercado.get("subcategory"),
+            "volume": round(float(mercado.get("volume") or 0)), "num_trades": int(mercado.get("num_trades") or 0)}
     if espn is None:
         return {**base, "escalar": True, "razon": f"ESPN: {nota_espn}"}
     v1, r1 = veredicto_1x2(espn)

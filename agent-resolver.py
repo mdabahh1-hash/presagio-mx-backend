@@ -37,6 +37,11 @@ Comandos:
   ./venv/bin/python agent-resolver.py resolve <market_id> --outcome <outcome_key>
       Resuelve UN mercado a mano (también irreversible, también con aprobación).
 
+  ./venv/bin/python agent-resolver.py planes [--limit N]
+  ./venv/bin/python agent-resolver.py plan-nocturno
+      Planes del job nocturno del servidor (status, resumen) y disparo manual.
+      El plan se aprueba desde el enlace del correo, no desde aquí.
+
 Formato del plan (JSON):
   {"generado": "2026-09-09T20:00:00Z",
    "resoluciones": [{"id": "...", "veredicto": "YES|NO|<outcome_key>",
@@ -53,12 +58,14 @@ import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
-from urllib.parse import urlparse
 
 API = "https://presagio-mx-backend-production-a30e.up.railway.app/api"
 REPO = os.path.dirname(os.path.abspath(__file__))
 ENV_FILE = os.path.join(REPO, ".env.agent")
 LOG_FILE = os.path.join(REPO, "resoluciones", "log.jsonl")
+
+sys.path.insert(0, REPO)
+from app.services.resolucion.validar import validar_entrada  # noqa: E402  (puro, sin BD)
 
 CAMPOS_COMPACTOS = (
     "id", "question", "market_type", "category", "subcategory", "kind",
@@ -179,57 +186,6 @@ def cmd_list(compact: bool, out_path: str | None) -> None:
 
 
 # ── plan ─────────────────────────────────────────────────────────────────────
-
-def _host(url: str) -> str:
-    try:
-        return (urlparse(url).hostname or "").lower().removeprefix("www.")
-    except Exception:
-        return ""
-
-
-def validar_entrada(entrada: dict, detalle: dict | None, ahora: datetime) -> list[str]:
-    """Errores de una resolución del plan contra el detalle del mercado. Función
-    pura (sin red) para poder testearla."""
-    errores: list[str] = []
-    if detalle is None or detalle.get("http_error"):
-        return ["mercado no encontrado en el API"]
-
-    if detalle.get("status") != "pending_resolution":
-        errores.append(f"status es '{detalle.get('status')}', no pending_resolution")
-
-    ends_at = detalle.get("ends_at")
-    if ends_at:
-        try:
-            if datetime.fromisoformat(ends_at.replace("Z", "+00:00")) > ahora:
-                errores.append("el mercado todavía no cierra (ends_at en el futuro)")
-        except ValueError:
-            errores.append(f"ends_at ilegible: {ends_at}")
-
-    veredicto = str(entrada.get("veredicto") or "").strip()
-    if detalle.get("market_type") == "multi":
-        keys = [o.get("outcome_key") for o in (detalle.get("outcomes") or [])]
-        if veredicto not in keys:
-            errores.append(f"veredicto '{veredicto}' no es un outcome_key válido ({', '.join(keys)})")
-    else:
-        if veredicto not in ("YES", "NO"):
-            errores.append(f"veredicto '{veredicto}' debe ser YES o NO (binario)")
-
-    f1, f2 = str(entrada.get("fuente_1") or ""), str(entrada.get("fuente_2") or "")
-    h1, h2 = _host(f1), _host(f2)
-    if not h1 or not f1.startswith("http"):
-        errores.append("fuente_1 no es una URL")
-    if not h2 or not f2.startswith("http"):
-        errores.append("fuente_2 no es una URL")
-    if h1 and h2 and h1 == h2:
-        errores.append(f"las dos fuentes son del mismo host ({h1}); se requieren fuentes independientes")
-
-    if entrada.get("confianza") != "alta":
-        errores.append(f"confianza '{entrada.get('confianza')}' (solo se ejecuta con 'alta')")
-
-    if not str(entrada.get("resultado") or "").strip():
-        errores.append("falta 'resultado' (hecho verificado)")
-    return errores
-
 
 def _cargar_plan(path: str) -> dict:
     with open(path) as f:
@@ -387,8 +343,10 @@ def cmd_resolve(market_id: str, resolution: str | None, outcome: str | None) -> 
 
 
 def cmd_plan_auto(out_path: str, ligas: list[str] | None) -> None:
-    sys.path.insert(0, REPO)
-    from resolucion.plan import armar_plan
+    import logging
+
+    logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stderr)
+    from app.services.resolucion.plan import armar_plan
 
     markets = _fetch_pending()
     with ThreadPoolExecutor(max_workers=8) as pool:
@@ -405,6 +363,29 @@ def cmd_plan_auto(out_path: str, ligas: list[str] | None) -> None:
     for e in esc:
         sug = f" sugerido={e['veredicto_sugerido']}" if e.get("veredicto_sugerido") else ""
         print(f"  ESCALADO {e['id']} (vol {e.get('volume', 0)}):{sug} {e['razon']}")
+
+
+def cmd_planes(limit: int) -> None:
+    """Planes del servidor (job nocturno) con su status y resumen."""
+    r = _auth(f"/admin/resolucion/planes?limit={limit}")
+    if isinstance(r, dict) and r.get("http_error"):
+        sys.exit(f"ERROR: {json.dumps(r, ensure_ascii=False)}")
+    n = r.get("nightly", {})
+    print(f"job nocturno: última corrida {n.get('ran_at')} · último plan #{n.get('last_plan_id')} · error: {n.get('last_error')}")
+    for p in r.get("planes", []):
+        s = p.get("resumen") or {}
+        res = p.get("resultado") or {}
+        extra = f" → resueltos {len(res.get('resueltos', []))}, fallidos {len(res.get('fallidos', []))}" if res else ""
+        print(f"#{p['id']:<4} {p['status']:<9} {p['created_at'][:16]}  {s.get('resoluciones', 0)} res · {s.get('escalados', 0)} esc · {s.get('volumen', 0)} PT{extra}")
+
+
+def cmd_plan_nocturno() -> None:
+    """Dispara en el servidor la armada de un plan (en segundo plano)."""
+    r = _auth("/admin/resolucion/planes", data={})
+    if isinstance(r, dict) and r.get("started"):
+        print("Plan nocturno disparado en el servidor. En unos minutos llega el correo; revisa con: agent-resolver.py planes")
+    else:
+        sys.exit(f"ERROR: {json.dumps(r, ensure_ascii=False)}")
 
 
 def cmd_check_token() -> None:
@@ -436,9 +417,16 @@ def main() -> None:
     pr.add_argument("market_id")
     pr.add_argument("--resolution", choices=["YES", "NO"])
     pr.add_argument("--outcome")
+    pls = sub.add_parser("planes")
+    pls.add_argument("--limit", type=int, default=10)
+    sub.add_parser("plan-nocturno")
     a = p.parse_args()
     if a.cmd == "check-token":
         cmd_check_token()
+    elif a.cmd == "planes":
+        cmd_planes(a.limit)
+    elif a.cmd == "plan-nocturno":
+        cmd_plan_nocturno()
     elif a.cmd == "list":
         cmd_list(a.compact, a.out)
     elif a.cmd == "plan-auto":
