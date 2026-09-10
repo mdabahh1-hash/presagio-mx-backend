@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from fastapi import FastAPI
@@ -15,6 +16,15 @@ from app.services.resolucion.nocturno import nightly_loop, get_nightly_status
 
 # How often the background job runs (closing-soon notices, auto-close, admin reminders).
 MAINTENANCE_INTERVAL_SECONDS = 900  # 15 min
+
+# Los loggers de app.* a INFO (correos enviados, plan nocturno) para que salgan
+# en `railway logs`; uvicorn solo configura los suyos.
+_app_logger = logging.getLogger("app")
+if not _app_logger.handlers:
+    _h = logging.StreamHandler()
+    _h.setFormatter(logging.Formatter("%(levelname)s [%(name)s] %(message)s"))
+    _app_logger.addHandler(_h)
+_app_logger.setLevel(logging.INFO)
 
 
 async def _maintenance_loop() -> None:
