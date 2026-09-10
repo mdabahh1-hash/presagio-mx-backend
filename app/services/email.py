@@ -193,7 +193,8 @@ async def send_resolution_plan_email(plan_id: int, plan: dict, resumen: dict, ur
         )
 
     tabla = ('<table style="width:100%;border-collapse:collapse;margin:0 0 18px">' + "".join(fila(r) for r in res) + "</table>") if res else \
-        '<p style="font-size:13px;color:rgba(245,240,232,0.6)">Ningún mercado quedó con doble fuente esta noche.</p>'
+        ('<p style="font-size:13px;color:rgba(245,240,232,0.6)">Ningún mercado quedó con marcador confirmado en dos fuentes, '
+         'así que <b>no hay nada que aprobar</b> y este correo no lleva botón. Los escalados de abajo se cierran a mano en /admin.</p>')
 
     def item(e: dict) -> str:
         sug = f' · sugerido: <b>{_esc(str(e["veredicto_sugerido"]))}</b>' if e.get("veredicto_sugerido") else ""
