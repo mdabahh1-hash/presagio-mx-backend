@@ -1,0 +1,159 @@
+{
+ "generado": "2026-09-10T13:30:55+00:00",
+ "resoluciones": [
+  {
+   "id": "lp-porto-moreirense-j5-2627",
+   "veredicto": "local",
+   "resultado": "FC Porto 2-1 Moreirense (04-sep-2026, Jornada 5; goles: Dinis Pinto 20' MOR, Bednarek 40' y William Gomes 45' POR)",
+   "fuente_1": "https://www.ligaportugal.pt/match/20262027/ligaportugalbetclic/5/6",
+   "fuente_2": "https://www.vavel.com/en-us/soccer/2026/09/04/1270067-porto-vs-moreirense-live-score-updates-in-liga.html",
+   "confianza": "alta"
+  },
+  {
+   "id": "lp-sporting-nacional-j5-2627",
+   "veredicto": "local",
+   "resultado": "Sporting CP 2-0 Nacional (05-sep-2026, Jornada 5; goles: Luis Suárez 32' pen., Flávio Gonçalves 49')",
+   "fuente_1": "https://www.ligaportugal.pt/match/20262027/ligaportugalbetclic/5/8",
+   "fuente_2": "https://www.foxsports.com/soccer/primeria-liga-sporting-cp-vs-nacional-sep-05-2026-game-boxscore-912896",
+   "confianza": "alta"
+  },
+  {
+   "id": "lp-estrela-famalicao-j5-2627",
+   "veredicto": "empate",
+   "resultado": "Estrela Amadora 2-2 Famalicão (05-sep-2026, Jornada 5; goles: Koutsias 2' y 80' pen. FAM, Antonetti 57' y Scholze 69' EST)",
+   "fuente_1": "https://www.ligaportugal.pt/match/20262027/ligaportugalbetclic/5/2",
+   "fuente_2": "https://cidadehoje.sapo.pt/famalicao-empata-na-amadora-2-2/",
+   "confianza": "alta"
+  },
+  {
+   "id": "lp-alverca-braga-j5-2627",
+   "veredicto": "visitante",
+   "resultado": "Alverca 1-2 Braga (05-sep-2026, Jornada 5; goles: Chiquinho 27' pen. ALV, Pau Víctor 50' y 57' BRA)",
+   "fuente_1": "https://www.ligaportugal.pt/match/20262027/ligaportugalbetclic/5/1",
+   "fuente_2": "https://vsports.pt/vsports/jogo/i-liga/alverca-braga/30397",
+   "confianza": "alta"
+  },
+  {
+   "id": "lp-maritimo-benfica-j5-2627",
+   "veredicto": "visitante",
+   "resultado": "Marítimo 0-3 Benfica (05-sep-2026, Jornada 5; goles: Leandro Barreiro 7' y 71', Prestianni 82')",
+   "fuente_1": "https://www.ligaportugal.pt/match/20262027/ligaportugalbetclic/5/5",
+   "fuente_2": "https://vsports.pt/vsports/jogo/i-liga/maritimo-benfica/30394/destaques",
+   "confianza": "alta"
+  },
+  {
+   "id": "lp-santaclara-rioave-j5-2627",
+   "veredicto": "local",
+   "resultado": "Santa Clara 4-0 Rio Ave (06-sep-2026, Jornada 5; goles: Brenner 3', Tiago Ribeiro 47', Vinícius Lopes 52', Luís Fernando 90')",
+   "fuente_1": "https://www.ligaportugal.pt/match/20262027/ligaportugalbetclic/5/7",
+   "fuente_2": "https://www.espn.com/soccer/match?gameId=401885450",
+   "confianza": "alta"
+  },
+  {
+   "id": "lp-guimaraes-casapia-j5-2627",
+   "veredicto": "empate",
+   "resultado": "Vitória Guimarães 0-0 Casa Pia (06-sep-2026, Jornada 5)",
+   "fuente_1": "https://www.ligaportugal.pt/match/20262027/ligaportugalbetclic/5/9",
+   "fuente_2": "https://www.foxsports.com/soccer/primeria-liga-vta-de-guimar-vs-casa-pia-lisbon-sep-06-2026-game-boxscore-912897",
+   "confianza": "alta"
+  },
+  {
+   "id": "lp-gilvicente-viseu-j5-2627",
+   "veredicto": "visitante",
+   "resultado": "Gil Vicente 0-1 Académico de Viseu (06-sep-2026, Jornada 5; gol: João Guilherme 4')",
+   "fuente_1": "https://www.ligaportugal.pt/match/20262027/ligaportugalbetclic/5/4",
+   "fuente_2": "https://www.diarioviseu.pt/2026/09/06/academico-de-viseu-consegue-primeira-vitoria-na-visita-ao-gil-vicente/",
+   "confianza": "alta"
+  },
+  {
+   "id": "lp-estoril-arouca-j5-2627",
+   "veredicto": "empate",
+   "resultado": "Estoril 0-0 Arouca (07-sep-2026, Jornada 5)",
+   "fuente_1": "https://www.ligaportugal.pt/match/20262027/ligaportugalbetclic/5/3",
+   "fuente_2": "https://www.foxsports.com/soccer/primeria-liga-estoril-praia-vs-arouca-sep-07-2026-game-boxscore-912891",
+   "confianza": "alta"
+  },
+  {
+   "id": "sa-genoa-como-j3-2627",
+   "veredicto": "visitante",
+   "resultado": "Genoa 1-4 Como (4-sep-2026, Jornada 3)",
+   "fuente_1": "https://www.legaseriea.it/videos/highlights/serie-a-2026-2027-genoa-como",
+   "fuente_2": "https://sport.sky.it/calcio/serie-a/partite/2026/giornata-3/genoa-como/risultato-gol",
+   "confianza": "alta"
+  },
+  {
+   "id": "sa-fiorentina-torino-j3-2627",
+   "veredicto": "visitante",
+   "resultado": "Fiorentina 1-2 Torino (5-sep-2026, Jornada 3)",
+   "fuente_1": "https://www.legaseriea.it/videos/highlights/serie-a-2026-2027-fiorentina-torino",
+   "fuente_2": "https://www.ansa.it/sito/notizie/sport/calcio/2026/09/05/serie-a-fiorentina-torino-1-2-granata-vincono-in-rimonta_85b34cec-9152-45b2-9211-9e9719e12a2c.html",
+   "confianza": "alta"
+  },
+  {
+   "id": "sa-inter-napoli-j3-2627",
+   "veredicto": "local",
+   "resultado": "Inter 3-2 Napoli (5-sep-2026, Jornada 3)",
+   "fuente_1": "https://www.legaseriea.it/videos/highlights/serie-a-2026-2027-inter-napoli",
+   "fuente_2": "https://www.calciomagazine.net/inter-napoli-diretta-risultato-5-settembre-2026-249539.html",
+   "confianza": "alta"
+  },
+  {
+   "id": "sa-roma-atalanta-j3-2627",
+   "veredicto": "local",
+   "resultado": "Roma 2-1 Atalanta (5-sep-2026, Jornada 3)",
+   "fuente_1": "https://www.legaseriea.it/videos/highlights/serie-a-2026-2027-roma-atalanta",
+   "fuente_2": "https://sport.virgilio.it/dirette/live/serie-a/5-9-2026/roma-atalanta/2638150/",
+   "confianza": "alta"
+  },
+  {
+   "id": "sa-frosinone-venezia-j3-2627",
+   "veredicto": "local",
+   "resultado": "Frosinone 3-2 Venezia (6-sep-2026, Jornada 3)",
+   "fuente_1": "https://www.legaseriea.it/videos/highlights/serie-a-2026-2027-frosinone-venezia",
+   "fuente_2": "https://www.ansa.it/sito/notizie/sport/calcio/2026/09/06/serie-a-frosinone-batte-venezia-3-2nbsp_8ca1ca58-50d1-427f-a3ee-7f000771d9b5.html",
+   "confianza": "alta"
+  },
+  {
+   "id": "sa-parma-monza-j3-2627",
+   "veredicto": "empate",
+   "resultado": "Parma 1-1 Monza (6-sep-2026, Jornada 3)",
+   "fuente_1": "https://www.legaseriea.it/videos/highlights/serie-a-2026-2027-parma-monza",
+   "fuente_2": "https://www.ansa.it/sito/notizie/sport/calcio/2026/09/06/serie-a-parma-monza-1-1-_aca002ea-3301-44a4-9fce-ecb6465a5f85.html",
+   "confianza": "alta"
+  },
+  {
+   "id": "sa-bologna-sassuolo-j3-2627",
+   "veredicto": "empate",
+   "resultado": "Bologna 2-2 Sassuolo (6-sep-2026, Jornada 3)",
+   "fuente_1": "https://www.legaseriea.it/videos/highlights/serie-a-2026-2027-bologna-sassuolo",
+   "fuente_2": "https://www.ansa.it/sito/notizie/sport/calcio/2026/09/06/serie-a-bologna-sassuolo-2-2_74b4353b-0644-48f6-9a94-a27ef7c13890.html",
+   "confianza": "alta"
+  },
+  {
+   "id": "sa-juventus-milan-j3-2627",
+   "veredicto": "empate",
+   "resultado": "Juventus 1-1 AC Milan (6-sep-2026, Jornada 3)",
+   "fuente_1": "https://www.legaseriea.it/videos/highlights/serie-a-2026-2027-juventus-milan",
+   "fuente_2": "https://www.ansa.it/sito/notizie/sport/calcio/2026/09/06/serie-a-juventus-milan-termina-1-1_0c3a486d-1be2-4c91-b068-6c478760311a.html",
+   "confianza": "alta"
+  },
+  {
+   "id": "sa-cagliari-lecce-j3-2627",
+   "veredicto": "local",
+   "resultado": "Cagliari 1-0 Lecce (7-sep-2026, Jornada 3)",
+   "fuente_1": "https://www.legaseriea.it/videos/highlights/serie-a-2026-2027-cagliari-lecce",
+   "fuente_2": "https://sport.virgilio.it/dirette/live/serie-a/7-9-2026/cagliari-lecce/2638143/",
+   "confianza": "alta"
+  },
+  {
+   "id": "sa-udinese-lazio-j3-2627",
+   "veredicto": "visitante",
+   "resultado": "Udinese 1-2 Lazio (7-sep-2026, Jornada 3)",
+   "fuente_1": "https://www.legaseriea.it/videos/highlights/serie-a-2026-2027-udinese-lazio",
+   "fuente_2": "https://www.ansa.it/sito/notizie/sport/calcio/2026/09/07/serie-a-in-campo-udinese-lazio-1-2_9a1b8c85-2b54-45cb-98d2-5b76db2ec524.html",
+   "confianza": "alta"
+  }
+ ],
+ "escalados": [],
+ "nota": "Primera corrida real. Solo Serie A J3 y Liga Portugal J5 (investigadas con doble fuente); los otros 88 pendientes quedan sin investigar para el siguiente plan (resolución mecánica por API de resultados)."
+}
