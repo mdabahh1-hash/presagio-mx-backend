@@ -45,10 +45,32 @@ Agrupa por `subcategory` + `kind`:
   (o multi con sus propias keys). Necesitan el criterio y las normas del detalle.
 - **No deportivos**: caso por caso.
 
-## Paso 2 — Investigación en paralelo (subagentes)
+## Paso 2 — Resolución mecánica (sin tokens): `plan-auto`
 
-Lanza subagentes **en paralelo** (uno por liga o grupo, tipo general-purpose con búsqueda web).
-A cada uno pásale un archivo con sus mercados (id, pregunta, tipo, `ends_at`, `outcome_keys`,
+```
+./venv/bin/python agent-resolver.py plan-auto --out resoluciones/AAAA-MM-DD.json
+```
+
+Cruza los 1X2 pendientes con **ESPN** (jornada completa) y **TheSportsDB** (partido por
+partido) usando `resolucion/` (sin LLM, ~5-10 min por el throttle de TheSportsDB). Al plan
+entran solo los partidos cuyo marcador final coincide en ambas fuentes (`confianza: alta`,
+`fuente_1` ESPN, `fuente_2` TheSportsDB). Todo lo demás sale en `escalados`, ordenado por
+volumen, con `veredicto_sugerido` cuando ESPN sí tiene el dato:
+- "solo una fuente": TheSportsDB no encontró el partido → confirma el marcador con UNA
+  página oficial (WebFetch) y, si coincide con ESPN, muévelo al plan con esa URL como
+  `fuente_2`.
+- accesorios titular/gol: sugerencia con la alineación o los goles de ESPN → confirma con la
+  página oficial del partido (UEFA, liga o club) y muévelo al plan con `YES`/`NO`.
+- aplazado / sin cruce / sin fuente automática (liga fuera de `resolucion/fuentes.py:LIGAS`,
+  NFL, Leagues Cup) → investigación manual solo si tiene volumen; si no, déjalo escalado.
+
+**Este paso sustituye a la investigación con subagentes.** Lanzar subagentes de búsqueda
+web por liga costó ~8,000 tokens por mercado (10-sep-2026) y agotó la sesión de Mark: no
+volver a hacerlo. Para lo que `plan-auto` no resuelve, una sola página por mercado.
+
+### Solo si Mark lo pide expresamente: investigación con subagentes
+
+A cada subagente pásale un archivo con sus mercados (id, pregunta, tipo, `ends_at`, `outcome_keys`,
 criterio de resolución, `resolution_source_url`, normas si es accesorio) e instrucciones estrictas:
 
 - Buscar el resultado en la **fuente oficial** del mercado Y en **al menos otra fuente
@@ -80,7 +102,8 @@ o criterio que hubo que interpretar → va a ESCALADOS, no al plan.
 
 ## Paso 3 — Plan y validación
 
-Con las respuestas arma `resoluciones/AAAA-MM-DD.json`:
+`plan-auto` ya deja `resoluciones/AAAA-MM-DD.json` con este formato; edítalo para agregar
+lo que confirmaste a mano (y deja en `escalados` lo que no):
 
 ```json
 {"generado": "2026-09-09T20:00:00Z",

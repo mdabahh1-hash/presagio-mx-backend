@@ -15,6 +15,12 @@ Comandos:
       completo (criterio, fuente, normas, outcomes); --compact solo lo que
       necesita la investigación.
 
+  ./venv/bin/python agent-resolver.py plan-auto --out resoluciones/AAAA-MM-DD.json [--liga "Serie A" ...]
+      Arma el plan SIN LLM: cruza los 1X2 pendientes con ESPN y TheSportsDB
+      (paquete resolucion/). Solo entran con confianza alta los partidos cuyo
+      marcador coincide en ambas fuentes; el resto (aplazados, una sola fuente,
+      accesorios de titular/gol con sugerencia de ESPN) queda en escalados.
+
   ./venv/bin/python agent-resolver.py check-plan resoluciones/AAAA-MM-DD.json
       Valida un plan contra el API (solo lectura): mercado sigue pendiente,
       veredicto válido para el tipo, dos fuentes de hosts distintos, confianza
@@ -380,6 +386,27 @@ def cmd_resolve(market_id: str, resolution: str | None, outcome: str | None) -> 
         sys.exit(f"FALLÓ {market_id}: {json.dumps(r, ensure_ascii=False)}")
 
 
+def cmd_plan_auto(out_path: str, ligas: list[str] | None) -> None:
+    sys.path.insert(0, REPO)
+    from resolucion.plan import armar_plan
+
+    markets = _fetch_pending()
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        details = [_proyectar(d, compact=False) for d in pool.map(_detail, markets)]
+    plan = armar_plan(details, solo_ligas=set(ligas) if ligas else None)
+    plan["escalados"].sort(key=lambda e: (-(e.get("volume") or 0), e["id"]))
+    os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
+    with open(out_path, "w") as f:
+        json.dump(plan, f, ensure_ascii=False, indent=1)
+    res, esc = plan["resoluciones"], plan["escalados"]
+    con_sug = [e for e in esc if e.get("veredicto_sugerido")]
+    print(f"{len(details)} pendientes → {len(res)} resoluciones con doble fuente, {len(esc)} escalados "
+          f"({len(con_sug)} con veredicto sugerido) → {out_path}")
+    for e in esc:
+        sug = f" sugerido={e['veredicto_sugerido']}" if e.get("veredicto_sugerido") else ""
+        print(f"  ESCALADO {e['id']} (vol {e.get('volume', 0)}):{sug} {e['razon']}")
+
+
 def cmd_check_token() -> None:
     token = _ensure_token()
     me = _req("/users/me", token=token)
@@ -395,6 +422,9 @@ def main() -> None:
     pl = sub.add_parser("list")
     pl.add_argument("--compact", action="store_true")
     pl.add_argument("--out")
+    pp = sub.add_parser("plan-auto")
+    pp.add_argument("--out", required=True)
+    pp.add_argument("--liga", action="append", help="limitar a una subcategoría (repetible)")
     pc = sub.add_parser("check-plan")
     pc.add_argument("plan")
     pc.add_argument("--only", nargs="+")
@@ -411,6 +441,8 @@ def main() -> None:
         cmd_check_token()
     elif a.cmd == "list":
         cmd_list(a.compact, a.out)
+    elif a.cmd == "plan-auto":
+        cmd_plan_auto(a.out, a.liga)
     elif a.cmd == "check-plan":
         check_plan(a.plan, a.only)
     elif a.cmd == "apply":
