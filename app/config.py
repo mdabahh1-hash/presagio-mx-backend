@@ -74,6 +74,10 @@ class Settings(BaseSettings):
     RESOLUCION_NOCTURNA_ENABLED: bool = False   # True en Railway
     RESOLUCION_NOCTURNA_HORA_UTC: int = 12      # 06:00 CDMX
     PLAN_APPROVAL_TTL_HOURS: int = 48
+    # True: los 1X2 con marcador coincidente en ESPN y TheSportsDB se resuelven
+    # solos al armar el plan (el correo es un reporte); los escalados siguen
+    # esperando al admin. False: todo espera el clic de aprobación.
+    RESOLUCION_AUTO_APROBAR_1X2: bool = False
 
 
 settings = Settings()

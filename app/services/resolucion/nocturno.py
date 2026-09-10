@@ -127,10 +127,17 @@ async def correr_plan_nocturno(forzar: bool = False) -> ResolutionPlan | None:
             await db.commit()
             await db.refresh(row)
             plan_id, nonce, resumen = row.id, row.nonce, dict(row.resumen)  # antes de cerrar la sesión
+            resultado = None
+            auto = [e for e in plan.get("resoluciones", []) if es_1x2_doble_fuente(e)]
+            if settings.RESOLUCION_AUTO_APROBAR_1X2 and auto:
+                logger.info("plan nocturno #%d: auto-aprobando %d 1X2 con doble fuente", plan_id, len(auto))
+                row.status = "applying"
+                await db.commit()
+                resultado = await aplicar_plan(db, plan_id, {"resoluciones": auto}, notificar=False)
         _LAST["last_plan_id"] = plan_id
         logger.info("plan nocturno #%d: %s", plan_id, resumen)
         url = f"{settings.BACKEND_URL}/api/admin/resolucion/planes/{plan_id}/aprobar?t={make_plan_token(plan_id, nonce)}"
-        spawn(send_resolution_plan_email(plan_id, plan, resumen, url))
+        spawn(send_resolution_plan_email(plan_id, plan, resumen, url, auto_resultado=resultado))
         return row
     except Exception as e:  # noqa: BLE001
         _LAST["last_error"] = str(e)
@@ -140,7 +147,20 @@ async def correr_plan_nocturno(forzar: bool = False) -> ResolutionPlan | None:
 
 # ── aplicar ──────────────────────────────────────────────────────────────────
 
-async def aplicar_plan(db: AsyncSession, plan_id: int, plan: dict) -> dict:
+_1X2 = {"local", "empate", "visitante"}
+_FUENTES_AUTO = {"espn.com", "thesportsdb.com"}
+
+
+def es_1x2_doble_fuente(e: dict) -> bool:
+    """Entrada apta para auto-aprobación: veredicto 1X2 y las dos fuentes
+    automáticas (ESPN + TheSportsDB) con confianza alta."""
+    from app.services.resolucion.validar import host
+
+    hosts = {host(str(e.get("fuente_1") or "")), host(str(e.get("fuente_2") or ""))}
+    return e.get("veredicto") in _1X2 and e.get("confianza") == "alta" and hosts == _FUENTES_AUTO
+
+
+async def aplicar_plan(db: AsyncSession, plan_id: int, plan: dict, notificar: bool = True) -> dict:
     """Aplica las resoluciones del plan (una transacción por mercado). Deja
     `resultado` y `status` en la fila. Idempotente: un plan aplicado no se
     vuelve a aplicar (el llamador verifica status == pending). Recibe el plan
@@ -192,7 +212,8 @@ async def aplicar_plan(db: AsyncSession, plan_id: int, plan: dict) -> dict:
     fresh.status = "partial" if fallidos else "applied"
     await db.commit()
     logger.info("plan #%d aplicado: %d resueltos, %d saltados, %d fallidos", plan_id, len(resueltos), len(saltados), len(fallidos))
-    spawn(send_resolution_plan_applied_email(plan_id, resultado))
+    if notificar:
+        spawn(send_resolution_plan_applied_email(plan_id, resultado))
     return resultado
 
 

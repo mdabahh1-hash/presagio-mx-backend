@@ -175,9 +175,12 @@ async def send_admin_resolution_reminder(markets: list[tuple[str, str, datetime]
     await _send(_ADMIN_EMAIL, f"🔔 {n} {plural} por resolver en VEREDIKT", _wrap(body))
 
 
-async def send_resolution_plan_email(plan_id: int, plan: dict, resumen: dict, url_aprobar: str) -> None:
+async def send_resolution_plan_email(
+    plan_id: int, plan: dict, resumen: dict, url_aprobar: str, auto_resultado: dict | None = None
+) -> None:
     """Plan nocturno al admin: tabla de resoluciones con evidencia, botón de
-    aprobación (enlace firmado, un solo uso) y lista de escalados."""
+    aprobación (enlace firmado, un solo uso) y lista de escalados. Con
+    `auto_resultado` (auto-aprobación de 1X2) el correo es un reporte sin botón."""
     res = sorted(plan.get("resoluciones", []), key=lambda x: (x.get("liga") or "", x["id"]))
     esc = plan.get("escalados", [])
     n, con_ops, vol = resumen.get("resoluciones", len(res)), resumen.get("con_operaciones", 0), resumen.get("volumen", 0)
@@ -206,9 +209,18 @@ async def send_resolution_plan_email(plan_id: int, plan: dict, resumen: dict, ur
     escalados = (f'<p style="margin:18px 0 6px;font-size:14px;font-weight:700">Escalados ({len(esc)}) — ciérralos en <a href="{_SITE}/#/admin" style="color:#8AB4FF">/admin</a></p>'
                  f'<ul style="padding-left:18px;margin:0">{"".join(item(e) for e in esc)}</ul>') if esc else ""
 
-    boton = (f'<a href="{_esc(url_aprobar)}" style="display:inline-block; background:#FFD700; color:#07071A; text-decoration:none; '
-             f'font-weight:800; font-size:14px; padding:12px 24px; border-radius:10px; margin:0 0 18px;">Revisar y aprobar {n} resoluciones →</a>'
-             f'<p style="margin:0 0 18px;font-size:11px;color:rgba(245,240,232,0.35)">El enlace abre una página de confirmación y vence en {settings.PLAN_APPROVAL_TTL_HOURS} h.</p>') if res else ""
+    if auto_resultado is not None:
+        r_ok, r_f = auto_resultado.get("resueltos", []), auto_resultado.get("fallidos", [])
+        fallos = "".join(f'<li style="font-size:12px;color:#FF2D55">{_esc(x["id"])}: {_esc(x.get("razon") or "")}</li>' for x in r_f)
+        boton = (f'<p style="margin:0 0 18px;font-size:13px;color:#00FF88"><b>✅ Resueltos automáticamente: {len(r_ok)}</b> '
+                 f'(1X2 con marcador coincidente en ESPN y TheSportsDB) · posiciones liquidadas {auto_resultado.get("posiciones_liquidadas", 0)}'
+                 f'{f" · fallidos {len(r_f)}" if r_f else ""}</p>{f"<ul>{fallos}</ul>" if fallos else ""}')
+        titulo = f"✅ Resueltos solos {len(r_ok)} mercados ({con_ops} con operaciones, {vol} PT)"
+    else:
+        boton = (f'<a href="{_esc(url_aprobar)}" style="display:inline-block; background:#FFD700; color:#07071A; text-decoration:none; '
+                 f'font-weight:800; font-size:14px; padding:12px 24px; border-radius:10px; margin:0 0 18px;">Revisar y aprobar {n} resoluciones →</a>'
+                 f'<p style="margin:0 0 18px;font-size:11px;color:rgba(245,240,232,0.35)">El enlace abre una página de confirmación y vence en {settings.PLAN_APPROVAL_TTL_HOURS} h.</p>') if res else ""
+        titulo = f"🧾 Plan de resolución: {n} mercados listos ({con_ops} con operaciones, {vol} PT)" if res else f"🧾 Plan de resolución: 0 listos, {len(esc)} escalados"
 
     body = f"""
       <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">🧾 Plan de resolución #{plan_id}</p>
@@ -219,7 +231,7 @@ async def send_resolution_plan_email(plan_id: int, plan: dict, resumen: dict, ur
       {tabla}
       {escalados}
     """
-    subject = f"🧾 Plan de resolución: {n} mercados listos ({con_ops} con operaciones, {vol} PT)" if res else f"🧾 Plan de resolución: 0 listos, {len(esc)} escalados"
+    subject = titulo
     await _send(_ADMIN_EMAIL, subject, _wrap(body).replace("max-width: 480px", "max-width: 720px"))
 
 

@@ -166,6 +166,39 @@ async def test_endpoints_admin_listar_y_disparar(client, db, make_user, armado, 
     assert r.status_code == 202 and r.json() == {"started": True}
 
 
+async def test_auto_aprobar_1x2(db, armado, correos, make_user, make_multi_market, make_binary_market, monkeypatch):
+    from app.config import settings
+    monkeypatch.setattr(settings, "RESOLUCION_AUTO_APROBAR_1X2", True)
+    u = await make_user("auto", points=50)
+    m1 = await make_multi_market("a-1", outcome_keys=("local", "empate", "visitante"))
+    b1 = await make_binary_market("a-bin")
+    db.add(Position(user_id=u.id, market_id=m1.id, outcome_key="local", shares=5, avg_cost=0.5))
+    await db.commit()
+    await _vencer(db, m1, b1)
+
+    row = await nocturno.correr_plan_nocturno()
+    import asyncio
+    await asyncio.sleep(0)
+    fresh = (await db.execute(select(ResolutionPlan).where(ResolutionPlan.id == row.id))).scalar_one()
+    assert fresh.status == "applied"
+    assert [x["id"] for x in fresh.resultado["resueltos"]] == ["a-1"]
+    m = (await db.execute(select(Market).where(Market.id == "a-1").execution_options(populate_existing=True))).scalar_one()
+    assert m.status == MarketStatus.RESOLVED and m.resolved_outcome_key == "local"
+    await db.refresh(u)
+    assert u.points == 55
+    # el binario escalado sigue pendiente y el correo es un reporte sin botón
+    b = (await db.execute(select(Market).where(Market.id == "a-bin").execution_options(populate_existing=True))).scalar_one()
+    assert b.status == MarketStatus.PENDING_RESOLUTION
+    # 2 correos: el del pago al usuario y el reporte del plan al admin
+    plan_mails = [(s, h) for s, h in correos if "Plan de resolución" in h or "Resueltos solos" in s]
+    assert len(plan_mails) == 1
+    subject, html = plan_mails[0]
+    assert "Resueltos solos 1" in subject and "automáticamente" in html and "Revisar y aprobar" not in html and "a-bin" in html
+    assert nocturno.es_1x2_doble_fuente(row.plan["resoluciones"][0]) is True
+    assert nocturno.es_1x2_doble_fuente({**row.plan["resoluciones"][0], "fuente_2": "https://www.skysports.com/x"}) is False
+    assert nocturno.es_1x2_doble_fuente({**row.plan["resoluciones"][0], "veredicto": "YES"}) is False
+
+
 def test_segundos_hasta_proxima_corrida():
     ahora = datetime(2026, 9, 10, 11, 30, tzinfo=timezone.utc)
     assert nocturno.segundos_hasta_proxima_corrida(ahora, hora_utc=12) == 1800
