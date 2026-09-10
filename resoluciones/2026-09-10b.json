@@ -1,0 +1,966 @@
+{
+ "generado": "2026-09-10T17:17:46+00:00",
+ "modo": "plan-auto (ESPN + TheSportsDB)",
+ "resoluciones": [
+  {
+   "id": "pl-ipswich-liverpool-j3-2627",
+   "volume": 3000,
+   "num_trades": 3,
+   "veredicto": "visitante",
+   "resultado": "Ipswich Town 0-2 Liverpool (04-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401879288",
+   "fuente_2": "https://www.thesportsdb.com/event/2494027",
+   "confianza": "alta"
+  },
+  {
+   "id": "pl-newcastle-bournemouth-j3-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Newcastle United 2-2 AFC Bournemouth (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401879286",
+   "fuente_2": "https://www.thesportsdb.com/event/2494020",
+   "confianza": "alta"
+  },
+  {
+   "id": "pl-brentford-sunderland-j3-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Brentford 1-1 Sunderland (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401879311",
+   "fuente_2": "https://www.thesportsdb.com/event/2494026",
+   "confianza": "alta"
+  },
+  {
+   "id": "pl-brighton-leeds-j3-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Brighton & Hove Albion 1-1 Leeds United (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401879290",
+   "fuente_2": "https://www.thesportsdb.com/event/2494025",
+   "confianza": "alta"
+  },
+  {
+   "id": "pl-city-coventry-j3-2627",
+   "volume": 2000,
+   "num_trades": 1,
+   "veredicto": "local",
+   "resultado": "Manchester City 1-0 Coventry City (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401879287",
+   "fuente_2": "https://www.thesportsdb.com/event/2494024",
+   "confianza": "alta"
+  },
+  {
+   "id": "pl-forest-tottenham-j3-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Nottingham Forest 0-0 Tottenham Hotspur (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401878780",
+   "fuente_2": "https://www.thesportsdb.com/event/2494029",
+   "confianza": "alta"
+  },
+  {
+   "id": "pl-fulham-palace-j3-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "visitante",
+   "resultado": "Fulham 2-3 Crystal Palace (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401879289",
+   "fuente_2": "https://www.thesportsdb.com/event/2494021",
+   "confianza": "alta"
+  },
+  {
+   "id": "pl-hull-villa-j3-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Hull City 0-0 Aston Villa (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401878781",
+   "fuente_2": "https://www.thesportsdb.com/event/2494028",
+   "confianza": "alta"
+  },
+  {
+   "id": "pl-everton-united-j3-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Everton 2-2 Manchester United (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401879291",
+   "fuente_2": "https://www.thesportsdb.com/event/2494023",
+   "confianza": "alta"
+  },
+  {
+   "id": "pl-arsenal-chelsea-j3-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Arsenal 2-1 Chelsea (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401879292",
+   "fuente_2": "https://www.thesportsdb.com/event/2494022",
+   "confianza": "alta"
+  },
+  {
+   "id": "mx-atlante-leon-j6",
+   "volume": 700,
+   "num_trades": 1,
+   "veredicto": "empate",
+   "resultado": "Atlante 1-1 León (29-ago-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401876999",
+   "fuente_2": "https://www.thesportsdb.com/event/2487498",
+   "confianza": "alta"
+  },
+  {
+   "id": "mx-pachuca-guadalajara-j6",
+   "volume": 400,
+   "num_trades": 1,
+   "veredicto": "empate",
+   "resultado": "Pachuca 1-1 Guadalajara (29-ago-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401876996",
+   "fuente_2": "https://www.thesportsdb.com/event/2487501",
+   "confianza": "alta"
+  },
+  {
+   "id": "mx-juarez-pachuca-j7-ap26",
+   "volume": 500,
+   "num_trades": 1,
+   "veredicto": "visitante",
+   "resultado": "FC Juarez 0-2 Pachuca (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401876990",
+   "fuente_2": "https://www.thesportsdb.com/event/2487507",
+   "confianza": "alta"
+  },
+  {
+   "id": "mx-sanluis-chivas-j7-ap26",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "visitante",
+   "resultado": "Atlético de San Luis 0-3 Guadalajara (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401876989",
+   "fuente_2": "https://www.thesportsdb.com/event/2487509",
+   "confianza": "alta"
+  },
+  {
+   "id": "mx-tigres-necaxa-j7-ap26",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Tigres UANL 1-1 Necaxa (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401876987",
+   "fuente_2": "https://www.thesportsdb.com/event/2487510",
+   "confianza": "alta"
+  },
+  {
+   "id": "mx-atlas-atlante-j7-ap26",
+   "volume": 1000,
+   "num_trades": 2,
+   "veredicto": "empate",
+   "resultado": "Atlas 1-1 Atlante (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401876985",
+   "fuente_2": "https://www.thesportsdb.com/event/2487512",
+   "confianza": "alta"
+  },
+  {
+   "id": "mx-cruzazul-santos-j7-ap26",
+   "volume": 100,
+   "num_trades": 1,
+   "veredicto": "local",
+   "resultado": "Cruz Azul 1-0 Santos (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401876983",
+   "fuente_2": "https://www.thesportsdb.com/event/2487514",
+   "confianza": "alta"
+  },
+  {
+   "id": "bl-stuttgart-koln-j2-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "VfB Stuttgart 4-1 FC Cologne (04-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401884808",
+   "fuente_2": "https://www.thesportsdb.com/event/2508347",
+   "confianza": "alta"
+  },
+  {
+   "id": "bl-bremen-leipzig-j2-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Werder Bremen 3-1 RB Leipzig (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401884802",
+   "fuente_2": "https://www.thesportsdb.com/event/2508342",
+   "confianza": "alta"
+  },
+  {
+   "id": "bl-gladbach-elversberg-j2-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "visitante",
+   "resultado": "Borussia Mönchengladbach 3-4 SV Elversberg (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401884804",
+   "fuente_2": "https://www.thesportsdb.com/event/2508343",
+   "confianza": "alta"
+  },
+  {
+   "id": "bl-hoffenheim-dortmund-j2-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "visitante",
+   "resultado": "TSG Hoffenheim 2-3 Borussia Dortmund (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401884807",
+   "fuente_2": "https://www.thesportsdb.com/event/2508344",
+   "confianza": "alta"
+  },
+  {
+   "id": "bl-leverkusen-union-j2-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Bayer Leverkusen 4-0 1. FC Union Berlin (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401884806",
+   "fuente_2": "https://www.thesportsdb.com/event/2508345",
+   "confianza": "alta"
+  },
+  {
+   "id": "bl-paderborn-freiburg-j2-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "visitante",
+   "resultado": "SC Paderborn 07 0-1 SC Freiburg (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401884800",
+   "fuente_2": "https://www.thesportsdb.com/event/2508350",
+   "confianza": "alta"
+  },
+  {
+   "id": "bl-schalke-bayern-j2-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Schalke 04 0-0 Bayern Munich (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401884801",
+   "fuente_2": "https://www.thesportsdb.com/event/2508348",
+   "confianza": "alta"
+  },
+  {
+   "id": "bl-hamburg-mainz-j2-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "visitante",
+   "resultado": "Hamburg SV 0-5 Mainz (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401884803",
+   "fuente_2": "https://www.thesportsdb.com/event/2508349",
+   "confianza": "alta"
+  },
+  {
+   "id": "bl-frankfurt-augsburg-j2-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "visitante",
+   "resultado": "Eintracht Frankfurt 1-4 FC Augsburg (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401884805",
+   "fuente_2": "https://www.thesportsdb.com/event/2508346",
+   "confianza": "alta"
+  },
+  {
+   "id": "laliga-levante-betis-j3",
+   "volume": 500,
+   "num_trades": 1,
+   "veredicto": "local",
+   "resultado": "Levante 5-2 Real Betis (29-ago-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401882902",
+   "fuente_2": "https://www.thesportsdb.com/event/2506192",
+   "confianza": "alta"
+  },
+  {
+   "id": "laliga-realsociedad-celta-j4-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Real Sociedad 0-0 Celta Vigo (03-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401882867",
+   "fuente_2": "https://www.thesportsdb.com/event/2506226",
+   "confianza": "alta"
+  },
+  {
+   "id": "laliga-betis-realmadrid-j4-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Real Betis 1-0 Real Madrid (04-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401882894",
+   "fuente_2": "https://www.thesportsdb.com/event/2506205",
+   "confianza": "alta"
+  },
+  {
+   "id": "laliga-athletic-atletico-j4-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Athletic Club 3-0 Atlético Madrid (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401882895",
+   "fuente_2": "https://www.thesportsdb.com/event/2506199",
+   "confianza": "alta"
+  },
+  {
+   "id": "laliga-rayo-racing-j4-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Rayo Vallecano 3-2 Racing Santander (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401882889",
+   "fuente_2": "https://www.thesportsdb.com/event/2506207",
+   "confianza": "alta"
+  },
+  {
+   "id": "laliga-villarreal-depor-j4-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "visitante",
+   "resultado": "Villarreal 2-3 Deportivo (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401882887",
+   "fuente_2": "https://www.thesportsdb.com/event/2506201",
+   "confianza": "alta"
+  },
+  {
+   "id": "laliga-valencia-barcelona-j4-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "visitante",
+   "resultado": "Valencia 0-5 Barcelona (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401882888",
+   "fuente_2": "https://www.thesportsdb.com/event/2506200",
+   "confianza": "alta"
+  },
+  {
+   "id": "laliga-alaves-osasuna-j4-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Alavés 5-2 Osasuna (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401882896",
+   "fuente_2": "https://www.thesportsdb.com/event/2506204",
+   "confianza": "alta"
+  },
+  {
+   "id": "laliga-malaga-levante-j4-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Málaga 0-0 Levante (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401882890",
+   "fuente_2": "https://www.thesportsdb.com/event/2506202",
+   "confianza": "alta"
+  },
+  {
+   "id": "laliga-espanyol-sevilla-j4-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Espanyol 1-1 Sevilla (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401882892",
+   "fuente_2": "https://www.thesportsdb.com/event/2506203",
+   "confianza": "alta"
+  },
+  {
+   "id": "laliga-getafe-celta-j4-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Getafe 1-1 Celta Vigo (07-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401882891",
+   "fuente_2": "https://www.thesportsdb.com/event/2506206",
+   "confianza": "alta"
+  },
+  {
+   "id": "spl-fayha-kholood-j5-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Al Fayha 2-2 Al Kholood (03-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401900374",
+   "fuente_2": "https://www.thesportsdb.com/event/2573337",
+   "confianza": "alta"
+  },
+  {
+   "id": "spl-neom-khaleej-j5-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Neom SC 3-0 Al Khaleej (03-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401900373",
+   "fuente_2": "https://www.thesportsdb.com/event/2573338",
+   "confianza": "alta"
+  },
+  {
+   "id": "spl-diriyah-qadsiah-j5-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "visitante",
+   "resultado": "Al Diriyah 0-2 Al Qadsiah (03-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401900372",
+   "fuente_2": "https://www.thesportsdb.com/event/2573339",
+   "confianza": "alta"
+  },
+  {
+   "id": "spl-abha-ettifaq-j5-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "visitante",
+   "resultado": "Abha 0-1 Al Ettifaq (04-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401900371",
+   "fuente_2": "https://www.thesportsdb.com/event/2573340",
+   "confianza": "alta"
+  },
+  {
+   "id": "spl-ahli-riyadh-j5-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Al Ahli 5-0 Al Riyadh (04-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401900369",
+   "fuente_2": "https://www.thesportsdb.com/event/2573341",
+   "confianza": "alta"
+  },
+  {
+   "id": "spl-shabab-hilal-j5-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "visitante",
+   "resultado": "Al Shabab 0-2 Al Hilal (04-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401900370",
+   "fuente_2": "https://www.thesportsdb.com/event/2573342",
+   "confianza": "alta"
+  },
+  {
+   "id": "spl-faisaly-hazm-j5-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Al Faisaly 0-0 Al Hazem (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401900368",
+   "fuente_2": "https://www.thesportsdb.com/event/2573343",
+   "confianza": "alta"
+  },
+  {
+   "id": "spl-taawoun-fateh-j5-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Al Taawoun 0-0 Al Fateh (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401900367",
+   "fuente_2": "https://www.thesportsdb.com/event/2573344",
+   "confianza": "alta"
+  },
+  {
+   "id": "spl-ittihad-nassr-j5-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Al Ittihad 2-1 Al Nassr (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401900366",
+   "fuente_2": "https://www.thesportsdb.com/event/2573345",
+   "confianza": "alta"
+  },
+  {
+   "id": "mls-nycfc-nashville-sep26",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "New York City FC 0-0 Nashville SC (04-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/761770",
+   "fuente_2": "https://www.thesportsdb.com/event/2407038",
+   "confianza": "alta"
+  },
+  {
+   "id": "mls-charlotte-houston-sep26",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Charlotte FC 0-0 Houston Dynamo FC (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/761774",
+   "fuente_2": "https://www.thesportsdb.com/event/2407045",
+   "confianza": "alta"
+  },
+  {
+   "id": "mls-columbus-colorado-sep26",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Columbus Crew 3-0 Colorado Rapids (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/761775",
+   "fuente_2": "https://www.thesportsdb.com/event/2407043",
+   "confianza": "alta"
+  },
+  {
+   "id": "mls-intermiami-atlanta-sep26",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Inter Miami CF 2-2 Atlanta United FC (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/761777",
+   "fuente_2": "https://www.thesportsdb.com/event/2407039",
+   "confianza": "alta"
+  },
+  {
+   "id": "mls-orlando-sandiego-sep26",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Orlando City SC 1-0 San Diego FC (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/761771",
+   "fuente_2": "https://www.thesportsdb.com/event/2407042",
+   "confianza": "alta"
+  },
+  {
+   "id": "mls-philadelphia-montreal-sep26",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Philadelphia Union 2-0 CF Montréal (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/761772",
+   "fuente_2": "https://www.thesportsdb.com/event/2407040",
+   "confianza": "alta"
+  },
+  {
+   "id": "mls-toronto-chicago-sep26",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Toronto FC 4-4 Chicago Fire FC (05-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/761776",
+   "fuente_2": "https://www.thesportsdb.com/event/2407044",
+   "confianza": "alta"
+  },
+  {
+   "id": "mls-austin-sanjose-sep26",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Austin FC 1-1 San Jose Earthquakes (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/761778",
+   "fuente_2": "https://www.thesportsdb.com/event/2407048",
+   "confianza": "alta"
+  },
+  {
+   "id": "mls-dallas-sportingkc-sep26",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "FC Dallas 4-3 Sporting Kansas City (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/761779",
+   "fuente_2": "https://www.thesportsdb.com/event/2407047",
+   "confianza": "alta"
+  },
+  {
+   "id": "mls-seattle-redbulls-sep26",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Seattle Sounders FC 0-0 Red Bull New York (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/761780",
+   "fuente_2": "https://www.thesportsdb.com/event/2407046",
+   "confianza": "alta"
+  },
+  {
+   "id": "mls-galaxy-newengland-sep26",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "LA Galaxy 2-1 New England Revolution (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/761782",
+   "fuente_2": "https://www.thesportsdb.com/event/2407050",
+   "confianza": "alta"
+  },
+  {
+   "id": "mls-rsl-lafc-sep26",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "empate",
+   "resultado": "Real Salt Lake 2-2 LAFC (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/761781",
+   "fuente_2": "https://www.thesportsdb.com/event/2407049",
+   "confianza": "alta"
+  },
+  {
+   "id": "mls-portland-minnesota-sep26",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Portland Timbers 5-4 Minnesota United FC (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/761783",
+   "fuente_2": "https://www.thesportsdb.com/event/2407052",
+   "confianza": "alta"
+  },
+  {
+   "id": "mls-vancouver-stlouis-sep26",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "visitante",
+   "resultado": "Vancouver Whitecaps 1-3 St. Louis CITY SC (06-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/761784",
+   "fuente_2": "https://www.thesportsdb.com/event/2407051",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-aek-lask-j1-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "AEK Athens 1-0 LASK Linz (08-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401915452",
+   "fuente_2": "https://www.thesportsdb.com/event/2594650",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-brugge-villa-j1-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "visitante",
+   "resultado": "Club Brugge 2-3 Aston Villa (08-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401915426",
+   "fuente_2": "https://www.thesportsdb.com/event/2594644",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-dortmund-villarreal-j1-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Borussia Dortmund 3-2 Villarreal (08-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401915449",
+   "fuente_2": "https://www.thesportsdb.com/event/2594572",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-lille-betis-j1-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "visitante",
+   "resultado": "Lille 2-3 Real Betis (08-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401915450",
+   "fuente_2": "https://www.thesportsdb.com/event/2594556",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-porto-city-j1-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "visitante",
+   "resultado": "FC Porto 0-2 Manchester City (08-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401915425",
+   "fuente_2": "https://www.thesportsdb.com/event/2594591",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-realmadrid-inter-j1-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Real Madrid 2-1 Internazionale (08-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401915451",
+   "fuente_2": "https://www.thesportsdb.com/event/2594629",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-barcelona-feyenoord-j1-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Barcelona 5-1 Feyenoord Rotterdam (09-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401915424",
+   "fuente_2": "https://www.thesportsdb.com/event/2594617",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-stuttgart-viking-j1-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "VfB Stuttgart 3-1 Viking FK (09-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401915448",
+   "fuente_2": "https://www.thesportsdb.com/event/2594578",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-liverpool-atletico-j1-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Liverpool 2-1 Atlético Madrid (09-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401915446",
+   "fuente_2": "https://www.thesportsdb.com/event/2594541",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-napoli-arsenal-j1-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "visitante",
+   "resultado": "Napoli 0-1 Arsenal (09-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401915423",
+   "fuente_2": "https://www.thesportsdb.com/event/2594603",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-psg-slovan-j1-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Paris Saint-Germain 6-1 Slovan Bratislava (09-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401915445",
+   "fuente_2": "https://www.thesportsdb.com/event/2594562",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-sporting-galatasaray-j1-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto": "local",
+   "resultado": "Sporting CP 3-1 Galatasaray (09-sep-2026)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401915447",
+   "fuente_2": "https://www.thesportsdb.com/event/2594597",
+   "confianza": "alta"
+  },
+  {
+   "id": "laliga-titular-julian-alvarez-j3",
+   "veredicto": "NO",
+   "resultado": "Sevilla 1-3 Atlético de Madrid (29-ago-2026): Julián Álvarez no fue convocado (ni once ni banca)",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401882897",
+   "fuente_2": "https://www.skysports.com/football/sevilla-vs-atletico-madrid/teams/562953",
+   "confianza": "alta"
+  },
+  {
+   "id": "laliga-titular-arda-guler-j3",
+   "veredicto": "NO",
+   "resultado": "Real Madrid 4-0 Málaga (30-ago-2026): Arda Güler en la banca, entró al 87'",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401882899",
+   "fuente_2": "https://www.skysports.com/football/real-madrid-vs-malaga/teams/562951",
+   "confianza": "alta"
+  },
+  {
+   "id": "laliga-titular-bernardo-silva-j3",
+   "veredicto": "NO",
+   "resultado": "Real Madrid 4-0 Málaga (30-ago-2026): Bernardo Silva en la banca, entró al 77'",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401882899",
+   "fuente_2": "https://www.skysports.com/football/real-madrid-vs-malaga/teams/562951",
+   "confianza": "alta"
+  },
+  {
+   "id": "pl-titular-gakpo-j2",
+   "veredicto": "YES",
+   "resultado": "Liverpool 2-2 Nottingham Forest (29-ago-2026): Cody Gakpo en el once inicial",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401879314",
+   "fuente_2": "https://www.skysports.com/football/liverpool-vs-nottingham-forest/teams/559460",
+   "confianza": "alta"
+  },
+  {
+   "id": "pl-titular-kovacic-j2",
+   "veredicto": "NO",
+   "resultado": "Crystal Palace 1-4 Manchester City (28-ago-2026): Mateo Kovačić en la banca",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401879294",
+   "fuente_2": "https://www.skysports.com/football/crystal-palace-vs-manchester-city/teams/559458",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-haaland-gol-j1-2627",
+   "veredicto": "YES",
+   "resultado": "FC Porto 0-2 Manchester City (08-sep-2026): Haaland marcó al 47' y al 90+1'",
+   "fuente_1": "https://www.espn.com/soccer/report/_/gameId/401915425",
+   "fuente_2": "https://www.skysports.com/football/fc-porto-vs-manchester-city/teams/577600",
+   "confianza": "alta"
+  },
+  {
+   "id": "monterrey-semis-leagues-cup-26",
+   "veredicto": "YES",
+   "resultado": "Chicago Fire 1-2 Monterrey, cuartos de final Leagues Cup (25-ago-2026): Monterrey avanzó a semifinales",
+   "fuente_1": "https://www.chicagofirefc.com/news/match-recap-chicago-fire-fc-falls-2-1-to-c-f-monterrey-in-leagues-cup-2026-quarterfinals",
+   "fuente_2": "https://www.mlssoccer.com/competitions/leagues-cup/news/chicago-fire-exit-leagues-cup",
+   "confianza": "alta"
+  },
+  {
+   "id": "liga-mx-gana-leagues-cup-26",
+   "veredicto": "YES",
+   "resultado": "Final Leagues Cup 2026 (06-sep-2026, Houston): Toluca 2-0 Monterrey; campeón de la Liga MX",
+   "fuente_1": "https://www.clarosports.com/futbol/leagues-cup/toluca-vs-monterrey-en-vivo-final-de-la-leagues-cup-2026-resultado-y-goles-del-partido-hoy-6-de-septiembre/",
+   "fuente_2": "https://en.wikipedia.org/wiki/2026_Leagues_Cup",
+   "confianza": "alta"
+  },
+  {
+   "id": "bl-colonia-hoffenheim-2908",
+   "veredicto": "local",
+   "resultado": "FC Köln 3-2 TSG Hoffenheim (29-ago-2026, Jornada 1)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401884810",
+   "fuente_2": "https://www.foxsports.com/soccer/bundesliga-fc-koln-vs-hoffenheim-aug-29-2026-game-boxscore-912553",
+   "confianza": "alta"
+  }
+ ],
+ "escalados": [
+  {
+   "id": "mls-cincinnati-dcunited-sep26",
+   "volume": 0,
+   "num_trades": 0,
+   "razon": "ESPN: partido aplazado",
+   "resultado": "sin marcador",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/761773"
+  },
+  {
+   "id": "nfl-jsn-td-w1-2026",
+   "razon": "sin fuente automática para la subcategoría 'NFL'",
+   "volume": 0,
+   "num_trades": 0
+  },
+  {
+   "id": "nfl-maye-2tdpass-w1-2026",
+   "razon": "sin fuente automática para la subcategoría 'NFL'",
+   "volume": 0,
+   "num_trades": 0
+  },
+  {
+   "id": "nfl-patriots-seahawks-s1-2026",
+   "razon": "sin fuente automática para la subcategoría 'NFL'",
+   "volume": 0,
+   "num_trades": 0
+  },
+  {
+   "id": "ucl-cherki-titular-j1-2627",
+   "razon": "accesorio con una sola fuente (ESPN): confirmar con la fuente oficial antes de resolver",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto_sugerido": "YES",
+   "resultado": "FC Porto 0-2 Manchester City (08-sep-2026) — Rayan Cherki en el once inicial de Manchester City",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915425"
+  },
+  {
+   "id": "ucl-dembele-gol-j1-2627",
+   "razon": "accesorio con una sola fuente (ESPN): confirmar con la fuente oficial antes de resolver",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto_sugerido": "YES",
+   "resultado": "Paris Saint-Germain 6-1 Slovan Bratislava (09-sep-2026) — gol 17' (Goal); gol 23' (Goal - Header)",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915445"
+  },
+  {
+   "id": "ucl-dimarco-titular-j1-2627",
+   "razon": "accesorio con una sola fuente (ESPN): confirmar con la fuente oficial antes de resolver",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto_sugerido": "NO",
+   "resultado": "Real Madrid 2-1 Internazionale (08-sep-2026) — no aparece en la convocatoria publicada por ESPN",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915451"
+  },
+  {
+   "id": "ucl-diomande-titular-j1-2627",
+   "razon": "accesorio con una sola fuente (ESPN): confirmar con la fuente oficial antes de resolver",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto_sugerido": "NO",
+   "resultado": "Real Madrid 2-1 Internazionale (08-sep-2026) — Yan Diomande en la banca de Real Madrid (no titular)",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915451"
+  },
+  {
+   "id": "ucl-fabianruiz-titular-j1-2627",
+   "razon": "accesorio con una sola fuente (ESPN): confirmar con la fuente oficial antes de resolver",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto_sugerido": "YES",
+   "resultado": "Paris Saint-Germain 6-1 Slovan Bratislava (09-sep-2026) — Fabián Ruiz en el once inicial de Paris Saint-Germain",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915445"
+  },
+  {
+   "id": "ucl-fenerbahce-roma-j1-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "razon": "ESPN: partido no terminado (LIVE)",
+   "resultado": "Fenerbahce 0-0 AS Roma",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401915444"
+  },
+  {
+   "id": "ucl-ferminlopez-gol-j1-2627",
+   "razon": "accesorio con una sola fuente (ESPN): confirmar con la fuente oficial antes de resolver",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto_sugerido": "NO",
+   "resultado": "Barcelona 5-1 Feyenoord Rotterdam (09-sep-2026) — sin gol de Fermín López en los eventos clave de ESPN (6 goles en el partido)",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915424"
+  },
+  {
+   "id": "ucl-fidalgo-titular-j1-2627",
+   "razon": "accesorio con una sola fuente (ESPN): confirmar con la fuente oficial antes de resolver",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto_sugerido": "NO",
+   "resultado": "Lille 2-3 Real Betis (08-sep-2026) — Álvaro Fidalgo en la banca de Real Betis (no titular)",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915450"
+  },
+  {
+   "id": "ucl-julianalvarez-gol-j1-2627",
+   "razon": "accesorio con una sola fuente (ESPN): confirmar con la fuente oficial antes de resolver",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto_sugerido": "NO",
+   "resultado": "Liverpool 2-1 Atlético Madrid (09-sep-2026) — sin gol de Julián Álvarez en los eventos clave de ESPN (3 goles en el partido)",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915446"
+  },
+  {
+   "id": "ucl-kvaratskhelia-gol-j1-2627",
+   "razon": "accesorio con una sola fuente (ESPN): confirmar con la fuente oficial antes de resolver",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto_sugerido": "NO",
+   "resultado": "Paris Saint-Germain 6-1 Slovan Bratislava (09-sep-2026) — sin gol de Khvicha Kvaratskhelia en los eventos clave de ESPN (7 goles en el partido)",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915445"
+  },
+  {
+   "id": "ucl-lenormand-titular-j1-2627",
+   "razon": "accesorio con una sola fuente (ESPN): confirmar con la fuente oficial antes de resolver",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto_sugerido": "NO",
+   "resultado": "Liverpool 2-1 Atlético Madrid (09-sep-2026) — Robin Le Normand en la banca de Atlético Madrid (no titular)",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915446"
+  },
+  {
+   "id": "ucl-mbappe-gol-j1-2627",
+   "razon": "accesorio con una sola fuente (ESPN): confirmar con la fuente oficial antes de resolver",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto_sugerido": "YES",
+   "resultado": "Real Madrid 2-1 Internazionale (08-sep-2026) — gol 14' (Goal)",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915451"
+  },
+  {
+   "id": "ucl-osimhen-gol-j1-2627",
+   "razon": "Victor Osimhen no aparece en ninguna alineación de ESPN cerca del cierre",
+   "volume": 0,
+   "num_trades": 0
+  },
+  {
+   "id": "ucl-psv-shakhtar-j1-2627",
+   "volume": 0,
+   "num_trades": 0,
+   "razon": "ESPN: partido no terminado (LIVE)",
+   "resultado": "PSV Eindhoven 0-0 Shakhtar Donetsk",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401915422"
+  },
+  {
+   "id": "ucl-rodri-titular-j1-2627",
+   "razon": "accesorio con una sola fuente (ESPN): confirmar con la fuente oficial antes de resolver",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto_sugerido": "YES",
+   "resultado": "Barcelona 5-1 Feyenoord Rotterdam (09-sep-2026) — Rodri en el once inicial de Barcelona",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915424"
+  },
+  {
+   "id": "ucl-wirtz-titular-j1-2627",
+   "razon": "accesorio con una sola fuente (ESPN): confirmar con la fuente oficial antes de resolver",
+   "volume": 0,
+   "num_trades": 0,
+   "veredicto_sugerido": "YES",
+   "resultado": "Liverpool 2-1 Atlético Madrid (09-sep-2026) — Florian Wirtz en el once inicial de Liverpool",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915446"
+  }
+ ],
+ "nota": "plan-auto (ESPN + TheSportsDB) + accesorios y Leagues Cup verificados a mano con ESPN/club oficial + Sky Sports."
+}
