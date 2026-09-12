@@ -11,8 +11,8 @@ ledger, liquida ligas privadas y manda correos. La regla de oro es:
 
 > **Solo se propone resolución con evidencia inequívoca confirmada por DOS fuentes
 > independientes. Ante cualquier duda, discrepancia o criterio ambiguo: se ESCALA a Mark,
-> jamás se adivina. Y NUNCA se ejecuta una resolución sin la aprobación explícita de Mark
-> en esta conversación.**
+> jamás se adivina. Y NUNCA se ejecuta una resolución sin la aprobación explícita de Mark:
+> la vía normal es el botón del correo (`proponer`), no el chat.**
 
 Herramienta: `agent-resolver.py` en la raíz del repo backend
 (`/Users/markdabah/Desktop/veredikt/veredikt-mx-backend`). Todos los comandos se corren desde
@@ -29,9 +29,14 @@ página de confirmación; el botón "Confirmar" (POST) aplica el plan una sola v
 `app/services/resolution.resolve` y manda un correo de resultado. Los escalados van en el mismo
 correo con veredicto sugerido y enlace a ESPN para cerrarlos en `/admin`.
 
+La auto-aprobación de 1X2 (`RESOLUCION_AUTO_APROBAR_1X2`) está **apagada** desde el
+2026-09-12 por decisión de Mark: todo plan, nocturno o del agente, lleva botón y nada se paga
+sin su clic.
+
 Comandos útiles: `agent-resolver.py planes` (planes del servidor y estado del job) y
 `agent-resolver.py plan-nocturno` (dispara uno ahora, p. ej. cuando ya terminaron los partidos
-"en vivo"). El flujo manual de abajo sigue vigente para escalados y para cuando Mark lo pida.
+"en vivo"). El flujo manual de abajo sigue vigente para escalados y para cuando Mark lo pida;
+termina en `proponer`, que manda el mismo correo con botón.
 
 ## Paso 0 — Token
 
@@ -145,29 +150,32 @@ Presenta a Mark, legible en el chat:
    de limpieza `cleanup-mercados-vencidos-sin-predicciones-2026-09-01.py`.
 3. Cuántos mercados y PT se van a liquidar.
 
-Luego **DETENTE y espera la aprobación explícita de Mark**. Acepta aprobación total ("aprueba
-todo") o parcial ("todo menos X y Y" → usa `--only` o quita los ids del plan). Si Mark corrige
-un veredicto, re-verifica con dos fuentes antes de aceptar el cambio.
-
-## Paso 4 — Ejecución (solo tras aprobación)
+## Paso 4 — Proponer (aprobación por correo)
 
 ```
-./venv/bin/python agent-resolver.py apply resoluciones/AAAA-MM-DD.json --yes
-./venv/bin/python agent-resolver.py apply resoluciones/AAAA-MM-DD.json --yes --only id1 id2
+./venv/bin/python agent-resolver.py proponer resoluciones/AAAA-MM-DD.json
+./venv/bin/python agent-resolver.py proponer resoluciones/AAAA-MM-DD.json --only id1 id2
 ```
 
-`apply` vuelve a correr `check-plan`, resuelve uno por uno y anexa cada resultado a
-`resoluciones/log.jsonl`. Si falla a la mitad, re-ejecuta el mismo comando: los ya registrados
-se saltan. `MARKET_ALREADY_RESOLVED` cuenta como ya resuelto, no como fallo.
+`proponer` vuelve a correr `check-plan`, sube el plan al servidor
+(`POST /admin/resolucion/planes/proponer`, que lo re-valida contra la BD) y lo guarda como
+`ResolutionPlan` pendiente con `origen=agente`. Mark recibe el correo "Plan del agente" con la
+tabla, las fuentes, los escalados y el botón **"Revisar y aprobar"** (enlace firmado, 48 h).
+**Nada se resuelve hasta su clic.** Si el servidor rechaza el plan (`PLAN_INVALIDO`), imprime
+los errores por mercado: corrige el JSON y vuelve a proponer.
 
-**Nunca pases `--yes` sin la aprobación de Mark en esta conversación.**
+Luego **DETENTE**: dile a Mark que revise el correo. Si él prefiere aprobar en el chat
+("aprueba todo" / "todo menos X"), usa el respaldo `apply --yes` (con `--only` para parciales),
+que resuelve directo y anexa a `resoluciones/log.jsonl`; re-ejecutable tras un fallo parcial
+(`MARKET_ALREADY_RESOLVED` cuenta como ya resuelto). Si Mark corrige un veredicto, re-verifica
+con dos fuentes antes de aceptar el cambio. **Nunca pases `--yes` sin su aprobación explícita.**
 
 ## Paso 5 — Reporte final y commit
 
-Resumen: resueltos (y posiciones liquidadas), fallidos y por qué, escalados y qué decide Mark.
-Después:
-- `git add resoluciones/AAAA-MM-DD.json resoluciones/log.jsonl` y commit
-  (`Resoluciones AAAA-MM-DD: N mercados`). Nunca `git add -A`.
+Resumen: propuestos (y PT involucrados), escalados y qué decide Mark. Cuando Mark aprueba,
+`agent-resolver.py planes` muestra `#N applied → resueltos X, fallidos Y`. Después:
+- `git add resoluciones/AAAA-MM-DD.json` (y `resoluciones/log.jsonl` si se usó `apply`) y
+  commit (`Resoluciones AAAA-MM-DD: N mercados propuestos (plan #N)`). Nunca `git add -A`.
 - Sugerir `sembrar-mercados.py prune` si hay documentos en `mercados-pendientes.yaml`, y el
   script de limpieza (dry-run primero) si hay vencidos sin actividad escalados.
 

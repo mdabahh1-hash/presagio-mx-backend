@@ -27,6 +27,7 @@ _ALIAS = {
     "napoles": "napoli", "milan": "milan", "internazionale": "inter", "inter": "inter",
     "psg": "paris saint germain", "man utd": "manchester united", "man city": "manchester city",
     "gladbach": "monchengladbach", "leverkusen": "leverkusen",
+    "praha": "prague",  # Slavia/Sparta Praha (pregunta) → Slavia/Sparta Prague (ESPN)
 }
 
 

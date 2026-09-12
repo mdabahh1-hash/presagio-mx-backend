@@ -10,11 +10,15 @@ class ResolutionPlan(Base):
     `plan` guarda las resoluciones propuestas (doble fuente) y los escalados;
     `resultado` lo que pasó al aplicarlo. El `nonce` viaja dentro del token de
     aprobación del correo: un plan solo se aplica una vez.
+
+    `origen`: `nocturno` (armado por el job) o `agente` (propuesto por el CLI
+    `agent-resolver.py proponer`, con la misma aprobación por correo).
     """
     __tablename__ = "resolution_plans"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="pending")  # pending|applied|partial|expired
+    origen: Mapped[str] = mapped_column(String(20), nullable=False, server_default="nocturno")  # nocturno|agente
     nonce: Mapped[str] = mapped_column(String(64), nullable=False)
     plan: Mapped[dict] = mapped_column(JSON, nullable=False)
     resumen: Mapped[dict] = mapped_column(JSON, nullable=False)

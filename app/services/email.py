@@ -176,11 +176,13 @@ async def send_admin_resolution_reminder(markets: list[tuple[str, str, datetime]
 
 
 async def send_resolution_plan_email(
-    plan_id: int, plan: dict, resumen: dict, url_aprobar: str, auto_resultado: dict | None = None
+    plan_id: int, plan: dict, resumen: dict, url_aprobar: str, auto_resultado: dict | None = None,
+    origen: str = "nocturno",
 ) -> None:
-    """Plan nocturno al admin: tabla de resoluciones con evidencia, botón de
+    """Plan de resolución al admin: tabla de resoluciones con evidencia, botón de
     aprobación (enlace firmado, un solo uso) y lista de escalados. Con
-    `auto_resultado` (auto-aprobación de 1X2) el correo es un reporte sin botón."""
+    `auto_resultado` (auto-aprobación de 1X2) el correo es un reporte sin botón.
+    `origen="agente"` distingue en el asunto los planes propuestos por el CLI."""
     res = sorted(plan.get("resoluciones", []), key=lambda x: (x.get("liga") or "", x["id"]))
     esc = plan.get("escalados", [])
     n, con_ops, vol = resumen.get("resoluciones", len(res)), resumen.get("con_operaciones", 0), resumen.get("volumen", 0)
@@ -220,10 +222,11 @@ async def send_resolution_plan_email(
         boton = (f'<a href="{_esc(url_aprobar)}" style="display:inline-block; background:#FFD700; color:#07071A; text-decoration:none; '
                  f'font-weight:800; font-size:14px; padding:12px 24px; border-radius:10px; margin:0 0 18px;">Revisar y aprobar {n} resoluciones →</a>'
                  f'<p style="margin:0 0 18px;font-size:11px;color:rgba(245,240,232,0.35)">El enlace abre una página de confirmación y vence en {settings.PLAN_APPROVAL_TTL_HOURS} h.</p>') if res else ""
-        titulo = f"🧾 Plan de resolución: {n} mercados listos ({con_ops} con operaciones, {vol} PT)" if res else f"🧾 Plan de resolución: 0 listos, {len(esc)} escalados"
+        quien = "Plan del agente" if origen == "agente" else "Plan de resolución"
+        titulo = f"🧾 {quien}: {n} mercados listos ({con_ops} con operaciones, {vol} PT)" if res else f"🧾 {quien}: 0 listos, {len(esc)} escalados"
 
     body = f"""
-      <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">🧾 Plan de resolución #{plan_id}</p>
+      <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">🧾 Plan de resolución #{plan_id}{" · propuesto por el agente" if origen == "agente" else ""}</p>
       <p style="margin: 0 0 18px; font-size: 14px; color: rgba(245,240,232,0.6);">
         {n} mercados con marcador confirmado en dos fuentes · {con_ops} con operaciones · {vol} PT · {len(esc)} escalados
       </p>

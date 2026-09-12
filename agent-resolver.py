@@ -26,8 +26,16 @@ Comandos:
       veredicto válido para el tipo, dos fuentes de hosts distintos, confianza
       alta, evento ya cerrado. Sale con código 1 si hay errores.
 
+  ./venv/bin/python agent-resolver.py proponer resoluciones/AAAA-MM-DD.json [--only ID ...]
+      Flujo normal desde 2026-09-12: valida el plan (check-plan) y lo sube al
+      servidor como ResolutionPlan pendiente (origen=agente). Mark recibe el
+      mismo correo que el nocturno, con tabla, fuentes y botón "Revisar y
+      aprobar"; nada se resuelve hasta que él confirma. El resultado queda en
+      el plan del servidor (`planes`). No escribe log.jsonl.
+
   ./venv/bin/python agent-resolver.py apply resoluciones/AAAA-MM-DD.json --yes [--only ID ...]
-      Ejecuta el plan (tras check-plan). IRREVERSIBLE: paga posiciones, escribe
+      Respaldo, solo si Mark lo pide expresamente en el chat: ejecuta el plan
+      directo (tras check-plan). IRREVERSIBLE: paga posiciones, escribe
       ledger, liquida ligas privadas y manda correos. Cada resultado se anexa a
       resoluciones/log.jsonl; los ya registrados con ok=true se saltan, así que
       se puede re-ejecutar tras un fallo parcial. --yes solo con aprobación
@@ -326,6 +334,32 @@ def cmd_apply(path: str, yes: bool, only: list[str] | None) -> None:
         sys.exit(1)
 
 
+def cmd_proponer(path: str, only: list[str] | None) -> None:
+    """Sube el plan al servidor para aprobación por correo (no resuelve nada)."""
+    entradas, _ = check_plan(path, only)
+    plan = _cargar_plan(path)
+    body = {
+        "resoluciones": entradas,
+        "escalados": plan.get("escalados") or [],
+        "nota": f"{os.path.basename(path)}" + (f" (--only {' '.join(only)})" if only else ""),
+    }
+    r = _auth("/admin/resolucion/planes/proponer", data=body)
+    if isinstance(r, dict) and r.get("id") and r.get("status") == "pending":
+        s = r.get("resumen") or {}
+        print(f"\nPlan #{r['id']} propuesto · correo enviado a Mark · {s.get('resoluciones', 0)} resoluciones "
+              f"({s.get('con_operaciones', 0)} con operaciones, {s.get('volumen', 0)} PT) · {s.get('escalados', 0)} escalados")
+        print("Nada se resolvió: Mark aprueba desde el enlace del correo. Verifica luego con: agent-resolver.py planes")
+        return
+    detail = (r.get("detail") or {}) if isinstance(r, dict) else {}
+    if detail.get("code") == "PLAN_INVALIDO":
+        print(f"\nEl servidor rechazó el plan: {detail.get('message')}")
+        for mid, errs in (detail.get("errores") or {}).items():
+            for err in errs:
+                print(f"  ✗ {mid}: {err}")
+        sys.exit(1)
+    sys.exit(f"ERROR: {json.dumps(r, ensure_ascii=False)}")
+
+
 def cmd_resolve(market_id: str, resolution: str | None, outcome: str | None) -> None:
     if bool(resolution) == bool(outcome):
         sys.exit("ERROR: pasa exactamente uno: --resolution YES|NO (binario) o --outcome <key> (multi)")
@@ -409,6 +443,9 @@ def main() -> None:
     pc = sub.add_parser("check-plan")
     pc.add_argument("plan")
     pc.add_argument("--only", nargs="+")
+    ppr = sub.add_parser("proponer")
+    ppr.add_argument("plan")
+    ppr.add_argument("--only", nargs="+")
     pa = sub.add_parser("apply")
     pa.add_argument("plan")
     pa.add_argument("--yes", action="store_true", help="ejecutar de verdad (solo con aprobación de Mark)")
@@ -433,6 +470,8 @@ def main() -> None:
         cmd_plan_auto(a.out, a.liga)
     elif a.cmd == "check-plan":
         check_plan(a.plan, a.only)
+    elif a.cmd == "proponer":
+        cmd_proponer(a.plan, a.only)
     elif a.cmd == "apply":
         cmd_apply(a.plan, a.yes, a.only)
     elif a.cmd == "resolve":

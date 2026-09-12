@@ -82,10 +82,16 @@ def resumen_de(plan: dict) -> dict:
 
 
 async def _plan_de_hoy(db: AsyncSession) -> ResolutionPlan | None:
+    """Plan NOCTURNO de hoy (los propuestos por el agente no cuentan: no deben
+    bloquear la corrida de las 12:00 UTC)."""
     inicio = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     res = await db.execute(
         select(ResolutionPlan)
-        .where(ResolutionPlan.created_at >= inicio, ResolutionPlan.status.in_(("pending", "applied", "partial")))
+        .where(
+            ResolutionPlan.created_at >= inicio,
+            ResolutionPlan.origen == "nocturno",
+            ResolutionPlan.status.in_(("pending", "applied", "partial")),
+        )
         .order_by(ResolutionPlan.id.desc())
     )
     return res.scalars().first()
@@ -121,7 +127,8 @@ async def correr_plan_nocturno(forzar: bool = False) -> ResolutionPlan | None:
             logger.info("plan nocturno: armando plan para %d pendientes", len(mercados))
             plan = await asyncio.to_thread(armar_plan, mercados)
             row = ResolutionPlan(
-                status="pending", nonce=secrets.token_urlsafe(16), plan=plan, resumen=resumen_de(plan),
+                status="pending", origen="nocturno", nonce=secrets.token_urlsafe(16),
+                plan=plan, resumen=resumen_de(plan),
             )
             db.add(row)
             await db.commit()
@@ -143,6 +150,76 @@ async def correr_plan_nocturno(forzar: bool = False) -> ResolutionPlan | None:
         _LAST["last_error"] = str(e)
         logger.exception("plan nocturno falló")
         raise
+
+
+# ── plan propuesto por el agente ─────────────────────────────────────────────
+
+class PlanInvalido(ValueError):
+    """El plan propuesto no pasa la validación; `errores` = {id: [motivos]}."""
+
+    def __init__(self, message: str, errores: dict[str, list[str]]):
+        super().__init__(message)
+        self.errores = errores
+
+
+_CAMPOS_ENTRADA = ("id", "veredicto", "resultado", "fuente_1", "fuente_2", "confianza")
+
+
+async def proponer_plan(db: AsyncSession, plan: dict) -> ResolutionPlan:
+    """Guarda un plan armado por el agente (`agent-resolver.py proponer`) como
+    ResolutionPlan pendiente y manda el correo con el botón de aprobación. Misma
+    validación que la aprobación del nocturno (`validar_entrada`): si alguna
+    entrada falla, no se guarda nada y se lanza PlanInvalido."""
+    entradas = list((plan or {}).get("resoluciones") or [])
+    if not entradas:
+        raise PlanInvalido("el plan no trae resoluciones", {})
+    ahora = datetime.now(timezone.utc)
+    errores: dict[str, list[str]] = {}
+    enriquecidas: list[dict] = []
+    vistos: set[str] = set()
+    for e in entradas:
+        mid = str(e.get("id") or "")
+        if not mid:
+            errores["?"] = ["entrada sin id"]
+            continue
+        if mid in vistos:
+            errores[mid] = ["id repetido en el plan"]
+            continue
+        vistos.add(mid)
+        detalle = await detalle_actual(db, mid)
+        errs = validar_entrada(e, detalle, ahora)
+        if errs:
+            errores[mid] = errs
+            continue
+        enriquecidas.append({
+            **{k: e.get(k) for k in _CAMPOS_ENTRADA},
+            "pregunta": detalle.get("question"),
+            "liga": detalle.get("subcategory"),
+            "volume": detalle.get("volume"),
+            "num_trades": detalle.get("num_trades"),
+        })
+    if errores:
+        raise PlanInvalido(f"{len(errores)} mercado(s) con errores", errores)
+
+    guardado = {
+        "generado": ahora.isoformat(timespec="seconds"),
+        "modo": "agente",
+        "nota": plan.get("nota"),
+        "resoluciones": enriquecidas,
+        "escalados": list(plan.get("escalados") or []),
+    }
+    row = ResolutionPlan(
+        status="pending", origen="agente", nonce=secrets.token_urlsafe(16),
+        plan=guardado, resumen=resumen_de(guardado),
+    )
+    db.add(row)
+    await db.commit()
+    await db.refresh(row)
+    plan_id, nonce, resumen = row.id, row.nonce, dict(row.resumen)
+    logger.info("plan del agente #%d propuesto: %s", plan_id, resumen)
+    url = f"{settings.BACKEND_URL}/api/admin/resolucion/planes/{plan_id}/aprobar?t={make_plan_token(plan_id, nonce)}"
+    spawn(send_resolution_plan_email(plan_id, guardado, resumen, url, origen="agente"))
+    return row
 
 
 # ── aplicar ──────────────────────────────────────────────────────────────────

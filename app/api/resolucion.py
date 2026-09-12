@@ -11,6 +11,7 @@ from html import escape as _esc
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,7 +27,7 @@ router = APIRouter(prefix="/admin/resolucion", tags=["admin"])
 
 def _plan_out(p: ResolutionPlan) -> dict:
     return {
-        "id": p.id, "status": p.status, "resumen": p.resumen,
+        "id": p.id, "status": p.status, "origen": p.origen, "resumen": p.resumen,
         "created_at": p.created_at.isoformat() if p.created_at else None,
         "approved_at": p.approved_at.isoformat() if p.approved_at else None,
         "applied_at": p.applied_at.isoformat() if p.applied_at else None,
@@ -67,6 +68,32 @@ async def disparar_plan(
     require_admin(current_user)
     spawn(nocturno.correr_plan_nocturno(forzar=True))
     return {"started": True}
+
+
+class PlanPropuesto(BaseModel):
+    resoluciones: list[dict] = Field(min_length=1)
+    escalados: list[dict] = []
+    nota: str | None = None
+
+
+@router.post("/planes/proponer", status_code=201)
+async def proponer_plan(
+    body: PlanPropuesto,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Plan armado por el agente (`agent-resolver.py proponer`): se valida entrada
+    por entrada, se guarda como pendiente (origen=agente) y se manda el correo
+    con el botón de aprobación. Nada se resuelve aquí."""
+    require_admin(current_user)
+    try:
+        row = await nocturno.proponer_plan(db, body.model_dump())
+    except nocturno.PlanInvalido as e:
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "PLAN_INVALIDO", "message": str(e), "errores": e.errores},
+        )
+    return _plan_out(row)
 
 
 # ── aprobación desde el correo ───────────────────────────────────────────────
