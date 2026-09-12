@@ -227,12 +227,18 @@ async def send_resolution_plan_email(
     def item(e: dict) -> str:
         sug = f' · sugerido: <b>{_esc(str(e["veredicto_sugerido"]))}</b>' if e.get("veredicto_sugerido") else ""
         ev = f' <a href="{_esc(e["fuente_1"])}" style="color:#8AB4FF">evidencia</a>' if e.get("fuente_1") else ""
+        ev += f' · <a href="{_esc(e["fuente_2"])}" style="color:#8AB4FF">evidencia 2</a>' if e.get("fuente_2") else ""
+        res = f'<br><span style="color:rgba(245,240,232,0.7)">{_esc(str(e["resultado"])[:300])}</span>' if e.get("resultado") else ""
+        citas = "".join(f'<br><i style="color:rgba(245,240,232,0.5)">“{_esc(str(c)[:200])}”</i>' for c in (e.get("citas") or [])[:3])
         warn = f' <span style="color:#FFD700">⚠️ {e.get("volume")} PT</span>' if (e.get("num_trades") or 0) else ""
         return (f'<li style="margin-bottom:8px;font-size:12px"><b>{_esc(e.get("pregunta") or e["id"])}</b>{warn}<br>'
-                f'<span style="color:rgba(245,240,232,0.55)">{_esc(e.get("razon") or "")}{sug}{ev}</span></li>')
+                f'<span style="color:rgba(245,240,232,0.55)">{_esc(e.get("razon") or "")}{sug}{ev}</span>{res}{citas}</li>')
 
+    sin_receta = resumen.get("sin_receta") or 0
+    aviso_skill = (f'<p style="margin:12px 0 0;font-size:12px;color:#FFD700">{sin_receta} no deportivos sin receta: '
+                   f'pídele a Claude Code correr la skill <b>resolver-no-deportivos</b>.</p>') if sin_receta else ""
     escalados = (f'<p style="margin:18px 0 6px;font-size:14px;font-weight:700">Escalados ({len(esc)}) — ciérralos en <a href="{_SITE}/#/admin" style="color:#8AB4FF">/admin</a></p>'
-                 f'<ul style="padding-left:18px;margin:0">{"".join(item(e) for e in esc)}</ul>') if esc else ""
+                 f'<ul style="padding-left:18px;margin:0">{"".join(item(e) for e in esc)}</ul>{aviso_skill}') if esc else ""
 
     if auto_resultado is not None:
         r_ok, r_f = auto_resultado.get("resueltos", []), auto_resultado.get("fallidos", [])

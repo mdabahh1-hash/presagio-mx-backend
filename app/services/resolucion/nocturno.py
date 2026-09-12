@@ -78,6 +78,7 @@ def resumen_de(plan: dict) -> dict:
         "con_operaciones": len(con_ops),
         "volumen": round(sum(float(r.get("volume") or 0) for r in res)),
         "sugeridos": len([e for e in esc if e.get("veredicto_sugerido")]),
+        "sin_receta": len([e for e in esc if e.get("sin_receta")]),  # no deportivos para la skill
     }
 
 

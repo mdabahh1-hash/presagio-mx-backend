@@ -80,6 +80,8 @@ async def migrate_columns() -> None:
         "CREATE INDEX IF NOT EXISTS ix_league_cycle_standings_user_id ON league_cycle_standings (user_id)",
         # Planes de resolución propuestos por el agente (además del job nocturno).
         "ALTER TABLE resolution_plans ADD COLUMN IF NOT EXISTS origen VARCHAR(20) NOT NULL DEFAULT 'nocturno'",
+        # Receta de resolución mecánica para mercados de dato publicado (no deportivos).
+        "ALTER TABLE markets ADD COLUMN IF NOT EXISTS auto_resolucion JSON",
     ]
     async with engine.begin() as conn:
         for s in stmts:

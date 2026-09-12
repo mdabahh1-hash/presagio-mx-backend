@@ -10,10 +10,16 @@ Comandos:
   ./venv/bin/python agent-resolver.py check-token
       Verifica el token de .env.agent (y lo renueva si hace falta).
 
-  ./venv/bin/python agent-resolver.py list [--compact] [--out archivo.json]
+  ./venv/bin/python agent-resolver.py list [--compact] [--out archivo.json] [--sin-deportes] [--categoria X]
       Lista TODOS los mercados en pending_resolution. Por default con detalle
-      completo (criterio, fuente, normas, outcomes); --compact solo lo que
-      necesita la investigación.
+      completo (criterio, fuente, normas, outcomes, auto_resolucion); --compact
+      solo lo que necesita la investigación. --sin-deportes para la skill
+      resolver-no-deportivos.
+
+  ./venv/bin/python agent-resolver.py recetas recetas-AAAA-MM-DD.yaml [--apply] [--only ID ...]
+      Escribe recetas de resolución mecánica (auto_resolucion, ver
+      app/services/resolucion/recetas.py) en mercados ya sembrados, vía PATCH.
+      Sin --apply solo valida.
 
   ./venv/bin/python agent-resolver.py plan-auto --out resoluciones/AAAA-MM-DD.json [--liga "Serie A" ...]
       Arma el plan SIN LLM: cruza los 1X2 pendientes con ESPN y TheSportsDB
@@ -89,6 +95,7 @@ CAMPOS_COMPACTOS = (
     "id", "question", "market_type", "category", "subcategory", "kind",
     "ends_at", "volume", "num_trades",
 )
+CATEGORIA_DEPORTES = "Deportes"  # value del enum que devuelve el API
 
 
 # ── HTTP ─────────────────────────────────────────────────────────────────────
@@ -183,6 +190,7 @@ def _proyectar(detail: dict, compact: bool) -> dict:
     out["resolution_criteria"] = detail.get("resolution_criteria")
     out["resolution_source_url"] = detail.get("resolution_source_url")
     out["rules"] = detail.get("rules")
+    out["auto_resolucion"] = detail.get("auto_resolucion")
     out["outcomes"] = [
         {"outcome_key": o.get("outcome_key"), "label": o.get("label"), "price": o.get("price")}
         for o in outcomes
@@ -190,8 +198,12 @@ def _proyectar(detail: dict, compact: bool) -> dict:
     return out
 
 
-def cmd_list(compact: bool, out_path: str | None) -> None:
+def cmd_list(compact: bool, out_path: str | None, sin_deportes: bool = False, categoria: str | None = None) -> None:
     markets = _fetch_pending()
+    if sin_deportes:
+        markets = [m for m in markets if m.get("category") != CATEGORIA_DEPORTES]
+    if categoria:
+        markets = [m for m in markets if (m.get("category") or "").lower() == categoria.lower()]
     with ThreadPoolExecutor(max_workers=8) as pool:
         details = list(pool.map(_detail, markets))
     out = {"total": len(details), "markets": [_proyectar(d, compact) for d in details]}
@@ -420,6 +432,50 @@ def cmd_patch(market_id: str, raw_json: str) -> None:
         sys.exit(f"FALLÓ {market_id}: {json.dumps(r, ensure_ascii=False)}")
 
 
+def cmd_recetas(path: str, apply: bool, only: list[str] | None) -> None:
+    """Aplica recetas (id → auto_resolucion) de un YAML/JSON a mercados existentes
+    vía PATCH. Sin --apply solo valida e imprime."""
+    from app.services.resolucion.recetas import validar_receta
+
+    with open(path) as f:
+        raw = f.read()
+    if path.endswith(".json"):
+        recetas = json.loads(raw)
+    else:
+        import yaml  # PyYAML ya es dependencia del sembrador
+
+        recetas = yaml.safe_load(raw) or {}
+    if not isinstance(recetas, dict):
+        sys.exit("ERROR: el archivo debe ser un mapa id → receta")
+    ids = [i for i in recetas if not only or i in set(only)]
+    detalles = _detalles(ids)
+    errores = 0
+    for mid in ids:
+        r = recetas[mid]
+        d = detalles.get(mid) or {}
+        if not d or d.get("http_error"):
+            print(f"✗ {mid}: no existe en el API"); errores += 1; continue
+        errs = validar_receta(r, d.get("market_type") or "binary")
+        if errs:
+            print(f"✗ {mid}: {'; '.join(errs)}"); errores += 1; continue
+        estado = "ya tiene receta" if d.get("auto_resolucion") else "sin receta"
+        print(f"  {mid:<40} {r.get('fuente'):<20} {estado}")
+    if errores:
+        sys.exit(f"\n{errores} receta(s) con errores; no se aplicó nada.")
+    if not apply:
+        print(f"\n{len(ids)} recetas válidas. Corre con --apply para escribirlas (PATCH /admin/markets/{{id}}).")
+        return
+    ok = 0
+    for mid in ids:
+        resp = _auth(f"/admin/markets/{mid}", data={"auto_resolucion": recetas[mid]}, method="PATCH")
+        if isinstance(resp, dict) and resp.get("ok"):
+            ok += 1
+            print(f"APLICADA {mid}")
+        else:
+            print(f"FALLÓ {mid}: {json.dumps(resp, ensure_ascii=False)}")
+    print(f"\n{ok}/{len(ids)} recetas aplicadas.")
+
+
 def cmd_plan_auto(out_path: str, ligas: list[str] | None, desde: str | None = None) -> None:
     import logging
 
@@ -489,6 +545,12 @@ def main() -> None:
     pl = sub.add_parser("list")
     pl.add_argument("--compact", action="store_true")
     pl.add_argument("--out")
+    pl.add_argument("--sin-deportes", action="store_true", help="solo mercados fuera de Deportes")
+    pl.add_argument("--categoria", help="solo esta categoría (valor del API, p. ej. 'Política')")
+    prc = sub.add_parser("recetas", help="aplicar recetas auto_resolucion (id → receta) a mercados existentes")
+    prc.add_argument("archivo")
+    prc.add_argument("--apply", action="store_true")
+    prc.add_argument("--only", nargs="+")
     pp = sub.add_parser("plan-auto")
     pp.add_argument("--out", required=True)
     pp.add_argument("--liga", action="append", help="limitar a una subcategoría (repetible)")
@@ -527,7 +589,9 @@ def main() -> None:
     elif a.cmd == "plan-nocturno":
         cmd_plan_nocturno()
     elif a.cmd == "list":
-        cmd_list(a.compact, a.out)
+        cmd_list(a.compact, a.out, a.sin_deportes, a.categoria)
+    elif a.cmd == "recetas":
+        cmd_recetas(a.archivo, a.apply, a.only)
     elif a.cmd == "plan-auto":
         cmd_plan_auto(a.out, a.liga, a.desde)
     elif a.cmd == "check-plan":

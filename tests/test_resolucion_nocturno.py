@@ -62,7 +62,7 @@ async def test_crea_plan_y_manda_correo(db, correos, armado, make_multi_market, 
 
     row = await nocturno.correr_plan_nocturno()
     assert row is not None and row.status == "pending"
-    assert row.resumen == {"resoluciones": 1, "escalados": 1, "con_operaciones": 0, "volumen": 0, "sugeridos": 1}
+    assert row.resumen == {"resoluciones": 1, "escalados": 1, "con_operaciones": 0, "volumen": 0, "sugeridos": 1, "sin_receta": 0}
     # spawn() manda el correo en una task: cederle el loop
     import asyncio
     await asyncio.sleep(0)
@@ -227,7 +227,7 @@ async def test_proponer_crea_plan_agente_y_se_aprueba_por_correo(client, db, cor
     assert r.status_code == 201, r.text
     out = r.json()
     assert out["status"] == "pending" and out["origen"] == "agente"
-    assert out["resumen"] == {"resoluciones": 2, "escalados": 1, "con_operaciones": 1, "volumen": 0, "sugeridos": 0}
+    assert out["resumen"] == {"resoluciones": 2, "escalados": 1, "con_operaciones": 1, "volumen": 0, "sugeridos": 0, "sin_receta": 0}
 
     import asyncio
     await asyncio.sleep(0)

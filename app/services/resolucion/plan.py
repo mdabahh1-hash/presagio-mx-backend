@@ -12,6 +12,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 
 from . import cruce
+from .recetas import resolver_receta
 from .fuentes import (LIGAS, UEFA_COMPETICION, Http, Partido, cbs_boxscore_nfl, deporte, espn_boxscore_nfl,
                       espn_scoreboard, espn_summary, tsdb_buscar, tsdb_resumen, uefa_partidos, uefa_resumen,
                       variantes_nombre)
@@ -43,7 +44,19 @@ def armar_plan(mercados: list[dict], http: Http | None = None, solo_ligas: set[s
         if solo_ligas and liga not in solo_ligas:
             continue
         if liga not in LIGAS:
-            escalados.append(_escalado(m, f"sin fuente automática para la subcategoría '{liga}'"))
+            if m.get("auto_resolucion"):
+                # Mercado de dato publicado con receta (no deportivo): dos fuentes
+                # mecánicas como en deportes; una sola → escalado con sugerencia.
+                _log(f"[receta] {m['id']}: {m['auto_resolucion'].get('fuente')}")
+                entrada = resolver_receta(m, http)
+                if entrada.pop("escalar", False):
+                    escalados.append(entrada)
+                else:
+                    resoluciones.append(entrada)
+            elif (m.get("category") or "").lower() in ("deportes", "sports"):
+                escalados.append(_escalado(m, f"sin fuente automática para la subcategoría '{liga}'"))
+            else:
+                escalados.append(_escalado(m, "sin receta: resolver con la skill resolver-no-deportivos", sin_receta=True))
             continue
         por_liga[liga].append(m)
 

@@ -73,6 +73,17 @@ async def patch_market(
         if valor is not None:
             setattr(market, campo, valor)
             cambios.append(campo)
+    if payload.auto_resolucion is not None:
+        from app.services.resolucion.recetas import validar_receta
+
+        if payload.auto_resolucion == {}:
+            market.auto_resolucion = None
+        else:
+            errs = validar_receta(payload.auto_resolucion, market.market_type)
+            if errs:
+                raise HTTPException(status_code=422, detail={"code": "RECETA_INVALIDA", "message": "; ".join(errs)})
+            market.auto_resolucion = payload.auto_resolucion
+        cambios.append("auto_resolucion")
     if payload.outcome_labels:
         res = await db.execute(select(Outcome).where(Outcome.market_id == market_id))
         por_key = {o.outcome_key: o for o in res.scalars().all()}

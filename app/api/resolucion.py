@@ -137,8 +137,11 @@ def _lista_escalados(plan: dict) -> str:
     for e in esc:
         sug = f" · sugerido: <b>{_esc(str(e['veredicto_sugerido']))}</b>" if e.get("veredicto_sugerido") else ""
         ev = f" <a href='{_esc(e['fuente_1'])}'>evidencia</a>" if e.get("fuente_1") else ""
+        ev += f" · <a href='{_esc(e['fuente_2'])}'>evidencia 2</a>" if e.get("fuente_2") else ""
+        res = f"<br>{_esc(str(e['resultado'])[:300])}" if e.get("resultado") else ""
+        citas = "".join(f"<br><i class='muted'>“{_esc(str(c)[:200])}”</i>" for c in (e.get("citas") or [])[:3])
         vol = f" <span class='warn'>⚠️ {e.get('volume')} PT</span>" if (e.get("num_trades") or 0) else ""
-        items.append(f"<li><b>{_esc(e.get('pregunta') or e['id'])}</b>{vol}<br><span class='muted'>{_esc(e.get('razon') or '')}{sug}{ev}</span></li>")
+        items.append(f"<li><b>{_esc(e.get('pregunta') or e['id'])}</b>{vol}<br><span class='muted'>{_esc(e.get('razon') or '')}{sug}{ev}</span>{res}{citas}</li>")
     return f"<div class='box'><b>Escalados ({len(esc)})</b> — no se resuelven con este plan; ciérralos en <a href='https://veredikt.mx/#/admin'>/admin</a>.<ul>{''.join(items)}</ul></div>"
 
 

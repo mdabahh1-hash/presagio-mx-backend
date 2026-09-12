@@ -26,6 +26,7 @@ def mercado_a_dict(m: Market, outcomes: list[Outcome]) -> dict:
         "resolution_criteria": m.resolution_criteria,
         "resolution_source_url": getattr(m, "resolution_source_url", None),
         "rules": getattr(m, "rules", None),
+        "auto_resolucion": getattr(m, "auto_resolucion", None),
         "outcomes": [
             {"outcome_key": o.outcome_key, "label": o.label, "price": o.price} for o in outcomes
         ],

@@ -75,6 +75,10 @@ class Settings(BaseSettings):
     RESOLUCION_NOCTURNA_HORA_UTC: int = 12      # 06:00 CDMX (respaldo si HORAS_UTC está vacío)
     # Horas UTC de corrida, separadas por coma. Railway: "0,12" (18:00 y 06:00 CDMX).
     RESOLUCION_HORAS_UTC: str = ""
+    # Tokens gratuitos para recetas de dato publicado (recetas.py). Vacíos →
+    # esas recetas se escalan con "falta token".
+    BANXICO_TOKEN: str = ""   # https://www.banxico.org.mx/SieAPIRest/service/v1/token
+    INEGI_TOKEN: str = ""     # https://www.inegi.org.mx/app/desarrolladores/generatoken/
     PLAN_APPROVAL_TTL_HOURS: int = 48
     # True: los 1X2 con marcador coincidente en ESPN y TheSportsDB se resuelven
     # solos al armar el plan (el correo es un reporte); los escalados siguen

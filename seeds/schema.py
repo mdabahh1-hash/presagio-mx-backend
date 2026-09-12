@@ -59,6 +59,7 @@ class MarketSpec:
     initial_yes_price: float | None = None
     outcomes: list[OutcomeSpec] = field(default_factory=list)
     origen: str = ""  # "partido" si vino del atajo (solo para el reporte)
+    auto_resolucion: dict | None = None  # receta mecánica (app/services/resolucion/recetas.py)
 
 
 class SchemaError(Exception):
@@ -178,6 +179,7 @@ def _normalizar(doc: dict, ctx: str, errores: list[str]) -> MarketSpec | None:
         resolution_source_url=doc.get("resolution_source_url"), b=b,
         trending=bool(doc.get("trending", False)), initial_yes_price=prior,
         outcomes=outcomes, origen=str(doc.get("_origen", "")),
+        auto_resolucion=doc.get("auto_resolucion"),
     )
 
 
@@ -211,6 +213,11 @@ def _validar(specs: list[MarketSpec], avisos: list[str]) -> list[str]:
             e.append(f"{c}: image_url debe ser https:// o /img/…")
         if s.b <= 0:
             e.append(f"{c}: b debe ser > 0")
+        if s.auto_resolucion is not None:
+            from app.services.resolucion.recetas import validar_receta
+
+            for err in validar_receta(s.auto_resolucion, "binary" if s.tipo == "binario" else "multi"):
+                e.append(f"{c}: auto_resolucion: {err}")
         elif s.b < B_DEFAULT:
             avisos.append(f"{c}: b={s.b:g} (el estándar actual es {B_DEFAULT:g})")
         if s.category == "DEPORTES" and not s.subcategory:

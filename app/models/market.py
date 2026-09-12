@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime
-from sqlalchemy import String, Float, DateTime, Enum, Text, Integer, func, Boolean
+from sqlalchemy import JSON, String, Float, DateTime, Enum, Text, Integer, func, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
@@ -53,6 +53,10 @@ class Market(Base):
     rules: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Contexto del mercado ("Market context"): antecedentes y por qué importa.
     context: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Receta de resolución mecánica (app/services/resolucion/recetas.py): qué
+    # dato publicado leer, con qué fuentes y contra qué umbral. NULL = el
+    # agente no lo resuelve solo (deportes usan sus propias fuentes).
+    auto_resolucion: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     # Imagen cuadrada del mercado: URL absoluta https:// o ruta relativa al
     # frontend (p. ej. "/img/markets/sub/liga-mx.svg"). Sin imagen el frontend
     # cae a la de la subcategoría/categoría.

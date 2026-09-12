@@ -40,6 +40,14 @@ Comandos útiles: `agent-resolver.py planes` (planes del servidor y estado del j
 "en vivo"). El flujo manual de abajo sigue vigente para escalados y para cuando Mark lo pida;
 termina en `proponer`, que manda el mismo correo con botón.
 
+## No deportivos
+
+Los mercados fuera de Deportes con `auto_resolucion` (receta: cierres cripto, dominancia,
+stablecoins, tasas, órdenes ejecutivas) los evalúa el mismo job con dos fuentes mecánicas
+(`app/services/resolucion/recetas.py`). Los que no tienen receta salen "sin receta" y se resuelven a
+mano, solo cuando Mark lo pide, con la skill **`resolver-no-deportivos`** (fuente de las normas + una
+fuente confiable de la lista cerrada; NO por ausencia siempre escalado).
+
 ## Paso 0 — Token
 
 ```

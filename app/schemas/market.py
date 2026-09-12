@@ -60,6 +60,7 @@ class MarketDetail(MarketBase):
     # Textos largos: solo en el detalle, no en los listados (100+ filas).
     rules: str | None = None
     context: str | None = None
+    auto_resolucion: dict | None = None  # receta mecánica (recetas.py); la usa agent-resolver.py
 
 
 class MarketCreate(BaseModel):
@@ -93,3 +94,4 @@ class MarketPatch(BaseModel):
     rules: str | None = None
     context: str | None = None
     outcome_labels: dict[str, str] | None = None  # outcome_key → etiqueta nueva
+    auto_resolucion: dict | None = None  # receta mecánica; {} la borra

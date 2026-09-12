@@ -1,0 +1,118 @@
+# recetas-2026-09-12.yaml — recetas de resolución mecánica (auto_resolucion)
+# para mercados no deportivos de DATO PUBLICADO ya sembrados.
+#
+#   ./venv/bin/python agent-resolver.py recetas recetas-2026-09-12.yaml          # valida
+#   ./venv/bin/python agent-resolver.py recetas recetas-2026-09-12.yaml --apply  # PATCH por id
+#
+# Esquema y fuentes: app/services/resolucion/recetas.py. Los mercados nuevos
+# llevan la receta en mercados-pendientes.yaml (campo auto_resolucion).
+#
+# Sin receta (se resuelven a mano con la skill resolver-no-deportivos):
+#   banxico-recorte-tasa-2026-q3 ("algún recorte en el trimestre": varias decisiones),
+#   mexico-inflacion-2026 (necesita INEGI_TOKEN y el id del indicador de inflación anual),
+#   trump-aprobacion-gallup-45-2026 (Gallup no tiene API), nvidia-1000 (Nasdaq sin API libre),
+#   eeuu-compra-bitcoin-2026 (hecho, no dato).
+
+# ── Cierres de fin de año: CF Benchmarks (oficial en las normas) + Binance ──
+btc-cierre-100k-2026:
+  fuente: cripto_cierre
+  params: {indice: BRR, symbol: BTCUSDT}
+  fecha: "2026-12-31"
+  op: ">="
+  valor: 100000
+
+eth-cierre-3000-2026:
+  fuente: cripto_cierre
+  params: {indice: ETHUSD_RR, symbol: ETHUSDT}
+  fecha: "2026-12-31"
+  op: ">="
+  valor: 3000
+
+sol-cierre-150-2026:
+  fuente: cripto_cierre
+  params: {indice: SOLUSD_RR, symbol: SOLUSDT}
+  fecha: "2026-12-31"
+  op: ">="
+  valor: 150
+
+# ── Ventanas: mínimo de cierres diarios BRR / máximo intradía (Binance + Kraken) ──
+btc-cierre-diario-60k-2026:
+  fuente: cripto_toca
+  params: {indice: BRR, symbol: BTCUSDT, campo: close, agg: min}
+  desde: "2026-08-27"
+  fecha: "2026-12-31"
+  op: "<"
+  valor: 60000
+
+# Las normas citan el índice en tiempo real BRTI (sin serie pública); se usan los
+# máximos intradía de Binance y Kraken como fuente sustituta, como prevén las normas.
+btc-toca-120k-2026:
+  fuente: cripto_toca
+  params: {symbol: BTCUSDT, pair: XBTUSD, campo: high, agg: max}
+  desde: "2026-08-27"
+  fecha: "2026-12-31"
+  op: ">="
+  valor: 120000
+
+# Normas: promedio Binance + Coinbase supera 150k en algún instante antes del 1-dic.
+# Sustituto mecánico: máximos intradía Binance + Kraken (si ambos superan 150k, el promedio también).
+bitcoin-150k:
+  fuente: cripto_toca
+  params: {symbol: BTCUSDT, pair: XBTUSD, campo: high, agg: max}
+  desde: "2026-06-05"
+  fecha: "2026-11-30"
+  op: ">"
+  valor: 150000
+
+# ── CoinGecko (una sola fuente libre → escalado con el valor leído) ──
+btc-dominancia-60-2026:
+  fuente: cripto_dominancia
+  params: {}
+  fecha: "2026-12-31"
+  op: ">="
+  valor: 60
+
+# Normas: "en cualquier momento" (gráfica histórica); el job solo lee el valor actual
+# al cierre. Si tocó 4T antes y bajó, la sugerencia sale NO: revisar la gráfica al aprobar.
+cripto-cap-4t-2026:
+  fuente: cripto_cap_total
+  params: {}
+  fecha: "2026-12-31"
+  op: ">="
+  valor: 4000000000000
+
+cinco-criptos-100b-2026:
+  fuente: cripto_n_sobre_cap
+  params:
+    umbral: 100000000000
+    excluir: [usdt, usdc, usds, usde, dai, fdusd, pyusd, tusd, busd, wbtc, weth, steth, wsteth, cbbtc, weeth, reth, tbtc]
+  fecha: "2026-12-31"
+  op: ">="
+  valor: 5
+
+# ── DefiLlama (historial) + CoinGecko (categoría stablecoins) ──
+stablecoins-350b-2026:
+  fuente: stablecoins_cap
+  params: {agg: max}
+  desde: "2026-08-27"
+  fecha: "2026-12-31"
+  op: ">="
+  valor: 350000000000
+
+# ── Tasas: FRED + comunicado de la Fed; Banxico SIE (requiere BANXICO_TOKEN) ──
+fed-mantiene-tasa-sep26:
+  fuente: fed_tasa
+  params: {decision: "2026-09-16", tipo: mantiene}
+
+banxico-mantiene-tasa-sep26:
+  fuente: banxico_tasa
+  params: {decision: "2026-09-24", tipo: mantiene}
+
+# ── Federal Register (conteo oficial; una fuente → escalado con el conteo) ──
+# Se evalúa hasta el 20-ene-2027 para dar tiempo a que se publiquen las últimas órdenes del año.
+trump-65-ordenes-ejecutivas-2026:
+  fuente: federal_register_eo
+  params: {presidente: donald-trump, desde: "2026-01-01", hasta: "2026-12-31"}
+  fecha: "2027-01-20"
+  op: ">="
+  valor: 65

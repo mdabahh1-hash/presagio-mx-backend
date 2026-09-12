@@ -19,7 +19,16 @@
 #                     rules (texto completo) O rules_cuerpo + rules_como
 #                     (obligatorio rules_como si no hay resolution_source_url),
 #                     context, ends_at (2026-11-13T05:59:00Z), initial_yes_price (1-99),
-#                     b? (1000), trending? (false)
+#                     b? (1000), trending? (false),
+#                     auto_resolucion? — receta para que el job lo resuelva solo
+#                     (solo binarios de DATO PUBLICADO; ver app/services/resolucion/recetas.py):
+#                       auto_resolucion: {fuente: cripto_cierre, params: {indice: BRR, symbol: BTCUSDT},
+#                                         fecha: "2026-12-31", op: ">=", valor: 100000}
+#                     fuentes: cripto_cierre, cripto_toca (desde + params.campo/agg),
+#                     cripto_dominancia, cripto_cap_total, cripto_n_sobre_cap, stablecoins_cap,
+#                     fed_tasa / banxico_tasa (params.decision + params.tipo mantiene|sube|baja),
+#                     inegi_inflacion (params.periodo), federal_register_eo.
+#                     Sin receta el mercado se escala para resolverlo a mano.
 #
 #   tipo: multi     — igual que binario sin initial_yes_price, más
 #                     outcomes: [{key, label, pct}]   (los pct suman 100)
