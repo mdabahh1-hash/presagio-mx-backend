@@ -12,8 +12,9 @@ from collections import defaultdict
 from datetime import datetime, timezone
 
 from . import cruce
-from .fuentes import (LIGAS, Http, Partido, deporte, espn_boxscore_nfl, espn_scoreboard, espn_summary,
-                      tsdb_buscar, variantes_nombre)
+from .fuentes import (LIGAS, UEFA_COMPETICION, Http, Partido, cbs_boxscore_nfl, deporte, espn_boxscore_nfl,
+                      espn_scoreboard, espn_summary, tsdb_buscar, tsdb_resumen, uefa_partidos, uefa_resumen,
+                      variantes_nombre)
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,14 @@ def armar_plan(mercados: list[dict], http: Http | None = None, solo_ligas: set[s
             _plan_nfl(http, liga, ms, partidos, resoluciones, escalados)
             continue
 
+        tsdb_resumenes: dict[str, dict | None] = {}  # id de partido ESPN → resumen de la segunda fuente
+        uefa_lista: list[dict] | None = None
+        if liga in UEFA_COMPETICION and any(m.get("kind") == "accesorio" or m.get("market_type") == "binary" for m in ms):
+            try:
+                uefa_lista = uefa_partidos(http, liga, min(kickoffs), max(kickoffs))
+                _log(f"[{liga}] {len(uefa_lista)} partidos en la UEFA")
+            except RuntimeError as e:
+                _log(f"[{liga}] UEFA no respondió: {e}")
         for m in ms:
             kickoff = _dt(m["ends_at"])
             if m.get("market_type") == "multi" and (m.get("kind") == "partido" or cruce.equipos_partido(m)):
@@ -103,12 +112,15 @@ def armar_plan(mercados: list[dict], http: Http | None = None, solo_ligas: set[s
                 if partido is None:
                     escalados.append(_escalado(m, f"{spec['jugador']} no aparece en ninguna alineación de ESPN cerca del cierre"))
                     continue
-            sugerido, detalle = (cruce.sugerir_titular if tit else cruce.sugerir_gol)(spec["jugador"], summary)
-            escalados.append(_escalado(
-                m, "accesorio con una sola fuente (ESPN): confirmar con la fuente oficial antes de resolver",
-                veredicto_sugerido=sugerido, resultado=f"{partido.marcador} ({cruce.fecha_corta(partido.kickoff)}) — {detalle}",
-                fuente_1=summary["url"],
-            ))
+            # Segunda fuente: UEFA (oficial, alineaciones completas) en sus
+            # competencias; TheSportsDB (recortada: solo presencias) en el resto.
+            if partido.id not in tsdb_resumenes:
+                tsdb_resumenes[partido.id] = _segunda_fuente_accesorio(http, liga, partido, uefa_lista)
+            entrada = cruce.resolver_accesorio(m, spec, "titular" if tit else "gol", partido, summary, tsdb_resumenes[partido.id])
+            if entrada.pop("escalar", False):
+                escalados.append(entrada)
+            else:
+                resoluciones.append(entrada)
 
     return {
         "generado": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -118,12 +130,37 @@ def armar_plan(mercados: list[dict], http: Http | None = None, solo_ligas: set[s
     }
 
 
+def _segunda_fuente_accesorio(http: Http, liga: str, partido: Partido, uefa_lista: list[dict] | None) -> dict | None:
+    """Resumen (equipos/goles) del mismo partido en la segunda fuente."""
+    if uefa_lista is not None:
+        u = cruce.emparejar_uefa(partido, uefa_lista)
+        if u is None:
+            _log(f"    ✗ UEFA: sin cruce para {partido.home} vs {partido.away}")
+            return None
+        try:
+            r = uefa_resumen(http, liga, u)
+            _log(f"    ✓ UEFA {partido.home} vs {partido.away}: {sum(len(e['titulares']) for e in r['equipos'].values())} titulares, {len(r['goles'])} goles")
+            return r
+        except RuntimeError as e:
+            _log(f"    ✗ UEFA lineups {partido.home} vs {partido.away}: {e}")
+            return None
+    ev = _buscar_tsdb(http, liga, partido, partido.home, partido.away, partido.kickoff)
+    if ev is None:
+        return None
+    try:
+        return tsdb_resumen(http, ev.id)
+    except RuntimeError as e:
+        _log(f"    ✗ TSDB lineup/timeline {partido.home} vs {partido.away}: {e}")
+        return None
+
+
 def _plan_nfl(http: Http, liga: str, ms: list[dict], partidos: list[Partido],
               resoluciones: list[dict], escalados: list[dict]) -> None:
     """NFL: el ganador se resuelve con doble fuente (ESPN + TheSportsDB) sobre
     outcomes por equipo; las props (TD, pases de TD, fantasy) salen escaladas
     con sugerencia del box score de ESPN, como los accesorios de fútbol."""
     boxscores: dict[str, dict] = {}
+    cbs_cache: dict[str, dict | None] = {}
 
     def boxscore(p: Partido) -> dict | None:
         if p.id not in boxscores:
@@ -133,6 +170,26 @@ def _plan_nfl(http: Http, liga: str, ms: list[dict], partidos: list[Partido],
                 _log(f"    ✗ box score {p.home} vs {p.away}: {e}")
                 boxscores[p.id] = None
         return boxscores[p.id]
+
+    def cbs(p: Partido) -> dict | None:
+        """Segunda fuente: box score de CBS del mismo partido (abreviaturas de ESPN)."""
+        if p.id not in cbs_cache:
+            cbs_cache[p.id] = None
+            sep = p.alias.index("|") if "|" in p.alias else len(p.alias)
+            abbr_home, abbr_away = (p.alias[sep - 1] if sep >= 1 else None), (p.alias[-1] if len(p.alias) > sep + 1 else None)
+            if abbr_home and abbr_away:
+                try:
+                    cbs_cache[p.id] = cbs_boxscore_nfl(http, p.kickoff, abbr_away, abbr_home)
+                    _log(f"    ✓ CBS box score {p.home} vs {p.away}: {len(cbs_cache[p.id]['jugadores'])} jugadores")
+                except RuntimeError as e:
+                    _log(f"    ✗ CBS box score {p.home} vs {p.away}: {e}")
+        return cbs_cache[p.id]
+
+    def buscar_jugador(bs: dict | None, jugador: str) -> str | None:
+        for nombre in (bs or {}).get("jugadores", {}):
+            if cruce._persona_coincide(jugador, nombre):
+                return nombre
+        return None
 
     for m in ms:
         kickoff = _dt(m["ends_at"])
@@ -161,38 +218,33 @@ def _plan_nfl(http: Http, liga: str, ms: list[dict], partidos: list[Partido],
             (p for p in partidos if abs((p.kickoff - kickoff).total_seconds()) <= 36 * 3600),
             key=lambda p: abs((p.kickoff - kickoff).total_seconds()),
         )
-        hallado = None
+        if not cercanos:
+            escalados.append(_escalado(m, "ningún partido de la NFL cerca de la hora de cierre"))
+            continue
+        # Partido del jugador: donde aparezca en el box score de ESPN o de CBS;
+        # si no aparece en ninguno, el más cercano al cierre (inactivo).
+        elegido, bs_e, nombre_e, nombre_c = None, None, None, None
         for p in cercanos:
-            bs = boxscore(p)
-            if not bs:
-                continue
-            for nombre, stats in bs["jugadores"].items():
-                if cruce._persona_coincide(spec["jugador"], nombre):
-                    hallado = (p, bs, nombre, stats)
-                    break
-            if hallado:
+            bs_e = boxscore(p)
+            nombre_e = buscar_jugador(bs_e, spec["jugador"])
+            nombre_c = buscar_jugador(cbs(p), spec["jugador"]) if bs_e is not None else None
+            if nombre_e or nombre_c:
+                elegido = p
                 break
-        if hallado is None:
-            if not cercanos:
-                escalados.append(_escalado(m, "ningún partido de la NFL cerca de la hora de cierre"))
-            else:
-                escalados.append(_escalado(
-                    m, f"{spec['jugador']} no aparece en el box score de ESPN de los partidos cercanos: "
-                       "si fue inactivo, por normas el mercado se cancela",
-                    veredicto_sugerido="CANCELAR", fuente_1=cercanos[0].url,
-                ))
+        if elegido is None:
+            elegido = cercanos[0]
+            bs_e, nombre_e, nombre_c = boxscore(elegido), None, None
+        if bs_e is None:
+            escalados.append(_escalado(m, "ESPN no devolvió el box score", fuente_1=elegido.url))
             continue
-        p, bs, nombre, stats = hallado
-        if bs.get("estado") not in ("FT", "AET"):
-            escalados.append(_escalado(m, f"partido no terminado ({bs.get('estado')})", fuente_1=bs["url"]))
+        if bs_e.get("estado") not in ("FT", "AET"):
+            escalados.append(_escalado(m, f"partido no terminado ({bs_e.get('estado')})", fuente_1=bs_e["url"]))
             continue
-        sugerido, detalle = cruce.sugerir_prop_nfl(spec, stats)
-        escalados.append(_escalado(
-            m, "prop con una sola fuente (box score de ESPN): confirmar con NFL.com o CBS antes de resolver",
-            veredicto_sugerido=sugerido,
-            resultado=f"{p.marcador} ({cruce.fecha_corta(p.kickoff)}) — {nombre}: {detalle}",
-            fuente_1=bs["url"],
-        ))
+        entrada = cruce.resolver_prop_nfl(m, spec, elegido, bs_e, cbs(elegido), nombre_e, nombre_c)
+        if entrada.pop("escalar", False):
+            escalados.append(entrada)
+        else:
+            resoluciones.append(entrada)
 
 
 def _buscar_tsdb(http: Http, liga: str, espn: Partido, local: str, visitante: str, kickoff: datetime) -> Partido | None:

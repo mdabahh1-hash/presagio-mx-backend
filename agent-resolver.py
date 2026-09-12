@@ -420,15 +420,22 @@ def cmd_patch(market_id: str, raw_json: str) -> None:
         sys.exit(f"FALLÓ {market_id}: {json.dumps(r, ensure_ascii=False)}")
 
 
-def cmd_plan_auto(out_path: str, ligas: list[str] | None) -> None:
+def cmd_plan_auto(out_path: str, ligas: list[str] | None, desde: str | None = None) -> None:
     import logging
 
     logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stderr)
     from app.services.resolucion.plan import armar_plan
 
-    markets = _fetch_pending()
-    with ThreadPoolExecutor(max_workers=8) as pool:
-        details = [_proyectar(d, compact=False) for d in pool.map(_detail, markets)]
+    if desde:
+        # Replay: listado guardado con `list --out` (detalle completo), p. ej.
+        # para reproducir el armado sobre mercados ya resueltos.
+        with open(desde) as f:
+            data = json.load(f)
+        details = data if isinstance(data, list) else data.get("markets") or data.get("mercados") or []
+    else:
+        markets = _fetch_pending()
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            details = [_proyectar(d, compact=False) for d in pool.map(_detail, markets)]
     plan = armar_plan(details, solo_ligas=set(ligas) if ligas else None)
     plan["escalados"].sort(key=lambda e: (-(e.get("volume") or 0), e["id"]))
     os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
@@ -449,7 +456,8 @@ def cmd_planes(limit: int) -> None:
     if isinstance(r, dict) and r.get("http_error"):
         sys.exit(f"ERROR: {json.dumps(r, ensure_ascii=False)}")
     n = r.get("nightly", {})
-    print(f"job nocturno: última corrida {n.get('ran_at')} · último plan #{n.get('last_plan_id')} · error: {n.get('last_error')}")
+    horas = ", ".join(f"{h:02d}:00" for h in (n.get("horas_utc") or [])) or "?"
+    print(f"job de resolución: corre a las {horas} UTC · última corrida {n.get('ran_at')} · último plan #{n.get('last_plan_id')} · error: {n.get('last_error')}")
     for p in r.get("planes", []):
         s = p.get("resumen") or {}
         res = p.get("resultado") or {}
@@ -484,6 +492,7 @@ def main() -> None:
     pp = sub.add_parser("plan-auto")
     pp.add_argument("--out", required=True)
     pp.add_argument("--liga", action="append", help="limitar a una subcategoría (repetible)")
+    pp.add_argument("--desde", help="replay: listado JSON guardado con `list --out` en vez de los pendientes del API")
     pc = sub.add_parser("check-plan")
     pc.add_argument("plan")
     pc.add_argument("--only", nargs="+")
@@ -520,7 +529,7 @@ def main() -> None:
     elif a.cmd == "list":
         cmd_list(a.compact, a.out)
     elif a.cmd == "plan-auto":
-        cmd_plan_auto(a.out, a.liga)
+        cmd_plan_auto(a.out, a.liga, a.desde)
     elif a.cmd == "check-plan":
         check_plan(a.plan, a.only)
     elif a.cmd == "proponer":

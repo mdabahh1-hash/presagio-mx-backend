@@ -325,3 +325,51 @@ async def test_plan_con_cancelar_reembolsa(client, db, correos, make_user, make_
     assert u.points == 57
     m = (await db.execute(select(Market).where(Market.id == "ag-cancel").execution_options(populate_existing=True))).scalar_one()
     assert m.status == MarketStatus.CANCELLED
+
+
+# ── dos corridas al día ──────────────────────────────────────────────────────
+
+def test_horas_y_proxima_corrida(monkeypatch):
+    from app.config import settings
+    monkeypatch.setattr(settings, "RESOLUCION_HORAS_UTC", "0,12")
+    assert nocturno.horas_utc() == [0, 12]
+    ahora = datetime(2026, 9, 12, 11, 30, tzinfo=timezone.utc)
+    assert nocturno.segundos_hasta_proxima_corrida(ahora) == 1800
+    ahora = datetime(2026, 9, 12, 12, 0, 30, tzinfo=timezone.utc)
+    assert nocturno.segundos_hasta_proxima_corrida(ahora) == 12 * 3600 - 30
+    ahora = datetime(2026, 9, 12, 0, 0, 5, tzinfo=timezone.utc)
+    assert nocturno.segundos_hasta_proxima_corrida(ahora) == 12 * 3600 - 5
+    assert nocturno._inicio_del_turno(datetime(2026, 9, 12, 13, 0, tzinfo=timezone.utc)) == datetime(2026, 9, 12, 12, 0, tzinfo=timezone.utc)
+    assert nocturno._inicio_del_turno(datetime(2026, 9, 12, 11, 0, tzinfo=timezone.utc)) == datetime(2026, 9, 12, 0, 0, tzinfo=timezone.utc)
+    monkeypatch.setattr(settings, "RESOLUCION_HORAS_UTC", "")
+    assert nocturno.horas_utc() == [settings.RESOLUCION_NOCTURNA_HORA_UTC]
+    assert nocturno._inicio_del_turno(datetime(2026, 9, 12, 11, 0, tzinfo=timezone.utc)) == datetime(2026, 9, 11, 12, 0, tzinfo=timezone.utc)
+
+
+async def test_turnos_y_sin_novedades(db, correos, armado, make_multi_market, make_binary_market, monkeypatch):
+    from app.config import settings
+    monkeypatch.setattr(settings, "RESOLUCION_HORAS_UTC", "0,12")
+    m1 = await make_multi_market("t-1", outcome_keys=("local", "empate", "visitante"))
+    b1 = await make_binary_market("t-bin")
+    await _vencer(db, m1, b1)
+    row = await nocturno.correr_plan_nocturno()
+    assert row is not None
+    # mismo turno: no arma otro
+    assert await nocturno.correr_plan_nocturno() is None
+    # el plan anterior "pasa" al turno previo → sí arma, pero solo trae el mismo escalado (t-1 sigue pendiente porque
+    # nadie aprobó: sí hay resolución → se guarda). Resolvemos t-1 a mano para dejar solo el escalado repetido.
+    viejo = (await db.execute(select(ResolutionPlan).where(ResolutionPlan.id == row.id))).scalar_one()
+    viejo.created_at = nocturno._inicio_del_turno(datetime.now(timezone.utc)) - timedelta(hours=1)
+    m1.status = MarketStatus.RESOLVED
+    await db.commit()
+    import asyncio
+    await asyncio.sleep(0)
+    n_correos = len(correos)
+    assert await nocturno.correr_plan_nocturno() is None  # 0 resoluciones y el mismo escalado (t-bin, YES): sin novedades
+    await asyncio.sleep(0)
+    assert len(correos) == n_correos
+    # con forzar sí se guarda y manda
+    row2 = await nocturno.correr_plan_nocturno(forzar=True)
+    assert row2 is not None and row2.id != row.id
+    assert nocturno.sin_novedades({"resoluciones": [], "escalados": [{"id": "a", "veredicto_sugerido": "NO"}]},
+                                  {"resoluciones": [], "escalados": [{"id": "a", "veredicto_sugerido": "YES"}]}) is False

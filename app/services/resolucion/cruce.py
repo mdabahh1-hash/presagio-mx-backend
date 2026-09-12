@@ -425,6 +425,128 @@ def sugerir_titular(jugador: str, summary: dict) -> tuple[str | None, str]:
     return "NO", "no aparece en la convocatoria publicada por ESPN"
 
 
+def participo(jugador: str, summary: dict) -> bool | None:
+    """True si fue titular o entró de cambio; False si estuvo en la banca sin
+    entrar (o no fue convocado); None si la fuente no informa cambios y el
+    jugador estaba en la banca (participación desconocida)."""
+    for r in summary.get("equipos", {}).values():
+        if any(_persona_coincide(jugador, n) for n in r.get("titulares", [])):
+            return True
+    cambios = summary.get("cambios")
+    en_banca = any(_persona_coincide(jugador, n) for r in summary.get("equipos", {}).values() for n in r.get("banca", []))
+    if not en_banca:
+        return False if summary.get("equipos") else None
+    if cambios is None:
+        return None
+    return any(_persona_coincide(jugador, n) for n in cambios)
+
+
+def resolver_accesorio(mercado: dict, spec: dict, tipo: str, partido: Partido,
+                       espn: dict, tsdb: dict | None) -> dict:
+    """Accesorio titular/gol con dos fuentes (ESPN + TheSportsDB). Entrada de
+    plan (confianza alta) cuando ambas coinciden; si no, escalado con la
+    sugerencia de ESPN y la razón. Reglas de gol: NO solo si el jugador
+    participó según ambas fuentes (titular); banca → escalado con sugerencia
+    (NO si entró según ESPN, CANCELAR si no entró); ausente de ambas
+    convocatorias → CANCELAR."""
+    base = {"id": mercado["id"], "pregunta": mercado.get("question"), "liga": mercado.get("subcategory"),
+            "volume": round(float(mercado.get("volume") or 0)), "num_trades": int(mercado.get("num_trades") or 0)}
+    sugerir = sugerir_titular if tipo == "titular" else sugerir_gol
+    v1, d1 = sugerir(spec["jugador"], espn)
+    marcador = f"{partido.marcador} ({fecha_corta(partido.kickoff)})"
+    esc = {**base, "escalar": True, "veredicto_sugerido": v1, "fuente_1": espn["url"]}
+    if v1 is None:
+        return {**esc, "razon": f"ESPN: {d1}", "resultado": marcador}
+    if tsdb is None or not tsdb.get("equipos"):
+        return {**esc, "razon": "accesorio con una sola fuente (ESPN): TheSportsDB no tiene el partido o la alineación",
+                "resultado": f"{marcador} — {d1}"}
+    fuente2 = "UEFA" if "uefa.com" in tsdb.get("url", "") else "TheSportsDB"
+    v2, d2 = sugerir(spec["jugador"], tsdb)
+    if v2 is None:
+        return {**esc, "razon": f"{fuente2}: {d2}", "resultado": f"{marcador} — ESPN: {d1}", "fuente_2": tsdb["url"]}
+    if not tsdb.get("completo", True) and v2 != "YES":
+        # TheSportsDB gratis recorta alineaciones y goles: su "no aparece" no
+        # confirma nada. Solo una presencia positiva cuenta como segunda fuente.
+        return {**esc, "razon": f"{fuente2} recorta el listado y solo confirma presencias; ESPN dice {v1} ({d1}): confirmar con la página oficial",
+                "resultado": marcador, "fuente_2": tsdb["url"]}
+    if v1 != v2:
+        return {**esc, "razon": f"las fuentes discrepan: ESPN {v1} ({d1}) vs {fuente2} {v2} ({d2})",
+                "resultado": marcador, "fuente_2": tsdb["url"]}
+    veredicto = v1
+    if tipo == "gol" and veredicto == "NO":
+        p1, p2 = participo(spec["jugador"], espn), participo(spec["jugador"], tsdb)
+        if p1 is False and p2 is False:
+            veredicto = "CANCELAR"
+            d1 = f"{spec['jugador']} no estuvo en la convocatoria (ESPN y {fuente2}): sin participar, por normas se cancela"
+        elif not (p1 is True and p2 is True):
+            sug = "CANCELAR" if p1 is False else "NO"
+            return {**esc, "veredicto_sugerido": sug,
+                    "razon": ("sin gol en ambas fuentes, pero la participación no está confirmada por las dos: "
+                              + ("entró de cambio según ESPN" if p1 else "no entró según ESPN")
+                              + f" y {fuente2} no publica cambios"),
+                    "resultado": f"{marcador} — {d1}", "fuente_2": tsdb["url"]}
+    return {**base, "veredicto": veredicto, "resultado": f"{marcador} — {d1}; {fuente2}: {d2}",
+            "fuente_1": espn["url"], "fuente_2": tsdb["url"], "confianza": "alta"}
+
+
+def emparejar_uefa(partido: Partido, uefa: list[dict], tolerancia_h: float = 3) -> dict | None:
+    """Partido de la UEFA que corresponde al de ESPN: mismo kickoff (±3 h) y
+    ambos equipos con similitud ≥ UMBRAL contra cualquiera de sus alias."""
+    mejor, mejor_score = None, 0.0
+    for u in uefa:
+        if abs((u["kickoff"] - partido.kickoff).total_seconds()) > tolerancia_h * 3600:
+            continue
+        sh = max((similitud(partido.home, n) for n in u["home"]), default=0.0)
+        sa = max((similitud(partido.away, n) for n in u["away"]), default=0.0)
+        s = min(sh, sa)
+        if s > mejor_score:
+            mejor, mejor_score = u, s
+    return mejor if mejor_score >= UMBRAL else None
+
+
+def resolver_prop_nfl(mercado: dict, spec: dict, partido: Partido, espn: dict, cbs: dict | None,
+                      jugador_espn: str | None, jugador_cbs: str | None) -> dict:
+    """Prop de NFL con dos box scores (ESPN + CBS). `espn`/`cbs` son los
+    resúmenes del partido (`jugadores`, `url`); `jugador_*` el nombre con el
+    que aparece en cada uno (None = ausente). Acuerdo → confianza alta; ausente
+    en ambos con partido terminado → CANCELAR (inactivo); si no, escalado."""
+    base = {"id": mercado["id"], "pregunta": mercado.get("question"), "liga": mercado.get("subcategory"),
+            "volume": round(float(mercado.get("volume") or 0)), "num_trades": int(mercado.get("num_trades") or 0)}
+    marcador = f"{partido.marcador} ({fecha_corta(partido.kickoff)})"
+    esc = {**base, "escalar": True, "fuente_1": espn["url"]}
+    if cbs is None:
+        if jugador_espn is None:
+            return {**esc, "veredicto_sugerido": "CANCELAR",
+                    "razon": f"{spec['jugador']} no aparece en el box score de ESPN (¿inactivo?) y CBS no respondió",
+                    "resultado": marcador}
+        v1, d1 = sugerir_prop_nfl(spec, espn["jugadores"][jugador_espn])
+        return {**esc, "veredicto_sugerido": v1, "razon": "prop con una sola fuente (box score de ESPN): CBS no respondió",
+                "resultado": f"{marcador} — {jugador_espn}: {d1}"}
+    if jugador_espn is None and jugador_cbs is None:
+        return {**base, "veredicto": "CANCELAR", "confianza": "alta",
+                "resultado": f"{marcador} — {spec['jugador']} no aparece en el box score de ESPN ni de CBS: inactivo, por normas se cancela",
+                "fuente_1": espn["url"], "fuente_2": cbs["url"]}
+    if jugador_espn is None or jugador_cbs is None:
+        falta, tiene = ("ESPN", "CBS") if jugador_espn is None else ("CBS", "ESPN")
+        stats = espn["jugadores"][jugador_espn] if jugador_espn else cbs["jugadores"][jugador_cbs]
+        v, d = sugerir_prop_nfl(spec, stats)
+        return {**esc, "veredicto_sugerido": v, "fuente_2": cbs["url"],
+                "razon": f"{spec['jugador']} aparece en el box score de {tiene} pero no en el de {falta}",
+                "resultado": f"{marcador} — {d}"}
+    e_stats, c_stats = espn["jugadores"][jugador_espn], cbs["jugadores"][jugador_cbs]
+    v1, d1 = sugerir_prop_nfl(spec, e_stats)
+    v2, d2 = sugerir_prop_nfl(spec, c_stats)
+    if v1 != v2:
+        return {**esc, "veredicto_sugerido": v1, "fuente_2": cbs["url"],
+                "razon": f"las fuentes discrepan: ESPN {v1} ({d1}) vs CBS {v2} ({d2})", "resultado": marcador}
+    if spec["tipo"] == "fantasy" and _num(e_stats.get("fumbles"), "fumblesLost") > 0:
+        return {**esc, "veredicto_sugerido": v1, "fuente_2": cbs["url"],
+                "razon": "fantasy con balón suelto perdido según ESPN; CBS no publica fumbles: confirmar a mano",
+                "resultado": f"{marcador} — {jugador_espn}: {d1}"}
+    return {**base, "veredicto": v1, "resultado": f"{marcador} — {jugador_espn}: {d1}; CBS: {d2}",
+            "fuente_1": espn["url"], "fuente_2": cbs["url"], "confianza": "alta"}
+
+
 def sugerir_gol(jugador: str, summary: dict) -> tuple[str | None, str]:
     goles = summary.get("goles", [])
     propios = [g for g in goles if g.get("jugador") and _persona_coincide(jugador, g["jugador"]) and "own" not in (g.get("tipo") or "").lower()]

@@ -72,7 +72,9 @@ class Settings(BaseSettings):
     # Plan de resolución nocturno (app/services/resolucion): arma el plan con
     # ESPN + TheSportsDB, lo manda por correo al admin y un clic lo aplica.
     RESOLUCION_NOCTURNA_ENABLED: bool = False   # True en Railway
-    RESOLUCION_NOCTURNA_HORA_UTC: int = 12      # 06:00 CDMX
+    RESOLUCION_NOCTURNA_HORA_UTC: int = 12      # 06:00 CDMX (respaldo si HORAS_UTC está vacío)
+    # Horas UTC de corrida, separadas por coma. Railway: "0,12" (18:00 y 06:00 CDMX).
+    RESOLUCION_HORAS_UTC: str = ""
     PLAN_APPROVAL_TTL_HOURS: int = 48
     # True: los 1X2 con marcador coincidente en ESPN y TheSportsDB se resuelven
     # solos al armar el plan (el correo es un reporte); los escalados siguen

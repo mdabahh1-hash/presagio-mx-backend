@@ -250,3 +250,163 @@ def test_fantasy_y_sugerencias_nfl():
     assert cruce.sugerir_prop_nfl({"tipo": "fantasy", "umbral": 15}, stafford)[0] == "NO"
     # fumble perdido resta 2
     assert cruce.fantasy_estandar({**jsn, "fumbles": {"fumblesLost": "1"}})[0] == 16.2
+
+
+# ── accesorios con doble fuente (ESPN + TheSportsDB) ─────────────────────────
+
+def _resumen(titulares, banca, goles=(), cambios=None, url="https://www.espn.com/soccer/lineups/_/gameId/1", completo=True):
+    return {"equipos": {"PSG": {"titulares": list(titulares), "banca": list(banca)}},
+            "goles": [{"minuto": "17'", "tipo": "Goal", "equipo": "PSG", "jugador": g, "texto": g} for g in goles],
+            "cambios": cambios, "url": url, "completo": completo}
+
+
+def test_participo():
+    assert cruce.participo("Dembélé", _resumen(["Ousmane Dembélé"], [])) is True
+    assert cruce.participo("Kvaratskhelia", _resumen(["X"], ["Khvicha Kvaratskhelia"], cambios=[])) is False
+    assert cruce.participo("Kvaratskhelia", _resumen(["X"], ["Khvicha Kvaratskhelia"], cambios=["Khvicha Kvaratskhelia"])) is True
+    assert cruce.participo("Kvaratskhelia", _resumen(["X"], ["Khvicha Kvaratskhelia"], cambios=None)) is None  # TSDB no trae cambios
+    assert cruce.participo("Osimhen", _resumen(["X"], ["Y"], cambios=[])) is False  # no convocado
+    assert cruce.participo("Osimhen", {"equipos": {}, "cambios": None}) is None
+
+
+def test_resolver_accesorio_titular_y_gol():
+    partido = P("PSG", "Slovan", 6, 1)
+    m = {"id": "x"}
+    espn = _resumen(["Fabián Ruiz", "Ousmane Dembélé"], ["Khvicha Kvaratskhelia"], goles=["Ousmane Dembélé"], cambios=[])
+    tsdb = _resumen(["Fabian Ruiz", "Ousmane Dembele"], ["Khvicha Kvaratskhelia"], goles=["Ousmane Dembele"], url="https://www.uefa.com/uefachampionsleague/match/1/")
+    e = cruce.resolver_accesorio(m, {"jugador": "Fabián Ruiz"}, "titular", partido, espn, tsdb)
+    assert e["veredicto"] == "YES" and e["confianza"] == "alta" and "uefa" in e["fuente_2"] and "UEFA:" in e["resultado"]
+    e = cruce.resolver_accesorio(m, {"jugador": "Kvaratskhelia"}, "titular", partido, espn, tsdb)
+    assert e["veredicto"] == "NO"
+    e = cruce.resolver_accesorio(m, {"jugador": "Dembélé"}, "gol", partido, espn, tsdb)
+    assert e["veredicto"] == "YES"
+    # sin gol y titular en ambas → NO
+    e = cruce.resolver_accesorio(m, {"jugador": "Fabián Ruiz"}, "gol", partido, espn, tsdb)
+    assert e["veredicto"] == "NO"
+    # sin gol y en la banca: participación no confirmada por las dos → escalado con sugerencia CANCELAR (no entró según ESPN)
+    e = cruce.resolver_accesorio(m, {"jugador": "Kvaratskhelia"}, "gol", partido, espn, tsdb)
+    assert e["escalar"] and e["veredicto_sugerido"] == "CANCELAR" and "participación" in e["razon"]
+    # entró de cambio según ESPN → sugerido NO, sigue escalado
+    espn2 = {**espn, "cambios": ["Khvicha Kvaratskhelia"]}
+    e = cruce.resolver_accesorio(m, {"jugador": "Kvaratskhelia"}, "gol", partido, espn2, tsdb)
+    assert e["escalar"] and e["veredicto_sugerido"] == "NO"
+    # no convocado en ambas → CANCELAR con confianza alta
+    e = cruce.resolver_accesorio(m, {"jugador": "Victor Osimhen"}, "gol", partido, {**espn, "cambios": []}, tsdb)
+    assert e["veredicto"] == "CANCELAR" and e["confianza"] == "alta"
+    # discrepancia → escalado; sin TSDB → escalado con sugerencia
+    tsdb2 = _resumen(["Khvicha Kvaratskhelia"], [], url="https://www.uefa.com/uefachampionsleague/match/1/")
+    e = cruce.resolver_accesorio(m, {"jugador": "Kvaratskhelia"}, "titular", partido, espn, tsdb2)
+    assert e["escalar"] and "discrepan" in e["razon"]
+    # TheSportsDB (recortada) solo confirma presencias: YES titular sí, NO/CANCELAR no
+    recortada = _resumen(["Fabian Ruiz"], [], url="https://www.thesportsdb.com/event/1", completo=False)
+    assert cruce.resolver_accesorio(m, {"jugador": "Fabián Ruiz"}, "titular", partido, espn, recortada)["veredicto"] == "YES"
+    e = cruce.resolver_accesorio(m, {"jugador": "Kvaratskhelia"}, "titular", partido, espn, recortada)
+    assert e["escalar"] and e["veredicto_sugerido"] == "NO" and "solo confirma presencias" in e["razon"]
+    e = cruce.resolver_accesorio(m, {"jugador": "Victor Osimhen"}, "gol", partido, {**espn, "cambios": []}, recortada)
+    assert e["escalar"] and "solo confirma presencias" in e["razon"]
+    e = cruce.resolver_accesorio(m, {"jugador": "Fabián Ruiz"}, "titular", partido, espn, None)
+    assert e["escalar"] and e["veredicto_sugerido"] == "YES" and "una sola fuente" in e["razon"]
+
+
+def test_tsdb_resumen_parseo():
+    from app.services.resolucion import fuentes
+
+    class FakeHttp:
+        def get(self, url):
+            if "lookuplineup" in url:
+                return {"lineup": [
+                    {"strPlayer": "Virgil van Dijk", "strTeam": "Liverpool", "strSubstitute": "No"},
+                    {"strPlayer": "Federico Chiesa", "strTeam": "Liverpool", "strSubstitute": "Yes"},
+                    {"strPlayer": "Sam Morsy", "strTeam": "Ipswich Town", "strSubstitute": "No"},
+                ]}
+            return {"timeline": [
+                {"strTimeline": "Goal", "strTimelineDetail": "Normal Goal", "strPlayer": "Alexander Isak", "strTeam": "Liverpool", "intTime": "6"},
+                {"strTimeline": "Card", "strTimelineDetail": "Yellow Card", "strPlayer": "X", "strTeam": "Liverpool", "intTime": "30"},
+                {"strTimeline": "Goal", "strTimelineDetail": "Own Goal", "strPlayer": "Sam Morsy", "strTeam": "Liverpool", "intTime": "70"},
+            ]}
+
+    r = fuentes.tsdb_resumen(FakeHttp(), "2494027")
+    assert r["equipos"]["Liverpool"] == {"titulares": ["Virgil van Dijk"], "banca": ["Federico Chiesa"]}
+    assert [g["jugador"] for g in r["goles"]] == ["Alexander Isak", "Sam Morsy"] and r["goles"][1]["tipo"] == "Own Goal"
+    assert r["cambios"] is None and r["url"].endswith("/event/2494027")
+    assert cruce.sugerir_gol("Isak", r)[0] == "YES"
+    assert cruce.sugerir_gol("Morsy", r)[0] == "NO"  # el autogol no cuenta
+    assert cruce.sugerir_titular("Chiesa", r)[0] == "NO"
+
+
+# ── props NFL con doble fuente (ESPN + CBS) ──────────────────────────────────
+
+def test_cbs_url_y_parseo():
+    from pathlib import Path
+    from app.services.resolucion import fuentes
+    # kickoff 00:35 UTC del 11-sep = 20:35 del 10-sep en el este → fecha 20260910
+    k = datetime(2026, 9, 11, 0, 35, tzinfo=timezone.utc)
+    assert fuentes.cbs_url_boxscore(k, "SF", "LAR") == "https://www.cbssports.com/nfl/gametracker/boxscore/NFL_20260910_SF@LAR/"
+    assert "NFL_20260910_WAS@JAC/" in fuentes.cbs_url_boxscore(k, "WSH", "JAX")
+    html = Path(__file__).parent.joinpath("fixtures", "cbs_boxscore_min.html").read_text()
+    bs = fuentes.parsear_cbs_boxscore(html, "u")
+    j = bs["jugadores"]
+    assert set(j) == {"Matthew Stafford", "Christian Mccaffrey", "Jaxon Smith Njigba"}  # la defensa no entra
+    assert j["Matthew Stafford"]["passing"] == {"passingYards": "155", "passingTouchdowns": "0", "interceptions": "1"} and j["Matthew Stafford"]["equipo"] == "LAR"
+    assert j["Christian Mccaffrey"]["rushing"]["rushingYards"] == "68" and j["Christian Mccaffrey"]["receiving"]["receivingYards"] == "20"
+    assert j["Jaxon Smith Njigba"]["receiving"]["receivingTouchdowns"] == "1"
+    assert cruce._persona_coincide("Jaxon Smith-Njigba", "Jaxon Smith Njigba")
+    assert cruce.fantasy_estandar(j["Christian Mccaffrey"])[0] == 8.8
+
+
+def test_resolver_prop_nfl():
+    partido = P("Los Angeles Rams", "San Francisco 49ers", 7, 27)
+    m = {"id": "x"}
+    espn = {"url": "https://www.espn.com/nfl/boxscore/_/gameId/1", "jugadores": {
+        "Christian McCaffrey": {"rushing": {"rushingYards": "68", "rushingTouchdowns": "0"}, "receiving": {"receivingYards": "20", "receivingTouchdowns": "0"}, "fumbles": {"fumblesLost": "0"}}}}
+    cbs = {"url": "https://www.cbssports.com/x", "jugadores": {
+        "Christian Mccaffrey": {"rushing": {"rushingYards": "68", "rushingTouchdowns": "0"}, "receiving": {"receivingYards": "20", "receivingTouchdowns": "0"}}}}
+    td = {"jugador": "Christian McCaffrey", "tipo": "td", "umbral": 1}
+    fan = {"jugador": "Christian McCaffrey", "tipo": "fantasy", "umbral": 15}
+    e = cruce.resolver_prop_nfl(m, td, partido, espn, cbs, "Christian McCaffrey", "Christian Mccaffrey")
+    assert e["veredicto"] == "NO" and e["confianza"] == "alta" and e["fuente_2"] == "https://www.cbssports.com/x"
+    assert cruce.resolver_prop_nfl(m, fan, partido, espn, cbs, "Christian McCaffrey", "Christian Mccaffrey")["veredicto"] == "NO"
+    # fumble perdido según ESPN → escalado (CBS no lo publica)
+    espn_f = {**espn, "jugadores": {"Christian McCaffrey": {**espn["jugadores"]["Christian McCaffrey"], "fumbles": {"fumblesLost": "1"}}}}
+    e = cruce.resolver_prop_nfl(m, fan, partido, espn_f, cbs, "Christian McCaffrey", "Christian Mccaffrey")
+    assert e["escalar"] and "balón suelto" in e["razon"]
+    # discrepancia
+    cbs_d = {"url": "u", "jugadores": {"Christian Mccaffrey": {"rushing": {"rushingTouchdowns": "1"}}}}
+    e = cruce.resolver_prop_nfl(m, td, partido, espn, cbs_d, "Christian McCaffrey", "Christian Mccaffrey")
+    assert e["escalar"] and "discrepan" in e["razon"]
+    # inactivo en ambos → CANCELAR alta; ausente en uno → escalado; sin CBS → escalado con sugerencia
+    e = cruce.resolver_prop_nfl(m, td, partido, espn, cbs, None, None)
+    assert e["veredicto"] == "CANCELAR" and e["confianza"] == "alta"
+    e = cruce.resolver_prop_nfl(m, td, partido, espn, cbs, "Christian McCaffrey", None)
+    assert e["escalar"] and "no en el de CBS" in e["razon"]
+    e = cruce.resolver_prop_nfl(m, td, partido, espn, None, "Christian McCaffrey", None)
+    assert e["escalar"] and e["veredicto_sugerido"] == "NO" and "CBS no respondió" in e["razon"]
+
+
+def test_uefa_partidos_resumen_y_emparejar():
+    from app.services.resolucion import fuentes
+
+    class FakeHttp:
+        def get(self, url):
+            if "/lineups" in url:
+                return {"homeTeam": {"team": {"internationalName": "Paris"}, "field": [{"player": {"internationalName": "Fabián Ruiz"}}] * 11,
+                                     "bench": [{"player": {"internationalName": "Khvicha Kvaratskhelia"}}]},
+                        "awayTeam": {"team": {"internationalName": "S. Bratislava"}, "field": [{"player": {"internationalName": "X"}}], "bench": []}}
+            return [{"id": "2049559", "kickOffTime": {"dateTime": "2026-09-09T19:00:00Z"}, "status": "FINISHED",
+                     "homeTeam": {"internationalName": "Paris", "translations": {"displayOfficialName": {"EN": "Paris Saint-Germain"}}},
+                     "awayTeam": {"internationalName": "S. Bratislava", "translations": {"displayOfficialName": {"EN": "Slovan Bratislava"}}},
+                     "score": {"total": {"home": 6, "away": 1}},
+                     "playerEvents": {"scorers": [{"goalType": "SCORED", "time": {"minute": 17}, "player": {"internationalName": "Ousmane Dembélé"}},
+                                                  {"goalType": "OWN_GOAL", "time": {"minute": 58}, "player": {"internationalName": "Sekou Camara"}}]}}]
+
+    http = FakeHttp()
+    lista = fuentes.uefa_partidos(http, "Champions League", datetime(2026, 9, 9, tzinfo=timezone.utc), datetime(2026, 9, 9, tzinfo=timezone.utc))
+    assert lista[0]["home"] == ["Paris", "Paris Saint-Germain"] and lista[0]["home_score"] == 6
+    espn = P("Paris Saint-Germain", "Slovan Bratislava", 6, 1, dt=datetime(2026, 9, 9, 19, 0, tzinfo=timezone.utc))
+    u = cruce.emparejar_uefa(espn, lista)
+    assert u is not None and u["id"] == "2049559"
+    assert cruce.emparejar_uefa(P("Liverpool", "Atlético Madrid", dt=espn.kickoff), lista) is None
+    r = fuentes.uefa_resumen(http, "Champions League", u)
+    assert r["completo"] is True and len(r["equipos"]["Paris"]["titulares"]) == 11 and r["url"] == "https://www.uefa.com/uefachampionsleague/match/2049559/"
+    assert cruce.sugerir_gol("Dembélé", r)[0] == "YES" and cruce.sugerir_gol("Camara", r)[0] == "NO"  # autogol no cuenta
+    assert cruce.sugerir_titular("Kvaratskhelia", r)[0] == "NO"

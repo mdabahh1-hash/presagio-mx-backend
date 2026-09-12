@@ -35,7 +35,7 @@ _LAST: dict = {"ran_at": None, "last_plan_id": None, "last_error": None}
 
 
 def get_nightly_status() -> dict:
-    return dict(_LAST)
+    return {**_LAST, "horas_utc": horas_utc()}
 
 
 # ── token de aprobación ──────────────────────────────────────────────────────
@@ -81,10 +81,28 @@ def resumen_de(plan: dict) -> dict:
     }
 
 
-async def _plan_de_hoy(db: AsyncSession) -> ResolutionPlan | None:
-    """Plan NOCTURNO de hoy (los propuestos por el agente no cuentan: no deben
-    bloquear la corrida de las 12:00 UTC)."""
-    inicio = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+def horas_utc() -> list[int]:
+    """Horas UTC de corrida (RESOLUCION_HORAS_UTC "0,12"); si está vacía, la
+    hora única de RESOLUCION_NOCTURNA_HORA_UTC."""
+    raw = (settings.RESOLUCION_HORAS_UTC or "").strip()
+    horas = sorted({int(h) for h in raw.split(",") if h.strip()}) if raw else []
+    return horas or [settings.RESOLUCION_NOCTURNA_HORA_UTC]
+
+
+def _inicio_del_turno(ahora: datetime, horas: list[int] | None = None) -> datetime:
+    """Último slot programado ≤ ahora (hoy, o el último de ayer)."""
+    horas = horas or horas_utc()
+    candidatos = [ahora.replace(hour=h, minute=0, second=0, microsecond=0) for h in horas]
+    pasados = [c for c in candidatos if c <= ahora]
+    if pasados:
+        return max(pasados)
+    return max(candidatos) - timedelta(days=1)
+
+
+async def _plan_del_turno(db: AsyncSession, ahora: datetime) -> ResolutionPlan | None:
+    """Plan NOCTURNO armado desde el último slot programado (los propuestos por
+    el agente no cuentan: no deben bloquear la corrida)."""
+    inicio = _inicio_del_turno(ahora)
     res = await db.execute(
         select(ResolutionPlan)
         .where(
@@ -95,6 +113,22 @@ async def _plan_de_hoy(db: AsyncSession) -> ResolutionPlan | None:
         .order_by(ResolutionPlan.id.desc())
     )
     return res.scalars().first()
+
+
+async def _ultimo_plan(db: AsyncSession) -> ResolutionPlan | None:
+    res = await db.execute(select(ResolutionPlan).order_by(ResolutionPlan.id.desc()).limit(1))
+    return res.scalars().first()
+
+
+def sin_novedades(plan: dict, anterior: dict | None) -> bool:
+    """True si el plan no trae resoluciones y todos sus escalados (id + veredicto
+    sugerido) ya estaban en el plan anterior: no vale la pena otro correo."""
+    if plan.get("resoluciones") or anterior is None:
+        return False
+    previos = {(e.get("id"), e.get("veredicto_sugerido")) for e in anterior.get("escalados") or []}
+    previos |= {(e.get("id"), None) for e in anterior.get("resoluciones") or []}
+    actuales = {(e.get("id"), e.get("veredicto_sugerido")) for e in plan.get("escalados") or []}
+    return actuales <= previos
 
 
 async def _expirar_viejos(db: AsyncSession) -> int:
@@ -109,16 +143,19 @@ async def _expirar_viejos(db: AsyncSession) -> int:
 
 
 async def correr_plan_nocturno(forzar: bool = False) -> ResolutionPlan | None:
-    """Arma y persiste el plan del día; manda el correo. Devuelve None si no
-    había pendientes o si hoy ya se armó uno (salvo `forzar`)."""
-    _LAST["ran_at"] = datetime.now(timezone.utc).isoformat()
+    """Arma y persiste el plan del turno; manda el correo. Devuelve None si no
+    había pendientes, si en este turno ya se armó uno, o si no hay novedades
+    respecto al plan anterior (salvo `forzar`)."""
+    ahora = datetime.now(timezone.utc)
+    _LAST["ran_at"] = ahora.isoformat()
     _LAST["last_error"] = None
+    _LAST["horas_utc"] = horas_utc()
     try:
         async with app_db.AsyncSessionLocal() as db:
             await _expirar_viejos(db)
             await db.commit()
-            if not forzar and await _plan_de_hoy(db) is not None:
-                logger.info("plan nocturno: ya existe un plan de hoy, no se arma otro")
+            if not forzar and await _plan_del_turno(db, ahora) is not None:
+                logger.info("plan nocturno: ya existe un plan de este turno, no se arma otro")
                 return None
             mercados = await pendientes_como_dicts(db)
             if not mercados:
@@ -126,6 +163,10 @@ async def correr_plan_nocturno(forzar: bool = False) -> ResolutionPlan | None:
                 return None
             logger.info("plan nocturno: armando plan para %d pendientes", len(mercados))
             plan = await asyncio.to_thread(armar_plan, mercados)
+            anterior = await _ultimo_plan(db)
+            if not forzar and sin_novedades(plan, anterior.plan if anterior else None):
+                logger.info("plan nocturno: sin novedades respecto al plan #%s (0 resoluciones, mismos escalados); no se guarda", anterior.id)
+                return None
             row = ResolutionPlan(
                 status="pending", origen="nocturno", nonce=secrets.token_urlsafe(16),
                 plan=plan, resumen=resumen_de(plan),
@@ -300,13 +341,19 @@ async def aplicar_plan(db: AsyncSession, plan_id: int, plan: dict, notificar: bo
 
 # ── loop ─────────────────────────────────────────────────────────────────────
 
-def segundos_hasta_proxima_corrida(ahora: datetime | None = None, hora_utc: int | None = None) -> float:
+def segundos_hasta_proxima_corrida(ahora: datetime | None = None, hora_utc: int | None = None,
+                                   horas: list[int] | None = None) -> float:
+    """Segundos hasta el siguiente slot (hoy o mañana) de `horas` (default:
+    horas_utc()); `hora_utc` fuerza una sola hora (compatibilidad)."""
     ahora = ahora or datetime.now(timezone.utc)
-    hora = settings.RESOLUCION_NOCTURNA_HORA_UTC if hora_utc is None else hora_utc
-    objetivo = ahora.replace(hour=hora, minute=0, second=0, microsecond=0)
-    if objetivo <= ahora:
-        objetivo += timedelta(days=1)
-    return max(60.0, (objetivo - ahora).total_seconds())
+    slots = [hora_utc] if hora_utc is not None else (horas or horas_utc())
+    candidatos = []
+    for h in slots:
+        objetivo = ahora.replace(hour=h, minute=0, second=0, microsecond=0)
+        if objetivo <= ahora:
+            objetivo += timedelta(days=1)
+        candidatos.append(objetivo)
+    return max(60.0, (min(candidatos) - ahora).total_seconds())
 
 
 async def nightly_loop() -> None:

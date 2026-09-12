@@ -12,6 +12,7 @@ TSDB  — thesportsdb.com API v1 con la key pública `3`. La capa gratuita recor
 from __future__ import annotations
 
 import json
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -202,6 +203,30 @@ class Http:
                 time.sleep(2 * (intento + 1))
         raise RuntimeError(f"GET {url} falló: {ultimo_error}")
 
+    def get_text(self, url: str) -> str:
+        """GET de una página HTML (CBS): mismos reintentos, sin throttle."""
+        if url in self.cache:
+            return self.cache[url]
+        ultimo_error: Exception | None = None
+        for intento in range(3):
+            try:
+                req = urllib.request.Request(url, headers=UA)
+                with urllib.request.urlopen(req, timeout=30) as r:
+                    texto = r.read().decode("utf-8", errors="replace")
+                self.consultas += 1
+                self.cache[url] = texto
+                return texto
+            except urllib.error.HTTPError as e:
+                ultimo_error = e
+                if e.code == 429 or 500 <= e.code < 600:
+                    time.sleep(5 * (intento + 1))
+                    continue
+                break
+            except (urllib.error.URLError, TimeoutError) as e:
+                ultimo_error = e
+                time.sleep(2 * (intento + 1))
+        raise RuntimeError(f"GET {url} falló: {ultimo_error}")
+
 
 def _dt(iso: str) -> datetime:
     return datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone(timezone.utc)
@@ -251,10 +276,12 @@ def espn_summary(http: Http, liga: str, event_id: str) -> dict:
     code = LIGAS[liga][0]
     data = http.get(f"{ESPN_API}/{code}/summary?event={event_id}")
     equipos: dict[str, dict[str, list[str]]] = {}
+    cambios: list[str] = []  # jugadores que entraron de cambio (roster.subbedIn)
     for r in data.get("rosters", []):
         nombre = r.get("team", {}).get("displayName", "?")
         titulares = [x["athlete"]["displayName"] for x in r.get("roster", []) if x.get("starter")]
         banca = [x["athlete"]["displayName"] for x in r.get("roster", []) if not x.get("starter")]
+        cambios += [x["athlete"]["displayName"] for x in r.get("roster", []) if not x.get("starter") and x.get("subbedIn")]
         equipos[nombre] = {"titulares": titulares, "banca": banca}
     goles = []
     for k in data.get("keyEvents", []) or []:
@@ -269,7 +296,96 @@ def espn_summary(http: Http, liga: str, event_id: str) -> dict:
             "jugador": autores[0] if autores else None,
             "texto": k.get("text", ""),
         })
-    return {"equipos": equipos, "goles": goles, "url": f"https://www.espn.com/soccer/lineups/_/gameId/{event_id}"}
+    return {"equipos": equipos, "goles": goles, "cambios": cambios, "completo": True,
+            "url": f"https://www.espn.com/soccer/lineups/_/gameId/{event_id}"}
+
+
+def tsdb_resumen(http: Http, id_evento: str) -> dict:
+    """Segunda fuente para accesorios de fútbol fuera de la UEFA: alineaciones
+    (lookuplineup: strSubstitute No = titular) y goles (lookuptimeline:
+    strTimeline "Goal"; "Own Goal" en el detalle) de TheSportsDB, en el mismo
+    formato que espn_summary para reutilizar cruce.sugerir_titular / sugerir_gol.
+    OJO: la capa gratuita RECORTA ambos listados a 5 filas (`completo: False`):
+    solo sirve para confirmar presencias (titular YES, gol YES), nunca ausencias.
+    Tampoco trae sustituciones: `cambios` va None."""
+    lineup = http.get(f"{TSDB_API}/lookuplineup.php?id={id_evento}").get("lineup") or []
+    equipos: dict[str, dict[str, list[str]]] = {}
+    for x in lineup:
+        eq = equipos.setdefault(x.get("strTeam") or "?", {"titulares": [], "banca": []})
+        (eq["titulares"] if (x.get("strSubstitute") or "No") == "No" else eq["banca"]).append(x.get("strPlayer") or "")
+    timeline = http.get(f"{TSDB_API}/lookuptimeline.php?id={id_evento}").get("timeline") or []
+    goles = []
+    for t in timeline:
+        if (t.get("strTimeline") or "").lower() != "goal":
+            continue
+        detalle = t.get("strTimelineDetail") or "Goal"
+        goles.append({"minuto": f"{t.get('intTime')}'", "tipo": detalle, "equipo": t.get("strTeam"),
+                      "jugador": t.get("strPlayer"), "texto": f"{t.get('strPlayer')} ({detalle})"})
+    return {"equipos": equipos, "goles": goles, "cambios": None, "completo": False,
+            "url": f"https://www.thesportsdb.com/event/{id_evento}"}
+
+
+# ── UEFA (match.uefa.com: fuente oficial de Champions/Europa League) ─────────
+
+UEFA_API = "https://match.uefa.com/v5"
+# subcategoría → competitionId de la UEFA. Solo estas ligas usan la UEFA como
+# segunda fuente (alineaciones completas + goleadores oficiales).
+UEFA_COMPETICION: dict[str, str] = {"Champions League": "1", "Europa League": "14"}
+
+
+def _uefa_nombres(team: dict) -> list[str]:
+    tr = (team.get("translations") or {})
+    nombres = [team.get("internationalName"), (tr.get("displayOfficialName") or {}).get("EN"),
+               (tr.get("displayName") or {}).get("EN"), (tr.get("shortName") or {}).get("EN")]
+    out: list[str] = []
+    for n in nombres:
+        if n and n not in out:
+            out.append(n)
+    return out
+
+
+def uefa_partidos(http: Http, liga: str, desde: datetime, hasta: datetime) -> list[dict]:
+    """Partidos oficiales de la competencia entre dos fechas: id, kickoff, nombres
+    (con alias) de cada equipo, marcador, estado y goleadores."""
+    comp = UEFA_COMPETICION[liga]
+    season = desde.year + 1 if desde.month >= 7 else desde.year  # 2026/27 → 2027
+    d1, d2 = (desde - timedelta(days=1)).strftime("%Y-%m-%d"), (hasta + timedelta(days=1)).strftime("%Y-%m-%d")
+    data = http.get(f"{UEFA_API}/matches?competitionId={comp}&fromDate={d1}&toDate={d2}&limit=100&offset=0&order=ASC&seasonYear={season}")
+    out = []
+    for m in data if isinstance(data, list) else []:
+        total = (m.get("score") or {}).get("total") or {}
+        goles = []
+        for s in ((m.get("playerEvents") or {}).get("scorers") or []):
+            p = s.get("player") or {}
+            tipo = s.get("goalType") or "SCORED"
+            goles.append({"minuto": (s.get("time") or {}).get("minute"), "tipo": "Own Goal" if "OWN" in tipo else tipo,
+                          "equipo": (s.get("teamId") or ""), "jugador": p.get("internationalName"),
+                          "texto": f"{p.get('internationalName')} ({tipo})"})
+        out.append({
+            "id": str(m.get("id")), "kickoff": _dt(((m.get("kickOffTime") or {}).get("dateTime")) or "1970-01-01T00:00:00Z"),
+            "home": _uefa_nombres(m.get("homeTeam") or {}), "away": _uefa_nombres(m.get("awayTeam") or {}),
+            "home_score": total.get("home"), "away_score": total.get("away"), "estado": m.get("status"), "goles": goles,
+        })
+    return out
+
+
+def uefa_resumen(http: Http, liga: str, partido: dict) -> dict:
+    """Alineaciones oficiales (11 titulares + banca) y goleadores de un partido
+    de la UEFA, en el formato de espn_summary. `completo: True`: una ausencia
+    en `field`/`bench` sí significa que no fue titular / no fue convocado. No
+    trae sustituciones (`cambios` None)."""
+    data = http.get(f"{UEFA_API}/matches/{partido['id']}/lineups")
+    equipos: dict[str, dict[str, list[str]]] = {}
+    for lado in ("homeTeam", "awayTeam"):
+        t = data.get(lado) or {}
+        nombre = ((t.get("team") or {}).get("internationalName")) or lado
+        equipos[nombre] = {
+            "titulares": [((x.get("player") or {}).get("internationalName")) for x in t.get("field") or []],
+            "banca": [((x.get("player") or {}).get("internationalName")) for x in t.get("bench") or []],
+        }
+    slug = "uefachampionsleague" if UEFA_COMPETICION.get(liga) == "1" else "uefaeuropaleague"
+    return {"equipos": equipos, "goles": partido.get("goles") or [], "cambios": None, "completo": True,
+            "url": f"https://www.uefa.com/{slug}/match/{partido['id']}/"}
 
 
 # Categorías del box score de ESPN (NFL) que usan las props: cada una trae
@@ -302,6 +418,83 @@ def espn_boxscore_nfl(http: Http, liga: str, event_id: str) -> dict:
     tipo = ((data.get("header") or {}).get("competitions") or [{}])[0].get("status", {}).get("type", {})
     estado = _ESPN_ESTADOS.get(tipo.get("name"), FT if tipo.get("completed") else UNKNOWN)
     return {"jugadores": jugadores, "estado": estado, "url": f"https://www.espn.com/nfl/boxscore/_/gameId/{event_id}"}
+
+
+# ── CBS Sports (segunda fuente de props NFL) ─────────────────────────────────
+
+# Abreviaturas de ESPN → CBS cuando difieren.
+CBS_ABBR = {"WSH": "WAS", "JAX": "JAC"}
+_CBS_SECCIONES = {"passing-ctr": "passing", "rushing-ctr": "rushing", "receiving-ctr": "receiving"}
+_CBS_KEYS = {
+    "passing": {"YDS": "passingYards", "TD": "passingTouchdowns", "INT": "interceptions"},
+    "rushing": {"ATT": "rushingAttempts", "YDS": "rushingYards", "TD": "rushingTouchdowns"},
+    "receiving": {"TAR": "receivingTargets", "REC": "receptions", "YDS": "receivingYards", "TD": "receivingTouchdowns"},
+}
+_RE_CBS_SECCION = re.compile(r'class="([a-z-]+-ctr)"')
+_RE_CBS_CABECERA = re.compile(r'<tr class="header-row">(.*?)</tr>', re.S)
+_RE_CBS_CELDA = re.compile(r'<td class="(?:name|number)-element">\s*(.*?)\s*</td>', re.S)
+_RE_CBS_FILA = re.compile(r'<tr class="[^"]*data-row[^"]*">', re.S)
+_RE_CBS_EQUIPO = re.compile(r'data-team-abbr="([A-Z]+)"')
+_RE_CBS_JUGADOR = re.compile(r'/nfl/players/\d+/([a-z0-9-]+)/')
+
+
+def cbs_url_boxscore(kickoff_utc: datetime, away_abbr: str, home_abbr: str) -> str:
+    """URL del box score de CBS: fecha local del este de EUA + abreviaturas."""
+    from zoneinfo import ZoneInfo
+
+    fecha = kickoff_utc.astimezone(ZoneInfo("America/New_York")).strftime("%Y%m%d")
+    a, h = CBS_ABBR.get(away_abbr, away_abbr), CBS_ABBR.get(home_abbr, home_abbr)
+    return f"https://www.cbssports.com/nfl/gametracker/boxscore/NFL_{fecha}_{a}@{h}/"
+
+
+def parsear_cbs_boxscore(html: str, url: str = "") -> dict:
+    """Box score de CBS → mismo formato que espn_boxscore_nfl (jugadores por
+    nombre completo, tomado del slug del enlace /nfl/players/{id}/{slug}/; keys
+    de ESPN). Solo Passing/Rushing/Receiving; CBS no publica fumbles perdidos."""
+    marcas = [(m.start(), _CBS_SECCIONES[m.group(1)]) for m in _RE_CBS_SECCION.finditer(html) if m.group(1) in _CBS_SECCIONES]
+    cabeceras: dict[int, list[str]] = {}
+    for m in _RE_CBS_CABECERA.finditer(html):
+        cabeceras[m.start()] = [re.sub(r"\s+", " ", c).strip() for c in _RE_CBS_CELDA.findall(m.group(1))]
+
+    def seccion_en(pos: int) -> str | None:
+        prev = [s for p, s in marcas if p < pos]
+        # la sección vigente es la última marca de sección antes de la fila; una
+        # marca de otro contenedor (defense-ctr…) no está en `marcas`, así que
+        # se corta por cabecera: la fila debe estar después de la última cabecera
+        return prev[-1] if prev else None
+
+    jugadores: dict[str, dict] = {}
+    for m in _RE_CBS_FILA.finditer(html):
+        ini = m.start()
+        sec = seccion_en(ini)
+        if sec is None:
+            continue
+        cab_pos = max((p for p in cabeceras if p < ini), default=None)
+        if cab_pos is None:
+            continue
+        labels = cabeceras[cab_pos]
+        if not labels or labels[0].lower() != sec:
+            continue  # la cabecera vigente no es de esta sección (p. ej. fila de defensa)
+        link = _RE_CBS_JUGADOR.search(html, ini)
+        if not link:
+            break
+        fin = html.find("</tr>", link.end())
+        celdas = [re.sub(r"\s+", " ", c).strip() for c in _RE_CBS_CELDA.findall(html[link.end():fin])]
+        eq = _RE_CBS_EQUIPO.search(html, ini, link.start())
+        nombre = " ".join(p.capitalize() for p in link.group(1).split("-"))
+        stats = {}
+        for label, valor in zip(labels[1:], celdas):
+            key = _CBS_KEYS[sec].get(label)
+            if key:
+                stats[key] = valor
+        j = jugadores.setdefault(nombre, {"equipo": eq.group(1) if eq else "?"})
+        j[sec] = stats
+    return {"jugadores": jugadores, "url": url}
+
+
+def cbs_boxscore_nfl(http: Http, kickoff_utc: datetime, away_abbr: str, home_abbr: str) -> dict:
+    url = cbs_url_boxscore(kickoff_utc, away_abbr, home_abbr)
+    return parsear_cbs_boxscore(http.get_text(url), url)
 
 
 # ── TheSportsDB ──────────────────────────────────────────────────────────────

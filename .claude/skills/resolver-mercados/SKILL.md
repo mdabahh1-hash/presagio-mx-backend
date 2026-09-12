@@ -21,8 +21,10 @@ son el rastro de auditoría de qué se resolvió, con qué evidencia).
 
 ## Modo nocturno (el default desde 2026-09-10)
 
-El backend en Railway arma el plan solo cada día a las 12:00 UTC (06:00 CDMX)
-(`RESOLUCION_NOCTURNA_ENABLED=true`, `app/services/resolucion/nocturno.py`): corre `armar_plan`
+El backend en Railway arma el plan solo dos veces al día, a las 00:00 y 12:00 UTC (18:00 y
+06:00 CDMX; `RESOLUCION_HORAS_UTC=0,12`, `RESOLUCION_NOCTURNA_ENABLED=true`,
+`app/services/resolucion/nocturno.py`). Si una corrida no trae resoluciones y sus escalados son
+los mismos del plan anterior, no guarda ni manda correo. Corre `armar_plan`
 contra la BD, guarda una fila en `resolution_plans` y manda a Mark un correo con la tabla, la
 evidencia y un botón **"Revisar y aprobar"** (enlace firmado, vence en 48 h). El enlace abre una
 página de confirmación; el botón "Confirmar" (POST) aplica el plan una sola vez con
@@ -78,17 +80,24 @@ volumen, con `veredicto_sugerido` cuando ESPN sí tiene el dato:
 - "solo una fuente": TheSportsDB no encontró el partido → confirma el marcador con UNA
   página oficial (WebFetch) y, si coincide con ESPN, muévelo al plan con esa URL como
   `fuente_2`.
-- accesorios titular/gol: sugerencia con la alineación o los goles de ESPN → confirma con la
-  página oficial del partido (UEFA, liga o club) y muévelo al plan con `YES`/`NO`.
+- accesorios titular/gol (desde 2026-09-12): en Champions/Europa League entran solos al plan
+  cuando ESPN y el API oficial de la UEFA (`match.uefa.com/v5`: alineaciones completas y
+  goleadores, `fuentes.uefa_partidos` / `uefa_resumen`) coinciden, incluidos `NO` y
+  `CANCELAR` (no convocado). En otras ligas la segunda fuente es TheSportsDB, que gratis
+  RECORTA alineaciones y goles a 5 filas: solo confirma presencias (titular `YES`, gol
+  `YES`); todo `NO` queda escalado. También quedan escalados: discrepancias y "sin gol" de un
+  suplente (ninguna segunda fuente publica cambios, así que la participación solo la
+  confirma ESPN) → confirma con la página oficial del partido y muévelo al plan.
 - aplazado / sin cruce / sin fuente automática (liga fuera de `resolucion/fuentes.py:LIGAS`,
   Leagues Cup) → investigación manual solo si tiene volumen; si no, déjalo escalado.
 - **NFL** (desde 2026-09-12): el ganador (outcomes por equipo, sede irrelevante) entra al plan
   con ESPN + TheSportsDB; las props (`anotará al menos N touchdown`, `lanzará N o más pases de
-  touchdown`, `conseguirá N o más puntos de fantasy` con scoring estándar) salen escaladas con
-  sugerencia del box score de ESPN → confirma con UNA página: CBS
-  (`https://www.cbssports.com/nfl/gametracker/boxscore/NFL_AAAAMMDD_VIS@LOC/`, fecha local de
-  EUA, abreviaturas ESPN) funciona con WebFetch; Pro-Football-Reference bloquea y NFL.com no
-  trae box score. Jugador ausente del box score = inactivo → `CANCELAR`.
+  touchdown`, `conseguirá N o más puntos de fantasy` con scoring estándar) entran con el box
+  score de ESPN + el de CBS (`fuentes.cbs_boxscore_nfl`, URL
+  `NFL_AAAAMMDD_VIS@LOC/` con fecha local del este). Jugador ausente de ambos box scores =
+  inactivo → `CANCELAR`. Escalados: discrepancias, CBS caído (Railway podría estar bloqueado:
+  confirmar entonces con WebFetch a CBS) y fantasy con balón suelto perdido (CBS no publica
+  fumbles). Pro-Football-Reference bloquea y NFL.com no trae box score.
 
 ### Veredicto `CANCELAR`
 
