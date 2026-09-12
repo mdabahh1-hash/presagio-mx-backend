@@ -29,6 +29,14 @@ Tipos (fuentes.py tiene los clientes; aquí los lectores):
   inegi_inflacion     INEGI INPC (token) + Banxico SIE inflación (token); params {periodo: "AAAA-MM",
                       indicador_inegi?, serie_banxico?}
   federal_register_eo Federal Register API (conteo, una fuente → escalado); params {presidente, desde, hasta}
+
+TRAMPA CONOCIDA (causó una resolución equivocada el 9-jun-2026, mercado
+btc-62k-finde): CoinGecko `coins/{id}/history?date=DD-MM-AAAA` NO devuelve el
+cierre de ese día, sino la foto de las 00:00 UTC, es decir el cierre del día
+ANTERIOR. El cierre del día X es la foto de X+1. Por eso los cierres de cripto
+se leen de CF Benchmarks y Binance (velas diarias UTC con cierre real), nunca
+del history de CoinGecko. Su `market_chart/range` tampoco sirve para mínimos o
+máximos: es horario y se pierde las mechas intradía.
 """
 from __future__ import annotations
 
