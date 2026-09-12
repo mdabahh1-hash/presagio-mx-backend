@@ -1,0 +1,201 @@
+{
+ "generado": "2026-09-12T03:30:00Z",
+ "modo": "agente",
+ "nota": "Accesorios Champions J1 escalados por el plan nocturno #4: sugerencia de ESPN (fuente_1) confirmada con la página de alineaciones/resultado de Sky Sports (fuente_2). Slavia-Lens: ESPN + Sky Sports coinciden 2-3.",
+ "resoluciones": [
+  {
+   "id": "ucl-cherki-titular-j1-2627",
+   "veredicto": "YES",
+   "resultado": "FC Porto 0-2 Manchester City (08-sep-2026): Rayan Cherki en el once inicial del City (sustituido al 62')",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915425",
+   "fuente_2": "https://www.skysports.com/football/fc-porto-vs-manchester-city/teams/577600",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-dimarco-titular-j1-2627",
+   "veredicto": "NO",
+   "resultado": "Real Madrid 2-1 Inter (08-sep-2026): Federico Dimarco no estuvo ni en el once ni en la banca del Inter (no convocado)",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915451",
+   "fuente_2": "https://www.skysports.com/football/real-madrid-vs-inter-milan/teams/577602",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-diomande-titular-j1-2627",
+   "veredicto": "NO",
+   "resultado": "Real Madrid 2-1 Inter (08-sep-2026): Yan Diomande en la banca del Real Madrid, no titular",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915451",
+   "fuente_2": "https://www.skysports.com/football/real-madrid-vs-inter-milan/teams/577602",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-mbappe-gol-j1-2627",
+   "veredicto": "YES",
+   "resultado": "Real Madrid 2-1 Inter (08-sep-2026): gol de Kylian Mbappé al 14'",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915451",
+   "fuente_2": "https://www.skysports.com/football/real-madrid-vs-inter-milan/577602",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-fidalgo-titular-j1-2627",
+   "veredicto": "NO",
+   "resultado": "Lille 2-3 Real Betis (08-sep-2026): Álvaro Fidalgo en la banca del Betis, no titular",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915450",
+   "fuente_2": "https://www.skysports.com/football/lille-vs-real-betis/teams/577601",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-rodri-titular-j1-2627",
+   "veredicto": "YES",
+   "resultado": "Barcelona 5-1 Feyenoord (09-sep-2026): Rodri en el once inicial del Barcelona",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915424",
+   "fuente_2": "https://www.skysports.com/football/barcelona-vs-feyenoord/teams/577603",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-ferminlopez-gol-j1-2627",
+   "veredicto": "NO",
+   "resultado": "Barcelona 5-1 Feyenoord (09-sep-2026): Fermín López entró de cambio al 71' y no anotó (goles: Raphinha 3' 57', Adeyemi 22', Yamal 77', G. Jesus 85')",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915424",
+   "fuente_2": "https://www.skysports.com/football/barcelona-vs-feyenoord/577603",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-fabianruiz-titular-j1-2627",
+   "veredicto": "YES",
+   "resultado": "PSG 6-1 Slovan Bratislava (09-sep-2026): Fabián Ruiz en el once inicial del PSG (y gol al 87')",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915445",
+   "fuente_2": "https://www.skysports.com/football/paris-saint-germain-vs-sk-slovan-bratislava/teams/577606",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-dembele-gol-j1-2627",
+   "veredicto": "YES",
+   "resultado": "PSG 6-1 Slovan Bratislava (09-sep-2026): goles de Ousmane Dembélé al 17' y 23'",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915445",
+   "fuente_2": "https://www.skysports.com/football/paris-saint-germain-vs-sk-slovan-bratislava/577606",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-wirtz-titular-j1-2627",
+   "veredicto": "YES",
+   "resultado": "Liverpool 2-1 Atlético de Madrid (09-sep-2026): Florian Wirtz en el once inicial del Liverpool",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915446",
+   "fuente_2": "https://www.skysports.com/football/liverpool-vs-atletico-madrid/teams/577604",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-lenormand-titular-j1-2627",
+   "veredicto": "NO",
+   "resultado": "Liverpool 2-1 Atlético de Madrid (09-sep-2026): Robin Le Normand en la banca del Atlético, no titular",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915446",
+   "fuente_2": "https://www.skysports.com/football/liverpool-vs-atletico-madrid/teams/577604",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-julianalvarez-gol-j1-2627",
+   "veredicto": "NO",
+   "resultado": "Liverpool 2-1 Atlético de Madrid (09-sep-2026): Julián Álvarez fue titular y no anotó (goles: Llorente 17', Szoboszlai 40', Mac Allister 50')",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915446",
+   "fuente_2": "https://www.skysports.com/football/liverpool-vs-atletico-madrid/report/577604",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-gnabry-titular-j1-2627",
+   "veredicto": "NO",
+   "resultado": "Bayern Múnich 5-0 Bodø/Glimt (10-sep-2026): Serge Gnabry no estuvo ni en el once ni en la banca (no convocado)",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915443",
+   "fuente_2": "https://www.skysports.com/football/bayern-munich-vs-bodo-glimt/teams/577609",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-kane-gol-j1-2627",
+   "veredicto": "YES",
+   "resultado": "Bayern Múnich 5-0 Bodø/Glimt (10-sep-2026): gol de Harry Kane al 61'",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915443",
+   "fuente_2": "https://www.skysports.com/football/bayern-munich-vs-bodo-glimt/577609",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-luisdiaz-gol-j1-2627",
+   "veredicto": "NO",
+   "resultado": "Bayern Múnich 5-0 Bodø/Glimt (10-sep-2026): Luis Díaz fue titular (sustituido al 80') y no anotó (goles: Musiala 47', Kane 61', Davies 77', Olise 83' 90+2')",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915443",
+   "fuente_2": "https://www.skysports.com/football/bayern-munich-vs-bodo-glimt/577609",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-yoro-titular-j1-2627",
+   "veredicto": "YES",
+   "resultado": "Manchester United 4-0 Sabah (10-sep-2026): Leny Yoro en el once inicial del United",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915442",
+   "fuente_2": "https://www.skysports.com/football/manchester-united-vs-sabah/teams/577612",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-slavia-lens-j1-2627",
+   "veredicto": "visitante",
+   "resultado": "Slavia Praha 2-3 Lens (10-sep-2026, Eden Arena): Sturm 51' 88'; Sima 73', Thauvin 90+1', Aguilar 90+3'",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401915440",
+   "fuente_2": "https://www.skysports.com/football/slavia-prague-vs-rc-lens/577614",
+   "confianza": "alta"
+  }
+ ],
+ "escalados": [
+  {
+   "id": "ucl-kvaratskhelia-gol-j1-2627",
+   "razon": "Kvaratskhelia fue suplente sin entrar en PSG 6-1 Slovan (Sky Sports lineups + ESPN): por normas, sin participar el mercado se CANCELA con reembolso; falta el endpoint de cancelación (0 posiciones, sin reembolsos pendientes)",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915445",
+   "fuente_2": "https://www.skysports.com/football/paris-saint-germain-vs-sk-slovan-bratislava/teams/577606"
+  },
+  {
+   "id": "ucl-osimhen-gol-j1-2627",
+   "razon": "Osimhen no estuvo ni en el once ni en la banca en Sporting 3-1 Galatasaray (09-sep-2026; Sky Sports lineups + ESPN): por normas, sin participar el mercado se CANCELA con reembolso; falta el endpoint de cancelación (0 posiciones)",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401915447",
+   "fuente_2": "https://www.skysports.com/football/galatasaray-vs-sporting/teams/577607"
+  },
+  {
+   "id": "mls-cincinnati-dcunited-sep26",
+   "razon": "ESPN: partido aplazado; 0 PT. Pendiente de cancelación (endpoint por hacer)"
+  },
+  {
+   "id": "nfl-patriots-seahawks-s1-2026",
+   "razon": "NFL: sin fuente automática (LIGAS solo cubre fútbol); pendiente de mapear ESPN NFL"
+  },
+  {
+   "id": "nfl-maye-2tdpass-w1-2026",
+   "razon": "NFL: sin fuente automática (LIGAS solo cubre fútbol); pendiente de mapear ESPN NFL"
+  },
+  {
+   "id": "nfl-jsn-td-w1-2026",
+   "razon": "NFL: sin fuente automática (LIGAS solo cubre fútbol); pendiente de mapear ESPN NFL"
+  },
+  {
+   "id": "nfl-nacua-td-w1-2026",
+   "razon": "NFL: sin fuente automática (LIGAS solo cubre fútbol); pendiente de mapear ESPN NFL"
+  },
+  {
+   "id": "nfl-stafford-fantasy15-w1-2026",
+   "razon": "NFL: sin fuente automática (LIGAS solo cubre fútbol); pendiente de mapear ESPN NFL"
+  },
+  {
+   "id": "nfl-mccaffrey-td-w1-2026",
+   "razon": "NFL: sin fuente automática (LIGAS solo cubre fútbol); pendiente de mapear ESPN NFL"
+  },
+  {
+   "id": "nfl-49ers-rams-s1-2026",
+   "razon": "NFL: sin fuente automática (LIGAS solo cubre fútbol); pendiente de mapear ESPN NFL"
+  },
+  {
+   "id": "nfl-nacua-fantasy15-w1-2026",
+   "razon": "NFL: sin fuente automática (LIGAS solo cubre fútbol); pendiente de mapear ESPN NFL"
+  },
+  {
+   "id": "nfl-stafford-2tdpass-w1-2026",
+   "razon": "NFL: sin fuente automática (LIGAS solo cubre fútbol); pendiente de mapear ESPN NFL"
+  },
+  {
+   "id": "nfl-mccaffrey-fantasy15-w1-2026",
+   "razon": "NFL: sin fuente automática (LIGAS solo cubre fútbol); pendiente de mapear ESPN NFL"
+  }
+ ]
+}
