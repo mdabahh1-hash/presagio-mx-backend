@@ -1,0 +1,104 @@
+{
+ "generado": "2026-09-12T04:30:00Z",
+ "modo": "agente",
+ "nota": "NFL Semana 1: ganadores con ESPN + TheSportsDB (plan-auto); props confirmadas con el box score de CBS Sports. Dos cancelaciones de Champions (jugador que no participó). El MLS Cincinnati-DC United se reabrió con su nueva fecha (24-oct) y no va en este plan.",
+ "resoluciones": [
+  {
+   "id": "nfl-patriots-seahawks-s1-2026",
+   "veredicto": "seahawks",
+   "resultado": "Seattle Seahawks 13-10 New England Patriots (10-sep-2026): gana Seattle Seahawks",
+   "fuente_1": "https://www.espn.com/nfl/game/_/gameId/401872656",
+   "fuente_2": "https://www.thesportsdb.com/event/2475374",
+   "confianza": "alta"
+  },
+  {
+   "id": "nfl-49ers-rams-s1-2026",
+   "veredicto": "49ers",
+   "resultado": "Los Angeles Rams 7-27 San Francisco 49ers (11-sep-2026): gana San Francisco 49ers",
+   "fuente_1": "https://www.espn.com/nfl/game/_/gameId/401872657",
+   "fuente_2": "https://www.thesportsdb.com/event/2475375",
+   "confianza": "alta"
+  },
+  {
+   "id": "nfl-jsn-td-w1-2026",
+   "veredicto": "YES",
+   "resultado": "Seahawks 13-10 Patriots (09-sep-2026): Jaxon Smith-Njigba 8 rec, 122 yd, 1 TD de recepción (45 yd, 4º cuarto)",
+   "fuente_1": "https://www.espn.com/nfl/boxscore/_/gameId/401872656",
+   "fuente_2": "https://www.cbssports.com/nfl/gametracker/boxscore/NFL_20260909_NE@SEA/",
+   "confianza": "alta"
+  },
+  {
+   "id": "nfl-maye-2tdpass-w1-2026",
+   "veredicto": "NO",
+   "resultado": "Seahawks 13-10 Patriots (09-sep-2026): Drake Maye 23/33, 178 yd, 1 pase de TD, 3 INT (jugó; no llegó a 2)",
+   "fuente_1": "https://www.espn.com/nfl/boxscore/_/gameId/401872656",
+   "fuente_2": "https://www.cbssports.com/nfl/gametracker/boxscore/NFL_20260909_NE@SEA/",
+   "confianza": "alta"
+  },
+  {
+   "id": "nfl-mccaffrey-fantasy15-w1-2026",
+   "veredicto": "NO",
+   "resultado": "49ers 27-7 Rams (10-sep-2026): McCaffrey 68 yd carrera + 20 yd recepción, 0 TD, 0 fumbles perdidos = 8.8 pts fantasy estándar (< 15)",
+   "fuente_1": "https://www.espn.com/nfl/boxscore/_/gameId/401872657",
+   "fuente_2": "https://www.cbssports.com/nfl/gametracker/boxscore/NFL_20260910_SF@LAR/",
+   "confianza": "alta"
+  },
+  {
+   "id": "nfl-mccaffrey-td-w1-2026",
+   "veredicto": "NO",
+   "resultado": "49ers 27-7 Rams (10-sep-2026, Melbourne): Christian McCaffrey 10 acarreos 68 yd, 5 rec 20 yd, 0 TD (jugó)",
+   "fuente_1": "https://www.espn.com/nfl/boxscore/_/gameId/401872657",
+   "fuente_2": "https://www.cbssports.com/nfl/gametracker/boxscore/NFL_20260910_SF@LAR/",
+   "confianza": "alta"
+  },
+  {
+   "id": "nfl-nacua-fantasy15-w1-2026",
+   "veredicto": "NO",
+   "resultado": "49ers 27-7 Rams (10-sep-2026): Nacua 74 yd recepción, 0 TD, 0 fumbles perdidos = 7.4 pts fantasy estándar (< 15)",
+   "fuente_1": "https://www.espn.com/nfl/boxscore/_/gameId/401872657",
+   "fuente_2": "https://www.cbssports.com/nfl/gametracker/boxscore/NFL_20260910_SF@LAR/",
+   "confianza": "alta"
+  },
+  {
+   "id": "nfl-nacua-td-w1-2026",
+   "veredicto": "NO",
+   "resultado": "49ers 27-7 Rams (10-sep-2026): Puka Nacua 5 rec 74 yd, 0 TD (jugó)",
+   "fuente_1": "https://www.espn.com/nfl/boxscore/_/gameId/401872657",
+   "fuente_2": "https://www.cbssports.com/nfl/gametracker/boxscore/NFL_20260910_SF@LAR/",
+   "confianza": "alta"
+  },
+  {
+   "id": "nfl-stafford-2tdpass-w1-2026",
+   "veredicto": "NO",
+   "resultado": "49ers 27-7 Rams (10-sep-2026): Matthew Stafford 15/25, 155 yd, 0 pases de TD, 1 INT (jugó)",
+   "fuente_1": "https://www.espn.com/nfl/boxscore/_/gameId/401872657",
+   "fuente_2": "https://www.cbssports.com/nfl/gametracker/boxscore/NFL_20260910_SF@LAR/",
+   "confianza": "alta"
+  },
+  {
+   "id": "nfl-stafford-fantasy15-w1-2026",
+   "veredicto": "NO",
+   "resultado": "49ers 27-7 Rams (10-sep-2026): Stafford 155 yd pase (6.2) − 2 INT − 0.1 carrera = 4.1 pts fantasy estándar (< 15)",
+   "fuente_1": "https://www.espn.com/nfl/boxscore/_/gameId/401872657",
+   "fuente_2": "https://www.cbssports.com/nfl/gametracker/boxscore/NFL_20260910_SF@LAR/",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-kvaratskhelia-gol-j1-2627",
+   "veredicto": "CANCELAR",
+   "resultado": "PSG 6-1 Slovan Bratislava (09-sep-2026): Kvaratskhelia fue suplente sin entrar (no participó) → por normas se cancela y reembolsa",
+   "fuente_1": "https://www.espn.com/soccer/lineups/_/gameId/401915445",
+   "fuente_2": "https://www.skysports.com/football/paris-saint-germain-vs-sk-slovan-bratislava/teams/577606",
+   "confianza": "alta"
+  },
+  {
+   "id": "ucl-osimhen-gol-j1-2627",
+   "veredicto": "CANCELAR",
+   "resultado": "Sporting CP 3-1 Galatasaray (09-sep-2026): Osimhen no estuvo ni en el once ni en la banca (no participó) → por normas se cancela y reembolsa",
+   "fuente_1": "https://www.espn.com/soccer/match/_/gameId/401915447",
+   "fuente_2": "https://www.skysports.com/football/galatasaray-vs-sporting/teams/577607",
+   "confianza": "alta"
+  }
+ ],
+ "escalados": []
+}
