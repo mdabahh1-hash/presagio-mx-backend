@@ -189,3 +189,64 @@ def test_sugerir_gol():
     assert cruce.sugerir_gol("Erling Haaland", SUMMARY)[0] == "YES"
     assert cruce.sugerir_gol("Diogo Costa", SUMMARY)[0] == "NO"  # autogol no cuenta
     assert cruce.sugerir_gol("Phil Foden", SUMMARY)[0] == "NO"
+
+
+# ── NFL ──────────────────────────────────────────────────────────────────────
+
+NFL_OUTS = [("seahawks", "Seahawks"), ("patriots", "Patriots")]
+
+
+def test_equipos_ganador():
+    m = {"outcomes": [{"outcome_key": "seahawks", "label": "🦅 Seahawks"}, {"outcome_key": "patriots", "label": "🇺🇸 Patriots"}]}
+    assert cruce.equipos_ganador(m) == NFL_OUTS
+    assert cruce.equipos_ganador({"outcomes": [{"outcome_key": "local", "label": "🏠 A"}, {"outcome_key": "visitante", "label": "✈️ B"}]}) is None
+
+
+def test_resolver_ganador_doble_fuente_y_sede_invertida():
+    espn = P("Seattle Seahawks", "New England Patriots", 13, 10, alias=["Seattle Seahawks", "Seahawks", "|", "New England Patriots", "Patriots"])
+    tsdb = P("Seattle Seahawks", "New England Patriots", 13, 10, fuente="tsdb")
+    p, nota = cruce.emparejar_cualquier_sede(["Patriots", "Seahawks"], K, [espn])
+    assert p is espn and nota == ""
+    e = cruce.resolver_ganador({"id": "x"}, NFL_OUTS, espn, "", tsdb)
+    assert e["veredicto"] == "seahawks" and e["confianza"] == "alta" and "gana Seattle Seahawks" in e["resultado"]
+    # misma información con local/visitante al revés en TSDB: no es discrepancia
+    tsdb2 = P("New England Patriots", "Seattle Seahawks", 10, 13, fuente="tsdb")
+    assert cruce.resolver_ganador({"id": "x"}, NFL_OUTS, espn, "", tsdb2)["veredicto"] == "seahawks"
+    # marcador distinto sí lo es
+    tsdb3 = P("Seattle Seahawks", "New England Patriots", 13, 17, fuente="tsdb")
+    e = cruce.resolver_ganador({"id": "x"}, NFL_OUTS, espn, "", tsdb3)
+    assert e["escalar"] and "discrepan" in e["razon"]
+
+
+def test_resolver_ganador_empate_sugiere_cancelar():
+    espn = P("Seattle Seahawks", "New England Patriots", 20, 20)
+    tsdb = P("Seattle Seahawks", "New England Patriots", 20, 20, fuente="tsdb")
+    e = cruce.resolver_ganador({"id": "x"}, NFL_OUTS, espn, "", tsdb)
+    assert e["escalar"] and e["veredicto_sugerido"] == "CANCELAR" and "empate" in e["razon"]
+    e = cruce.resolver_ganador({"id": "x"}, NFL_OUTS, espn, "", None)
+    assert e["escalar"] and "solo una fuente" in e["razon"]
+
+
+def test_parse_prop_nfl():
+    assert cruce.parse_prop_nfl({"question": "¿Jaxon Smith-Njigba anotará al menos 1 touchdown en la Semana 1?"}) == \
+        {"jugador": "Jaxon Smith-Njigba", "tipo": "td", "umbral": 1.0}
+    assert cruce.parse_prop_nfl({"question": "¿Drake Maye lanzará 2 o más pases de touchdown en la Semana 1?"}) == \
+        {"jugador": "Drake Maye", "tipo": "pases_td", "umbral": 2.0}
+    assert cruce.parse_prop_nfl({"question": "¿Christian McCaffrey conseguirá 15 o más puntos de Fantasy NFL (scoring estándar) en la Semana 1?"}) == \
+        {"jugador": "Christian McCaffrey", "tipo": "fantasy", "umbral": 15.0}
+    assert cruce.parse_prop_nfl({"question": "¿Quién gana 49ers vs Rams?"}) is None
+
+
+def test_fantasy_y_sugerencias_nfl():
+    stafford = {"passing": {"passingYards": "155", "passingTouchdowns": "0", "interceptions": "1"},
+                "rushing": {"rushingYards": "-1", "rushingTouchdowns": "0"}}
+    pts, _ = cruce.fantasy_estandar(stafford)
+    assert pts == 4.1
+    jsn = {"receiving": {"receivingYards": "122", "receivingTouchdowns": "1", "receptions": "8"}}
+    assert cruce.fantasy_estandar(jsn)[0] == 18.2
+    assert cruce.sugerir_prop_nfl({"tipo": "td", "umbral": 1}, jsn)[0] == "YES"
+    assert cruce.sugerir_prop_nfl({"tipo": "pases_td", "umbral": 2}, {"passing": {"passingTouchdowns": "1"}})[0] == "NO"
+    assert cruce.sugerir_prop_nfl({"tipo": "fantasy", "umbral": 15}, jsn)[0] == "YES"
+    assert cruce.sugerir_prop_nfl({"tipo": "fantasy", "umbral": 15}, stafford)[0] == "NO"
+    # fumble perdido resta 2
+    assert cruce.fantasy_estandar({**jsn, "fumbles": {"fumblesLost": "1"}})[0] == 16.2

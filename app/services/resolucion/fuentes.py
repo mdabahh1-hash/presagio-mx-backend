@@ -20,24 +20,36 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 
 UA = {"User-Agent": "curl/8.1.2"}
-ESPN_API = "https://site.api.espn.com/apis/site/v2/sports/soccer"
+ESPN_API = "https://site.api.espn.com/apis/site/v2/sports"
 TSDB_API = "https://www.thesportsdb.com/api/v1/json/3"
 
-# subcategoría de Veredikt → (código ESPN, id de liga TSDB, nombre de liga TSDB
-# tal como aparece en strFilename). Extender aquí al sembrar una liga nueva; una
-# subcategoría ausente se escala como "sin fuente".
+# subcategoría de Veredikt → (ruta ESPN "deporte/liga", id de liga TSDB, nombre
+# de liga TSDB tal como aparece en strFilename). Extender aquí al sembrar una
+# liga nueva; una subcategoría ausente se escala como "sin fuente".
 LIGAS: dict[str, tuple[str, str, str]] = {
-    "Serie A": ("ita.1", "4332", "Italian Serie A"),
-    "LaLiga": ("esp.1", "4335", "Spanish La Liga"),
-    "Premier League": ("eng.1", "4328", "English Premier League"),
-    "Bundesliga": ("ger.1", "4331", "German Bundesliga"),
-    "Ligue 1": ("fra.1", "4334", "French Ligue 1"),
-    "Liga Portugal": ("por.1", "4344", "Portuguese Primeira Liga"),
-    "MLS": ("usa.1", "4346", "American Major League Soccer"),
-    "Liga MX": ("mex.1", "4350", "Mexican Liga MX"),
-    "Saudi Pro League": ("ksa.1", "4668", "Saudi-Arabian Pro League"),
-    "Champions League": ("uefa.champions", "4480", "UEFA Champions League"),
+    "Serie A": ("soccer/ita.1", "4332", "Italian Serie A"),
+    "LaLiga": ("soccer/esp.1", "4335", "Spanish La Liga"),
+    "Premier League": ("soccer/eng.1", "4328", "English Premier League"),
+    "Bundesliga": ("soccer/ger.1", "4331", "German Bundesliga"),
+    "Ligue 1": ("soccer/fra.1", "4334", "French Ligue 1"),
+    "Liga Portugal": ("soccer/por.1", "4344", "Portuguese Primeira Liga"),
+    "MLS": ("soccer/usa.1", "4346", "American Major League Soccer"),
+    "Liga MX": ("soccer/mex.1", "4350", "Mexican Liga MX"),
+    "Saudi Pro League": ("soccer/ksa.1", "4668", "Saudi-Arabian Pro League"),
+    "Champions League": ("soccer/uefa.champions", "4480", "UEFA Champions League"),
+    "NFL": ("football/nfl", "4391", "NFL"),
 }
+
+
+def deporte(liga: str) -> str:
+    """'futbol' | 'nfl' según la ruta ESPN de la liga."""
+    code = LIGAS.get(liga, ("soccer/",))[0]
+    return "nfl" if code.startswith("football/nfl") else "futbol"
+
+
+def _url_partido(liga: str, event_id: str) -> str:
+    return (f"https://www.espn.com/nfl/game/_/gameId/{event_id}" if deporte(liga) == "nfl"
+            else f"https://www.espn.com/soccer/match/_/gameId/{event_id}")
 
 # Nombre en ESPN (o en el mercado) → nombre exacto en TheSportsDB, para los
 # clubes que las transformaciones genéricas no resuelven. Se prueba primero.
@@ -118,6 +130,8 @@ _ESPN_ESTADOS = {
     "STATUS_HALFTIME": LIVE,
     "STATUS_FIRST_HALF": LIVE,
     "STATUS_SECOND_HALF": LIVE,
+    "STATUS_END_PERIOD": LIVE,      # NFL: fin de cuarto
+    "STATUS_SUSPENDED": POSTPONED,
 }
 _TSDB_ESTADOS = {
     "FT": FT, "Match Finished": FT, "AET": AET, "PEN": AET,
@@ -214,7 +228,7 @@ def _espn_partido(e: dict, liga: str) -> Partido:
         return [n for n in (t.get("displayName"), t.get("shortDisplayName"), t.get("name"), t.get("abbreviation")) if n]
 
     return Partido(
-        fuente="espn", id=str(e["id"]), url=f"https://www.espn.com/soccer/match/_/gameId/{e['id']}",
+        fuente="espn", id=str(e["id"]), url=_url_partido(liga, str(e["id"])),
         kickoff=_dt(e["date"]), home=h["team"]["displayName"], away=a["team"]["displayName"],
         home_score=score(h) if estado in (FT, AET, LIVE) else None,
         away_score=score(a) if estado in (FT, AET, LIVE) else None,
@@ -256,6 +270,38 @@ def espn_summary(http: Http, liga: str, event_id: str) -> dict:
             "texto": k.get("text", ""),
         })
     return {"equipos": equipos, "goles": goles, "url": f"https://www.espn.com/soccer/lineups/_/gameId/{event_id}"}
+
+
+# Categorías del box score de ESPN (NFL) que usan las props: cada una trae
+# `keys` con los nombres de estadística, así que se guardan por key.
+_NFL_CATEGORIAS = ("passing", "rushing", "receiving", "fumbles")
+
+
+def espn_boxscore_nfl(http: Http, liga: str, event_id: str) -> dict:
+    """Estadísticas por jugador de un partido de NFL: {jugadores: {nombre:
+    {equipo, passing: {...}, rushing: {...}, receiving: {...}, fumbles: {...}}},
+    estado, url}. Solo aparecen los jugadores con alguna estadística registrada:
+    un jugador ausente del box score no participó (inactivo)."""
+    code = LIGAS[liga][0]
+    data = http.get(f"{ESPN_API}/{code}/summary?event={event_id}")
+    jugadores: dict[str, dict] = {}
+    for team in (data.get("boxscore") or {}).get("players", []):
+        equipo = (team.get("team") or {}).get("displayName", "?")
+        for cat in team.get("statistics", []):
+            nombre_cat = cat.get("name")
+            if nombre_cat not in _NFL_CATEGORIAS:
+                continue
+            keys = cat.get("keys") or cat.get("labels") or []
+            for a in cat.get("athletes", []):
+                nombre = (a.get("athlete") or {}).get("displayName")
+                if not nombre:
+                    continue
+                stats = dict(zip(keys, a.get("stats", [])))
+                j = jugadores.setdefault(nombre, {"equipo": equipo})
+                j[nombre_cat] = stats
+    tipo = ((data.get("header") or {}).get("competitions") or [{}])[0].get("status", {}).get("type", {})
+    estado = _ESPN_ESTADOS.get(tipo.get("name"), FT if tipo.get("completed") else UNKNOWN)
+    return {"jugadores": jugadores, "estado": estado, "url": f"https://www.espn.com/nfl/boxscore/_/gameId/{event_id}"}
 
 
 # ── TheSportsDB ──────────────────────────────────────────────────────────────

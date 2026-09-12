@@ -33,7 +33,9 @@ def validar_entrada(entrada: dict, detalle: dict | None, ahora: datetime) -> lis
             errores.append(f"ends_at ilegible: {ends_at}")
 
     veredicto = str(entrada.get("veredicto") or "").strip()
-    if detalle.get("market_type") == "multi":
+    if veredicto == "CANCELAR":
+        pass  # válido para binarios y multi: reembolsa (aplazado fuera de ventana, inactivo, empate NFL)
+    elif detalle.get("market_type") == "multi":
         keys = [o.get("outcome_key") for o in (detalle.get("outcomes") or [])]
         if veredicto not in keys:
             errores.append(f"veredicto '{veredicto}' no es un outcome_key válido ({', '.join(keys)})")

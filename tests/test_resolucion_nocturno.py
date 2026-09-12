@@ -300,3 +300,28 @@ def test_segundos_hasta_proxima_corrida():
     assert nocturno.segundos_hasta_proxima_corrida(ahora, hora_utc=12) == 1800
     ahora = datetime(2026, 9, 10, 12, 0, 30, tzinfo=timezone.utc)
     assert nocturno.segundos_hasta_proxima_corrida(ahora, hora_utc=12) == 86400 - 30
+
+
+async def test_plan_con_cancelar_reembolsa(client, db, correos, make_user, make_binary_market):
+    admin = await _admin(make_user, db)
+    u = await make_user("inactivo", points=50)
+    b1 = await make_binary_market("ag-cancel")
+    db.add(Position(user_id=u.id, market_id=b1.id, outcome_key="YES", shares=10, avg_cost=0.7))
+    b1.num_trades = 1
+    await db.commit()
+    await _vencer(db, b1)
+    body = {"resoluciones": [{**_entrada("ag-cancel", "CANCELAR"), "resultado": "jugador inactivo: no participó"}]}
+    r = await client.post("/api/admin/resolucion/planes/proponer", json=body, headers=auth_headers(admin))
+    assert r.status_code == 201, r.text
+    row = (await db.execute(select(ResolutionPlan).where(ResolutionPlan.id == r.json()["id"]))).scalar_one()
+    t = nocturno.make_plan_token(row.id, row.nonce)
+    r = await client.post(f"/api/admin/resolucion/planes/{row.id}/aprobar?t={t}")
+    assert r.status_code == 200 and "aplicado" in r.text
+    fresh = (await db.execute(select(ResolutionPlan).where(ResolutionPlan.id == row.id).execution_options(populate_existing=True))).scalar_one()
+    assert fresh.status == "applied" and fresh.resultado["resueltos"][0] == {
+        "id": "ag-cancel", "veredicto": "CANCELAR", "resultado": "jugador inactivo: no participó",
+        "fuente_1": body["resoluciones"][0]["fuente_1"], "fuente_2": body["resoluciones"][0]["fuente_2"], "positions_settled": 1}
+    await db.refresh(u)
+    assert u.points == 57
+    m = (await db.execute(select(Market).where(Market.id == "ag-cancel").execution_options(populate_existing=True))).scalar_one()
+    assert m.status == MarketStatus.CANCELLED

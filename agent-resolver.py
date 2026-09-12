@@ -45,6 +45,16 @@ Comandos:
   ./venv/bin/python agent-resolver.py resolve <market_id> --outcome <outcome_key>
       Resuelve UN mercado a mano (también irreversible, también con aprobación).
 
+  ./venv/bin/python agent-resolver.py cancel <market_id>
+      Cancela UN mercado (reembolsa shares*avg_cost, anula picks de ligas).
+      En un plan, el veredicto "CANCELAR" hace lo mismo (aplazado fuera de
+      ventana, jugador inactivo, empate en NFL).
+
+  ./venv/bin/python agent-resolver.py patch <market_id> --json '{...}'
+      Edita un mercado no resuelto: {"status":"open","ends_at":"…Z"} reabre un
+      aplazado con su nueva fecha; también question, rules, context y
+      outcome_labels {"local":"🏠 D.C. United"}.
+
   ./venv/bin/python agent-resolver.py planes [--limit N]
   ./venv/bin/python agent-resolver.py plan-nocturno
       Planes del job nocturno del servidor (status, resumen) y disparo manual.
@@ -94,7 +104,7 @@ def _read_token() -> str | None:
     return None
 
 
-def _req(path: str, data: dict | None = None, token: str | None = None) -> dict | list:
+def _req(path: str, data: dict | None = None, token: str | None = None, method: str | None = None) -> dict | list:
     headers = {"Content-Type": "application/json"}
     if token:
         headers["Authorization"] = "Bearer " + token
@@ -102,6 +112,7 @@ def _req(path: str, data: dict | None = None, token: str | None = None) -> dict 
         API + path,
         data=json.dumps(data).encode() if data is not None else None,
         headers=headers,
+        method=method,
     )
     try:
         with urllib.request.urlopen(req) as resp:
@@ -139,8 +150,8 @@ def _ensure_token() -> str:
     return token
 
 
-def _auth(path: str, data: dict | None = None) -> dict | list:
-    return _req(path, data=data, token=_ensure_token())
+def _auth(path: str, data: dict | None = None, method: str | None = None) -> dict | list:
+    return _req(path, data=data, token=_ensure_token(), method=method)
 
 
 # ── list ─────────────────────────────────────────────────────────────────────
@@ -296,7 +307,12 @@ def cmd_apply(path: str, yes: bool, only: list[str] | None) -> None:
             saltados.append(mid)
             print(f"SALTADO {mid} (ya está en el log como resuelto)")
             continue
-        r = _req(f"/admin/markets/{mid}/resolve", data=_payload(e, detalles[mid]), token=token)
+        if e["veredicto"] == "CANCELAR":
+            r = _req(f"/admin/markets/{mid}/cancel", data={}, token=token)
+            if isinstance(r, dict) and r.get("ok"):
+                r["positions_settled"] = r.get("positions_refunded", 0)
+        else:
+            r = _req(f"/admin/markets/{mid}/resolve", data=_payload(e, detalles[mid]), token=token)
         row = {
             "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "plan": os.path.basename(path),
@@ -372,6 +388,34 @@ def cmd_resolve(market_id: str, resolution: str | None, outcome: str | None) -> 
     })
     if isinstance(r, dict) and r.get("ok"):
         print(f"RESUELTO {market_id} → {r.get('resolution')} (posiciones liquidadas: {r.get('positions_settled')})")
+    else:
+        sys.exit(f"FALLÓ {market_id}: {json.dumps(r, ensure_ascii=False)}")
+
+
+def cmd_cancel(market_id: str) -> None:
+    """Cancela UN mercado a mano (reembolsa; irreversible; con aprobación)."""
+    r = _auth(f"/admin/markets/{market_id}/cancel", data={})
+    _log({
+        "ts": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "plan": None, "id": market_id, "veredicto": "CANCELAR",
+        "respuesta": r, "ok": bool(isinstance(r, dict) and r.get("ok")),
+    })
+    if isinstance(r, dict) and r.get("ok"):
+        print(f"CANCELADO {market_id} (posiciones reembolsadas: {r.get('positions_refunded')}, {r.get('refunded')} PT)")
+    else:
+        sys.exit(f"FALLÓ {market_id}: {json.dumps(r, ensure_ascii=False)}")
+
+
+def cmd_patch(market_id: str, raw_json: str) -> None:
+    """Edita un mercado no resuelto (PATCH /admin/markets/{id}): reabrir con
+    nueva fecha, pregunta, normas, contexto, etiquetas de outcomes."""
+    try:
+        body = json.loads(raw_json)
+    except json.JSONDecodeError as e:
+        sys.exit(f"ERROR: --json inválido: {e}")
+    r = _auth(f"/admin/markets/{market_id}", data=body, method="PATCH")
+    if isinstance(r, dict) and r.get("ok"):
+        print(f"EDITADO {market_id}: {', '.join(r.get('cambios') or [])} → status {r.get('status')} · cierre {r.get('ends_at')}")
     else:
         sys.exit(f"FALLÓ {market_id}: {json.dumps(r, ensure_ascii=False)}")
 
@@ -454,12 +498,21 @@ def main() -> None:
     pr.add_argument("market_id")
     pr.add_argument("--resolution", choices=["YES", "NO"])
     pr.add_argument("--outcome")
+    pcx = sub.add_parser("cancel")
+    pcx.add_argument("market_id")
+    ppt = sub.add_parser("patch")
+    ppt.add_argument("market_id")
+    ppt.add_argument("--json", required=True, help='p. ej. \'{"status":"open","ends_at":"2026-10-24T23:30:00Z"}\'')
     pls = sub.add_parser("planes")
     pls.add_argument("--limit", type=int, default=10)
     sub.add_parser("plan-nocturno")
     a = p.parse_args()
     if a.cmd == "check-token":
         cmd_check_token()
+    elif a.cmd == "cancel":
+        cmd_cancel(a.market_id)
+    elif a.cmd == "patch":
+        cmd_patch(a.market_id, a.json)
     elif a.cmd == "planes":
         cmd_planes(a.limit)
     elif a.cmd == "plan-nocturno":

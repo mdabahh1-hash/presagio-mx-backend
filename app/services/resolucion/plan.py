@@ -12,7 +12,8 @@ from collections import defaultdict
 from datetime import datetime, timezone
 
 from . import cruce
-from .fuentes import LIGAS, Http, Partido, espn_scoreboard, espn_summary, tsdb_buscar, variantes_nombre
+from .fuentes import (LIGAS, Http, Partido, deporte, espn_boxscore_nfl, espn_scoreboard, espn_summary,
+                      tsdb_buscar, variantes_nombre)
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,10 @@ def armar_plan(mercados: list[dict], http: Http | None = None, solo_ligas: set[s
                 escalados.append(_escalado(m, f"ESPN no respondió: {e}"))
             continue
         _log(f"[{liga}] {len(partidos)} partidos en ESPN")
+
+        if deporte(liga) == "nfl":
+            _plan_nfl(http, liga, ms, partidos, resoluciones, escalados)
+            continue
 
         for m in ms:
             kickoff = _dt(m["ends_at"])
@@ -111,6 +116,83 @@ def armar_plan(mercados: list[dict], http: Http | None = None, solo_ligas: set[s
         "resoluciones": resoluciones,
         "escalados": escalados,
     }
+
+
+def _plan_nfl(http: Http, liga: str, ms: list[dict], partidos: list[Partido],
+              resoluciones: list[dict], escalados: list[dict]) -> None:
+    """NFL: el ganador se resuelve con doble fuente (ESPN + TheSportsDB) sobre
+    outcomes por equipo; las props (TD, pases de TD, fantasy) salen escaladas
+    con sugerencia del box score de ESPN, como los accesorios de fútbol."""
+    boxscores: dict[str, dict] = {}
+
+    def boxscore(p: Partido) -> dict | None:
+        if p.id not in boxscores:
+            try:
+                boxscores[p.id] = espn_boxscore_nfl(http, liga, p.id)
+            except RuntimeError as e:
+                _log(f"    ✗ box score {p.home} vs {p.away}: {e}")
+                boxscores[p.id] = None
+        return boxscores[p.id]
+
+    for m in ms:
+        kickoff = _dt(m["ends_at"])
+        if m.get("market_type") == "multi":
+            outs = cruce.equipos_ganador(m)
+            if not outs:
+                escalados.append(_escalado(m, "multi NFL sin dos outcomes de equipo: revisar a mano"))
+                continue
+            nombres = [n for _, n in outs]
+            espn, nota = cruce.emparejar_cualquier_sede(nombres, kickoff, partidos)
+            tsdb: Partido | None = None
+            if espn is not None:
+                tsdb = _buscar_tsdb(http, liga, espn, espn.home, espn.away, kickoff)
+            entrada = cruce.resolver_ganador(m, outs, espn, nota, tsdb)
+            if entrada.pop("escalar", False):
+                escalados.append(entrada)
+            else:
+                resoluciones.append(entrada)
+            continue
+
+        spec = cruce.parse_prop_nfl(m)
+        if not spec or m.get("market_type") != "binary":
+            escalados.append(_escalado(m, "prop NFL sin regla mecánica: revisar a mano"))
+            continue
+        cercanos = sorted(
+            (p for p in partidos if abs((p.kickoff - kickoff).total_seconds()) <= 36 * 3600),
+            key=lambda p: abs((p.kickoff - kickoff).total_seconds()),
+        )
+        hallado = None
+        for p in cercanos:
+            bs = boxscore(p)
+            if not bs:
+                continue
+            for nombre, stats in bs["jugadores"].items():
+                if cruce._persona_coincide(spec["jugador"], nombre):
+                    hallado = (p, bs, nombre, stats)
+                    break
+            if hallado:
+                break
+        if hallado is None:
+            if not cercanos:
+                escalados.append(_escalado(m, "ningún partido de la NFL cerca de la hora de cierre"))
+            else:
+                escalados.append(_escalado(
+                    m, f"{spec['jugador']} no aparece en el box score de ESPN de los partidos cercanos: "
+                       "si fue inactivo, por normas el mercado se cancela",
+                    veredicto_sugerido="CANCELAR", fuente_1=cercanos[0].url,
+                ))
+            continue
+        p, bs, nombre, stats = hallado
+        if bs.get("estado") not in ("FT", "AET"):
+            escalados.append(_escalado(m, f"partido no terminado ({bs.get('estado')})", fuente_1=bs["url"]))
+            continue
+        sugerido, detalle = cruce.sugerir_prop_nfl(spec, stats)
+        escalados.append(_escalado(
+            m, "prop con una sola fuente (box score de ESPN): confirmar con NFL.com o CBS antes de resolver",
+            veredicto_sugerido=sugerido,
+            resultado=f"{p.marcador} ({cruce.fecha_corta(p.kickoff)}) — {nombre}: {detalle}",
+            fuente_1=bs["url"],
+        ))
 
 
 def _buscar_tsdb(http: Http, liga: str, espn: Partido, local: str, visitante: str, kickoff: datetime) -> Partido | None:

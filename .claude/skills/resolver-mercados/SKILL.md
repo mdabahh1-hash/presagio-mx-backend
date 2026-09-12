@@ -81,7 +81,30 @@ volumen, con `veredicto_sugerido` cuando ESPN sí tiene el dato:
 - accesorios titular/gol: sugerencia con la alineación o los goles de ESPN → confirma con la
   página oficial del partido (UEFA, liga o club) y muévelo al plan con `YES`/`NO`.
 - aplazado / sin cruce / sin fuente automática (liga fuera de `resolucion/fuentes.py:LIGAS`,
-  NFL, Leagues Cup) → investigación manual solo si tiene volumen; si no, déjalo escalado.
+  Leagues Cup) → investigación manual solo si tiene volumen; si no, déjalo escalado.
+- **NFL** (desde 2026-09-12): el ganador (outcomes por equipo, sede irrelevante) entra al plan
+  con ESPN + TheSportsDB; las props (`anotará al menos N touchdown`, `lanzará N o más pases de
+  touchdown`, `conseguirá N o más puntos de fantasy` con scoring estándar) salen escaladas con
+  sugerencia del box score de ESPN → confirma con UNA página: CBS
+  (`https://www.cbssports.com/nfl/gametracker/boxscore/NFL_AAAAMMDD_VIS@LOC/`, fecha local de
+  EUA, abreviaturas ESPN) funciona con WebFetch; Pro-Football-Reference bloquea y NFL.com no
+  trae box score. Jugador ausente del box score = inactivo → `CANCELAR`.
+
+### Veredicto `CANCELAR`
+
+Las normas de muchos mercados mandan cancelar (partido aplazado fuera de la ventana, jugador
+inactivo que no participó, empate oficial en NFL). En el plan se escribe `"veredicto":
+"CANCELAR"` (binarios y multi) con las mismas dos fuentes: al aplicarse llama a
+`POST /admin/markets/{id}/cancel`, que devuelve a cada posición `shares × costo promedio` con
+fila de ledger `refund`, anula los picks de ligas y avisa por correo. Nunca resuelvas `NO` a un
+jugador que no jugó: es `CANCELAR`.
+
+### Aplazado con nueva fecha (Mark decide)
+
+Si Mark quiere mantener el mercado vivo, se reabre con `agent-resolver.py patch <id> --json
+'{"status":"open","ends_at":"<nuevo kickoff UTC>","outcome_labels":{…}}'` (también `question`,
+`rules`, `context`). Verifica la nueva fecha en el scoreboard de ESPN de la liga y, si cambió la
+sede, corrige pregunta y etiquetas local/visitante.
 
 **Este paso sustituye a la investigación con subagentes.** Lanzar subagentes de búsqueda
 web por liga costó ~8,000 tokens por mercado (10-sep-2026) y agotó la sesión de Mark: no

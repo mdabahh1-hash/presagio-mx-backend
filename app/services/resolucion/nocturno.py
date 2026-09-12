@@ -258,9 +258,13 @@ async def aplicar_plan(db: AsyncSession, plan_id: int, plan: dict, notificar: bo
         if errs:
             fallidos.append({"id": mid, "razon": "; ".join(errs)})
             continue
-        kwargs = {"outcome_key": e["veredicto"]} if detalle["market_type"] == "multi" else {"resolution": e["veredicto"]}
         try:
-            r = await resolution.resolve(db, mid, **kwargs)
+            if e["veredicto"] == "CANCELAR":
+                r = await resolution.cancel(db, mid)
+                r["positions_settled"] = r.get("positions_refunded", 0)
+            else:
+                kwargs = {"outcome_key": e["veredicto"]} if detalle["market_type"] == "multi" else {"resolution": e["veredicto"]}
+                r = await resolution.resolve(db, mid, **kwargs)
         except resolution.ResolutionError as ex:
             await db.rollback()
             if ex.code == "MARKET_ALREADY_RESOLVED":

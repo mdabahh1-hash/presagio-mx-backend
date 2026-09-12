@@ -76,6 +76,29 @@ async def send_verification_email(to_email: str, display_name: str, code: str) -
     await _send(to_email, f"{code} es tu código de verificación VEREDIKT", _wrap(body))
 
 
+async def send_market_cancelled_email(to_email: str, display_name: str, question: str, refund: float) -> None:
+    """Aviso a quien tenía posición en un mercado cancelado: se le devolvió lo que pagó."""
+    body = f"""
+      <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">Hola {_esc(display_name)},</p>
+      <p style="margin: 0 0 18px; font-size: 14px; color: rgba(245,240,232,0.6);">
+        Un mercado en el que participaste se canceló (evento aplazado, jugador inactivo o sin resultado válido):
+      </p>
+      <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,215,0,0.18);
+                  border-radius: 12px; padding: 20px; margin-bottom: 22px;">
+        <div style="font-size: 15px; font-weight: 700; color: #F5F0E8; margin-bottom: 12px;">{_esc(question)}</div>
+        <div style="font-size: 18px; font-weight: 800; color: #F5F0E8; margin-bottom: 6px;">Mercado cancelado</div>
+        <div style="font-size: 14px; color: rgba(245,240,232,0.7);">
+          Te devolvimos lo que habías invertido: <b style="color:#00FF88">+{round(refund)} PT</b>. No cuenta como acierto ni como fallo.
+        </div>
+      </div>
+      <a href="{_SITE}" style="display:inline-block; background:#FFD700; color:#07071A;
+         text-decoration:none; font-weight:800; font-size:14px; padding:12px 24px; border-radius:10px;">
+        Ver mercados →
+      </a>
+    """
+    await _send(to_email, "Mercado cancelado: te devolvimos tus puntos", _wrap(body))
+
+
 async def send_resolution_email(
     to_email: str, display_name: str, question: str, won: bool, payout: float
 ) -> None:

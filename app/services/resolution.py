@@ -20,7 +20,7 @@ from app.models.outcome import Outcome
 from app.models.position import Position
 from app.models.user import User
 from app.services import ledger
-from app.services.email import send_resolution_email
+from app.services.email import send_market_cancelled_email, send_resolution_email
 from app.services.league_engine import process_market_resolution_for_leagues
 
 
@@ -126,3 +126,53 @@ async def resolve(
         spawn(send_resolution_email(entry["email"], entry["name"], question, entry["payout"] > 0, entry["payout"]))
 
     return {"ok": True, "resolution": etiqueta, "positions_settled": len(positions)}
+
+
+async def cancel(db: AsyncSession, market_id: str) -> dict:
+    """Cancela un mercado (aplazado fuera de ventana, jugador inactivo, empate
+    en NFL…): devuelve a cada posición lo que pagó (`shares * avg_cost`) con
+    fila de ledger "refund", anula los picks de ligas privadas (stake de vuelta)
+    y avisa por correo. No cuenta como predicción acertada ni fallada.
+
+    Devuelve {"ok": True, "resolution": "CANCELLED", "positions_refunded": n, "refunded": total}.
+    """
+    result = await db.execute(select(Market).where(Market.id == market_id).with_for_update())
+    market = result.scalar_one_or_none()
+    if not market:
+        raise ResolutionError("MARKET_NOT_FOUND", "Mercado no encontrado", status=404)
+    if market.status not in (MarketStatus.OPEN, MarketStatus.PENDING_RESOLUTION, MarketStatus.CLOSED):
+        raise ResolutionError("MARKET_ALREADY_RESOLVED", "Mercado ya resuelto o cancelado")
+
+    market.status = MarketStatus.CANCELLED
+    market.resolved_at = datetime.now(timezone.utc)
+
+    positions_result = await db.execute(
+        select(Position).where(Position.market_id == market_id, Position.shares > 0)
+    )
+    positions = positions_result.scalars().all()
+    notify: dict[int, dict] = {}
+    total = 0.0
+    for pos in positions:
+        user_result = await db.execute(select(User).where(User.id == pos.user_id).with_for_update())
+        user = user_result.scalar_one_or_none()
+        if not user:
+            continue
+        refund = round(pos.shares * (pos.avg_cost or 0.0), 2)
+        user.points += refund
+        ledger.record(db, user.id, refund, "refund")
+        pos.shares = 0
+        total += refund
+        if user.email and user.email_notifications:
+            entry = notify.setdefault(user.id, {"email": user.email, "name": user.display_name, "refund": 0.0})
+            entry["refund"] += refund
+
+    await process_market_resolution_for_leagues(
+        db, market_id, winning_outcome_id=None, winning_binary_side=None, voided=True
+    )
+    await db.commit()
+
+    question = market.question
+    for entry in notify.values():
+        spawn(send_market_cancelled_email(entry["email"], entry["name"], question, entry["refund"]))
+
+    return {"ok": True, "resolution": "CANCELLED", "positions_refunded": len(positions), "refunded": round(total, 2)}
