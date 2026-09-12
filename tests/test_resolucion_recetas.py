@@ -73,6 +73,31 @@ def test_resolver_receta_una_fuente_y_errores(monkeypatch):
     assert e["escalar"] and "receta inválida" in e["razon"]
 
 
+def test_inflacion_anual(monkeypatch):
+    from app.config import settings
+    r = {"fuente": "inflacion_anual", "params": {"periodo": "2026-12"}, "fecha": "2027-01-09", "op": "<", "valor": 4.0}
+    assert validar_receta(r) == []
+    assert any("params.periodo" in e for e in validar_receta({"fuente": "inflacion_anual", "params": {}, "op": "<", "valor": 4}))
+    assert any("params.variacion" in e for e in validar_receta({**r, "params": {"periodo": "2026-12", "variacion": "trimestral"}}))
+    m = {"id": "mexico-inflacion-2026", "question": "¿inflación < 4%?", "market_type": "binary", "category": "Economía",
+         "ends_at": "2027-01-15T00:00:00Z", "volume": 100, "num_trades": 1, "auto_resolucion": r}
+    banxico = Lectura(3.37, "https://www.banxico.org.mx/SieInternet/", "2026-12", "INPC SP30578: 3.37 %", "banxico")
+    monkeypatch.setattr(recetas, "leer_banxico_inflacion", lambda http, periodo, serie="SP30578": banxico)
+    # sin el id del indicador de INEGI: una sola fuente → escalado con la cifra
+    monkeypatch.setattr(settings, "INEGI_INPC_INDICADOR", "")
+    e = resolver_receta(m, http=object(), ahora=datetime(2027, 1, 10, tzinfo=timezone.utc))
+    assert e["escalar"] and e["veredicto_sugerido"] == "YES" and "INEGI no disponible" in e["razon"]
+    # con INEGI configurado y coincidente → confianza alta
+    monkeypatch.setattr(settings, "INEGI_INPC_INDICADOR", "123456")
+    monkeypatch.setattr(recetas, "leer_inegi_inflacion", lambda http, periodo, ind: Lectura(3.37, "https://www.inegi.org.mx/temas/inpc/", "2026-12", "INEGI: 3.37 %", "inegi"))
+    e = resolver_receta(m, http=object(), ahora=datetime(2027, 1, 10, tzinfo=timezone.utc))
+    assert e["veredicto"] == "YES" and e["confianza"] == "alta" and "inegi.org.mx" in e["fuente_2"]
+    # INEGI discrepa en el veredicto → escalado
+    monkeypatch.setattr(recetas, "leer_inegi_inflacion", lambda http, periodo, ind: Lectura(4.10, "https://www.inegi.org.mx/temas/inpc/", "2026-12", "INEGI: 4.10 %", "inegi"))
+    e = resolver_receta(m, http=object(), ahora=datetime(2027, 1, 10, tzinfo=timezone.utc))
+    assert e["escalar"] and "discrepan" in e["razon"]
+
+
 def test_fed_y_dominancia(monkeypatch):
     fed = {"fuente": "fed_tasa", "params": {"decision": "2026-09-16", "tipo": "mantiene"}}
     monkeypatch.setattr(recetas, "leer_fred_movimiento", lambda http, d: Lectura(0.0, "https://fred.stlouisfed.org/series/DFEDTARU", "2026-09-16", "3.75 → 3.75", "fred"))

@@ -26,8 +26,9 @@ Tipos (fuentes.py tiene los clientes; aquí los lectores):
   fed_tasa            FRED DFEDTARU (rango superior antes/después) + comunicado federalreserve.gov;
                       params {decision: "AAAA-MM-DD", tipo: mantiene|sube|baja}
   banxico_tasa        Banxico SIE SF61745 (token) — una fuente → escalado; params {decision, tipo}
-  inegi_inflacion     INEGI INPC (token) + Banxico SIE inflación (token); params {periodo: "AAAA-MM",
-                      indicador_inegi?, serie_banxico?}
+  inflacion_anual     Banxico SIE SP30578 (variación anual del INPC, la cifra que publica el INEGI;
+                      requiere BANXICO_TOKEN) + INEGI si INEGI_INPC_INDICADOR está configurado;
+                      params {periodo: "AAAA-MM", variacion?: anual|mensual|acumulada}
   federal_register_eo Federal Register API (conteo, una fuente → escalado); params {presidente, desde, hasta}
 
 TRAMPA CONOCIDA (causó una resolución equivocada el 9-jun-2026, mercado
@@ -60,7 +61,7 @@ OPS = {
 }
 TIPOS = {
     "cripto_cierre", "cripto_toca", "cripto_dominancia", "cripto_cap_total", "cripto_n_sobre_cap",
-    "stablecoins_cap", "fed_tasa", "banxico_tasa", "inegi_inflacion", "federal_register_eo",
+    "stablecoins_cap", "fed_tasa", "banxico_tasa", "inflacion_anual", "federal_register_eo",
 }
 _SIN_OP = {"fed_tasa", "banxico_tasa"}  # el veredicto es el tipo de movimiento, no un umbral
 TOLERANCIA_PRECIO = 0.005  # 0.5 % entre fuentes para considerar el mismo dato
@@ -126,8 +127,11 @@ def validar_receta(r: dict, market_type: str = "binary") -> list[str]:
             e.append("cripto_toca necesita params.symbol (Binance)")
     if tipo == "cripto_n_sobre_cap" and not p.get("umbral"):
         e.append("cripto_n_sobre_cap necesita params.umbral")
-    if tipo == "inegi_inflacion" and not p.get("periodo"):
-        e.append("inegi_inflacion necesita params.periodo (AAAA-MM)")
+    if tipo == "inflacion_anual":
+        if not p.get("periodo"):
+            e.append("inflacion_anual necesita params.periodo (AAAA-MM)")
+        if p.get("variacion") and p["variacion"] not in BANXICO_SERIES_PRECIOS:
+            e.append(f"params.variacion debe ser {', '.join(BANXICO_SERIES_PRECIOS)}")
     if tipo == "federal_register_eo" and not (p.get("presidente") and p.get("desde") and p.get("hasta")):
         e.append("federal_register_eo necesita params.presidente, desde y hasta")
     return e
@@ -330,30 +334,54 @@ def leer_banxico_movimiento(http: Http, decision: date) -> Lectura:
 
 
 def leer_inegi_inflacion(http: Http, periodo: str, indicador: str) -> Lectura:
+    """Variación anual del INPC según INEGI. El API pide el id EXACTO del
+    indicador: `INEGI_INPC_INDICADOR` en la config (Railway). Sin él no se
+    puede consultar; INEGI responde "No se encontraron resultados" (HTTP 400)
+    a cualquier id que no exista, así que no se puede adivinar. El id se saca
+    del constructor de consultas de inegi.org.mx/servicios/api_indicadores.html.
+    Verificado: la fuente es BISE con área 00 (BIE y área 0700 dan 400)."""
     if not settings.INEGI_TOKEN:
         raise RecetaError("falta INEGI_TOKEN")
-    url = f"https://www.inegi.org.mx/app/api/indicadores/desarrolladores/jsonxml/INDICATOR/{indicador}/es/0700/false/BIE/2.0/{settings.INEGI_TOKEN}?type=json"
+    if not indicador:
+        raise RecetaError("falta INEGI_INPC_INDICADOR (id del indicador de inflación anual)")
+    url = (f"https://www.inegi.org.mx/app/api/indicadores/desarrolladores/jsonxml/INDICATOR/{indicador}"
+           f"/es/{settings.INEGI_AREA}/false/{settings.INEGI_FUENTE}/2.0/{settings.INEGI_TOKEN}?type=json")
     data = http.get(url)
     obs = ((data.get("Series") or [{}])[0].get("OBSERVATIONS")) or []
-    por_periodo = {o.get("TIME_PERIOD"): o.get("OBS_VALUE") for o in obs}
+    por_periodo = {str(o.get("TIME_PERIOD")): o.get("OBS_VALUE") for o in obs}
     y, m = periodo.split("-")
-    clave = f"{y}/{int(m):02d}"
-    if clave not in por_periodo:
-        raise RecetaError(f"INEGI: el indicador {indicador} aún no tiene {clave}")
-    v = float(por_periodo[clave])
-    return Lectura(v, "https://www.inegi.org.mx/temas/inpc/", periodo, f"INEGI indicador {indicador} {clave}: {v}", "inegi")
+    for clave in (f"{y}/{int(m):02d}", f"{y}/{int(m)}", f"{y}-{int(m):02d}"):
+        if clave in por_periodo:
+            v = float(por_periodo[clave])
+            return Lectura(v, "https://www.inegi.org.mx/temas/inpc/", periodo, f"INEGI (indicador {indicador}) {clave}: {v} %", "inegi")
+    raise RecetaError(f"INEGI: el indicador {indicador} aún no tiene {y}/{int(m):02d}")
 
 
-def leer_banxico_inflacion(http: Http, periodo: str, serie: str) -> Lectura:
+# Series del SIE de Banxico con las cifras de precios que publica el INEGI.
+BANXICO_SERIES_PRECIOS = {
+    "anual": "SP30578",    # INPC variación anual (la cifra de "inflación")
+    "mensual": "SP30577",  # INPC variación mensual
+    "acumulada": "SP30579",
+}
+
+
+def leer_banxico_inflacion(http: Http, periodo: str, serie: str = "SP30578") -> Lectura:
+    """Inflación del mes `periodo` (AAAA-MM) según el SIE de Banxico, que
+    republica la cifra oficial del INEGI el mismo día que INEGI la publica."""
     if not settings.BANXICO_TOKEN:
         raise RecetaError("falta BANXICO_TOKEN")
-    data = http.get(f"https://www.banxico.org.mx/SieAPIRest/service/v1/series/{serie}/datos/oportuno?token={settings.BANXICO_TOKEN}")
+    y, m = periodo.split("-")
+    fin = f"{y}-{int(m):02d}-28"
+    data = http.get(f"https://www.banxico.org.mx/SieAPIRest/service/v1/series/{serie}/datos/{y}-{int(m):02d}-01/{fin}?token={settings.BANXICO_TOKEN}")
     datos = (((data.get("bmx") or {}).get("series") or [{}])[0].get("datos")) or []
     for x in datos:
-        f = x.get("fecha") or ""
-        if f.endswith(f"{periodo[5:7]}/{periodo[:4]}") or f == periodo:
-            return Lectura(float(x["dato"]), "https://www.banxico.org.mx/SieInternet/", periodo, f"Banxico SIE {serie} {f}: {x['dato']}", "banxico")
-    raise RecetaError(f"Banxico SIE: {serie} aún no tiene {periodo}")
+        try:
+            valor = float(x["dato"])
+        except (KeyError, ValueError):
+            continue
+        return Lectura(valor, f"https://www.banxico.org.mx/SieInternet/consultarDirectorioInternetAction.do?idCuadro=CP154&sector=8&locale=es",
+                       periodo, f"INPC {serie} de {x.get('fecha')} (SIE Banxico, cifra del INEGI): {valor} %", "banxico")
+    raise RecetaError(f"Banxico SIE: {serie} aún no publica {periodo}")
 
 
 def leer_federal_register_eo(http: Http, presidente: str, desde: str, hasta: str) -> Lectura:
@@ -418,9 +446,12 @@ def lecturas(r: dict, ends_at: datetime, http: Http) -> tuple[Lectura, Lectura |
     elif tipo == "banxico_tasa":
         l1 = leer_banxico_movimiento(http, date.fromisoformat(p["decision"]))
         l2, nota = None, "sin segunda fuente mecánica para Banxico (una sola fuente)"
-    elif tipo == "inegi_inflacion":
-        l1 = leer_inegi_inflacion(http, p["periodo"], str(p.get("indicador_inegi") or "910406"))
-        l2 = _try(lambda: leer_banxico_inflacion(http, p["periodo"], str(p.get("serie_banxico") or "SP1")))
+    elif tipo == "inflacion_anual":
+        serie = BANXICO_SERIES_PRECIOS.get(str(p.get("variacion") or "anual"), "SP30578")
+        l1 = leer_banxico_inflacion(http, p["periodo"], serie)
+        l2 = _try(lambda: leer_inegi_inflacion(http, p["periodo"], settings.INEGI_INPC_INDICADOR))
+        if isinstance(l2, Exception):
+            nota = f"INEGI no disponible ({l2}); Banxico republica la cifra del INEGI, pero es una sola fuente"
     elif tipo == "federal_register_eo":
         l1 = leer_federal_register_eo(http, p["presidente"], p["desde"], p["hasta"])
         l2, nota = None, "una sola fuente (Federal Register)"

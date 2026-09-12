@@ -79,6 +79,13 @@ class Settings(BaseSettings):
     # esas recetas se escalan con "falta token".
     BANXICO_TOKEN: str = ""   # https://www.banxico.org.mx/SieAPIRest/service/v1/token
     INEGI_TOKEN: str = ""     # https://www.inegi.org.mx/app/desarrolladores/generatoken/
+    # Id EXACTO del indicador de inflación anual en el API de INEGI (su API
+    # responde 400 a cualquier id inexistente, así que no se puede adivinar;
+    # se saca del constructor de consultas de INEGI). Sin él, la inflación se
+    # lee solo de Banxico y el mercado sale escalado con la cifra.
+    INEGI_INPC_INDICADOR: str = ""
+    INEGI_FUENTE: str = "BISE"  # verificado: BISE responde, BIE da 400
+    INEGI_AREA: str = "00"      # verificado: 00 responde, 0700 da 400
     PLAN_APPROVAL_TTL_HOURS: int = 48
     # True: los 1X2 con marcador coincidente en ESPN y TheSportsDB se resuelven
     # solos al armar el plan (el correo es un reporte); los escalados siguen

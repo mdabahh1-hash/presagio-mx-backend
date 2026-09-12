@@ -9,7 +9,6 @@
 #
 # Sin receta (se resuelven a mano con la skill resolver-no-deportivos):
 #   banxico-recorte-tasa-2026-q3 ("algún recorte en el trimestre": varias decisiones),
-#   mexico-inflacion-2026 (necesita INEGI_TOKEN y el id del indicador de inflación anual),
 #   trump-aprobacion-gallup-45-2026 (Gallup no tiene API), nvidia-1000 (Nasdaq sin API libre),
 #   eeuu-compra-bitcoin-2026 (hecho, no dato).
 
@@ -107,6 +106,15 @@ fed-mantiene-tasa-sep26:
 banxico-mantiene-tasa-sep26:
   fuente: banxico_tasa
   params: {decision: "2026-09-24", tipo: mantiene}
+
+# ── Inflación: SIE de Banxico (republica la cifra del INEGI el mismo día) ──
+# Segunda fuente pendiente: INEGI_INPC_INDICADOR. Mientras tanto sale escalado
+# con la cifra leída. "Exactamente 4.00 % resuelve NO" → op "<" estricto.
+mexico-inflacion-2026:
+  fuente: inflacion_anual
+  params: {periodo: "2026-12"}
+  op: "<"
+  valor: 4.0
 
 # ── Federal Register (conteo oficial; una fuente → escalado con el conteo) ──
 # Se evalúa hasta el 20-ene-2027 para dar tiempo a que se publiquen las últimas órdenes del año.
