@@ -69,9 +69,9 @@ class Market(Base):
 
     # LMSR parameters
     # b controls liquidity: higher b = less price movement per trade.
-    # 1000 matches the 10,000 PT economy (a 1,000 PT bet moves prices like a
-    # 100 PT bet did under b=100).
-    b: Mapped[float] = mapped_column(Float, default=1000.0, nullable=False)
+    # 3000 for the 10,000 PT economy: a 1,000 PT bet moves a 50% binary to ~64%
+    # (b=1000 took it to ~82%). See backfill-liquidez-b3000-2026-09-14.py.
+    b: Mapped[float] = mapped_column(Float, default=3000.0, nullable=False)
     # Outstanding shares for each outcome (LMSR state)
     q_yes: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     q_no: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)

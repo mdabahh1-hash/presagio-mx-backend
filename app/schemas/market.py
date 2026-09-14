@@ -76,7 +76,7 @@ class MarketCreate(BaseModel):
     image_url: str | None = Field(default=None, max_length=500)
     kind: MarketKind | None = None
     ends_at: datetime
-    b: float = Field(default=1000.0, gt=0)  # LMSR liquidity; must be positive
+    b: float = Field(default=3000.0, gt=0)  # LMSR liquidity; must be positive
     initial_yes_price: float = Field(default=50.0, ge=1, le=99)  # percentage
 
 

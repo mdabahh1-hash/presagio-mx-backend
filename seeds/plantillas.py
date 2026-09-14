@@ -9,7 +9,7 @@ No importamos ese módulo porque arrastra todo market_content/ (10 módulos + as
 """
 from dataclasses import dataclass
 
-B_DEFAULT = 1000.0
+B_DEFAULT = 3000.0
 
 
 @dataclass(frozen=True)

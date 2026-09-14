@@ -2,6 +2,10 @@ from datetime import datetime
 from pydantic import BaseModel, field_validator, model_validator
 from app.models.trade import TradeSide
 
+# Apuesta mínima. Se valida en los endpoints (trade y quote) con code MIN_AMOUNT
+# para que el frontend la traduzca; un 422 de pydantic no trae code.
+MIN_TRADE_POINTS = 10
+
 
 class TradeRequest(BaseModel):
     side: TradeSide | None = None          # binary markets

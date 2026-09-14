@@ -118,7 +118,7 @@ def test_cargar_expande_partido():
     assert "Real Madrid" in partido.rules and "Barcelona" in partido.rules and len(partido.rules) >= 200
     assert partido.resolution_source_url == COMPETENCIAS["LaLiga"].url
     assert partido.ends_at == datetime(2030, 10, 25, 20, 0, tzinfo=timezone.utc)
-    assert partido.b == 1000.0
+    assert partido.b == 3000.0
     # Banxico no está en la lista conocida → aviso, no error.
     assert any("Banxico" in a for a in avisos)
 
@@ -254,7 +254,7 @@ async def test_apply_inserta(db):
     binario = mercados["prueba-binario-ok"]
     assert binario.market_type == "binary" and binario.yes_price == 35.0
     assert binario.category == MarketCategory.ECONOMIA and binario.subcategory == "Banxico"
-    assert binario.rules.startswith("Cómo se resuelve:") and binario.b == 1000.0
+    assert binario.rules.startswith("Cómo se resuelve:") and binario.b == 3000.0
 
     nfl = mercados["prueba-multi-nfl"]
     assert nfl.market_type == "multi" and nfl.kind == "accesorio" and nfl.trending is True

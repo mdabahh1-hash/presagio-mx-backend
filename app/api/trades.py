@@ -13,7 +13,7 @@ from app.models.trade import Trade, TradeSide
 from app.models.position import Position
 from app.models.price_history import PriceHistory
 from app.models.user import User
-from app.schemas.trade import TradeRequest, TradeResponse, PositionOut, QuoteOut
+from app.schemas.trade import MIN_TRADE_POINTS, TradeRequest, TradeResponse, PositionOut, QuoteOut
 from app.schemas.market import OutcomeOut
 from app.core.auth import get_current_user
 from app.core import lmsr
@@ -49,6 +49,8 @@ async def execute_trade(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    if payload.points < MIN_TRADE_POINTS:
+        raise HTTPException(status_code=400, detail={"code": "MIN_AMOUNT", "message": f"Mínimo {MIN_TRADE_POINTS} PT por operación"})
     result = await db.execute(
         select(Market).where(Market.id == market_id).with_for_update()
     )
@@ -383,6 +385,8 @@ async def get_quote(
     """
     if amount <= 0:
         raise HTTPException(status_code=400, detail={"code": "INVALID_AMOUNT", "message": "points debe ser mayor a 0"})
+    if amount < MIN_TRADE_POINTS:
+        raise HTTPException(status_code=400, detail={"code": "MIN_AMOUNT", "message": f"Mínimo {MIN_TRADE_POINTS} PT por operación"})
     if amount > 100_000:
         raise HTTPException(status_code=400, detail={"code": "AMOUNT_TOO_LARGE", "message": "Máximo 100,000 PT por operación"})
 
