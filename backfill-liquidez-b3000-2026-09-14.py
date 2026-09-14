@@ -51,6 +51,15 @@ async def main() -> None:
         return
 
     async with engine.begin() as conn:
+        # [0] Bloquear markets ANTES que market_outcomes, en el mismo orden que
+        #     execute_trade (markets FOR UPDATE → outcomes FOR UPDATE): un
+        #     UPDATE ... FROM no bloquea la tabla unida y el orden inverso puede
+        #     hacer deadlock con un trade multi en vivo.
+        await conn.execute(text(
+            f"SELECT id FROM markets WHERE status IN {ACTIVOS} AND b <> :bn "
+            f"ORDER BY id FOR UPDATE"
+        ), {"bn": B_NEW})
+
         # [1] Multi primero: k usa el b viejo de markets, así que las outcomes
         #     se reescalan ANTES de tocar markets.b.
         r1 = await conn.execute(text(
