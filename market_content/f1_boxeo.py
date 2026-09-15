@@ -8,24 +8,24 @@ CONTENT: dict[str, dict] = {}
 
 CONTENT["canelo-vence-mbilli-sep-2026"] = entry(
     binario_rules("""
-Resuelve SÍ si Saúl «Canelo» Álvarez es declarado ganador de su combate contra Christian Mbilli del 12 de septiembre de 2026 en Riad, por cualquier vía: decisión unánime, mayoritaria o dividida, nocaut, nocaut técnico, detención del árbitro o de la esquina, o descalificación del rival. Un empate (incluido el empate mayoritario), una derrota de Canelo o un «sin decisión» (no contest) resuelven NO.
+Resuelve SÍ si Saúl «Canelo» Álvarez es declarado ganador de su combate contra Christian Mbilli del 31 de octubre de 2026 en Riad, por cualquier vía: decisión unánime, mayoritaria o dividida, nocaut, nocaut técnico, detención del árbitro o de la esquina, o descalificación del rival. Un empate (incluido el empate mayoritario), una derrota de Canelo o un «sin decisión» (no contest) resuelven NO.
 
 La fuente es el resultado oficial anunciado en el ring y registrado por los organismos sancionadores; BoxRec es la referencia pública del registro. Si el resultado se modifica después por una decisión administrativa (por ejemplo, un cambio a no contest por dopaje), manda el resultado anunciado la noche de la pelea, no la corrección posterior.
 
 Si la pelea se pospone, el mercado se mantiene abierto hasta la nueva fecha siempre que se celebre antes del 31 de diciembre de 2026; si se cancela o se recorre a 2027, el mercado se cancela y se reembolsa.
-""", "2026-09-13T06:00:00+00:00", con_hora=True, anticipado=False),
-    "Canelo Álvarez, el boxeador mexicano más importante de su generación y campeón indiscutido de los supermedianos hasta 2025, regresa al ring el 12 de septiembre de 2026 en Riad. Es su primer combate después de perder con Terence Crawford en septiembre de 2025 y de una cirugía de codo. Enfrente estará Christian Mbilli, campeón del CMB de peso supermediano, invicto y de estilo de presión constante. La pregunta es si Canelo, a los 36 años, sigue siendo el mejor de la división.",
+""", "2026-11-01T06:00:00+00:00", con_hora=True, anticipado=False),
+    "Canelo Álvarez, el boxeador mexicano más importante de su generación y campeón indiscutido de los supermedianos hasta 2025, regresa al ring el 31 de octubre de 2026 en Riad. Es su primer combate después de perder con Terence Crawford en septiembre de 2025 y de una cirugía de codo. Enfrente estará Christian Mbilli, campeón del CMB de peso supermediano, invicto y de estilo de presión constante. La pregunta es si Canelo, a los 36 años, sigue siendo el mejor de la división.",
     BOXREC)
 
 CONTENT["canelo-gana-por-nocaut-sep-2026"] = entry(
     binario_rules("""
-Resuelve SÍ únicamente si Canelo Álvarez gana su combate contra Christian Mbilli del 12 de septiembre de 2026 antes del límite: por nocaut, nocaut técnico, detención del árbitro, retiro de la esquina o del propio rival entre asaltos, o por lesión que impida a Mbilli continuar. Una victoria por decisión de los jueces, un empate, una derrota, una descalificación o un no contest resuelven NO.
+Resuelve SÍ únicamente si Canelo Álvarez gana su combate contra Christian Mbilli del 31 de octubre de 2026 antes del límite: por nocaut, nocaut técnico, detención del árbitro, retiro de la esquina o del propio rival entre asaltos, o por lesión que impida a Mbilli continuar. Una victoria por decisión de los jueces, un empate, una derrota, una descalificación o un no contest resuelven NO.
 
 La fuente es el resultado oficial anunciado en el ring y registrado por los organismos sancionadores; BoxRec es la referencia pública. Si hay duda entre «TKO» y «decisión técnica» (pelea detenida por corte y decidida en las tarjetas), una decisión técnica resuelve NO porque el resultado lo definen los jueces.
 
 Si la pelea se pospone, el mercado sigue abierto hasta la nueva fecha si se celebra antes del 31 de diciembre de 2026; si se cancela o pasa a 2027, el mercado se cancela.
-""", "2026-09-13T06:00:00+00:00", con_hora=True, anticipado=False),
-    "Es un mercado derivado del Canelo vs. Mbilli del 12 de septiembre de 2026 en Riad. Canelo ha ganado la mayoría de sus peleas recientes por decisión, no por nocaut, y Mbilli llega invicto y con reputación de boxeador resistente y de mucho volumen. Ganar por la vía rápida es, por eso, un resultado menos probable que simplemente ganar, y este mercado paga precisamente esa diferencia.",
+""", "2026-11-01T06:00:00+00:00", con_hora=True, anticipado=False),
+    "Es un mercado derivado del Canelo vs. Mbilli del 31 de octubre de 2026 en Riad. Canelo ha ganado la mayoría de sus peleas recientes por decisión, no por nocaut, y Mbilli llega invicto y con reputación de boxeador resistente y de mucho volumen. Ganar por la vía rápida es, por eso, un resultado menos probable que simplemente ganar, y este mercado paga precisamente esa diferencia.",
     BOXREC)
 
 CONTENT["checo-puntos-gp-mexico-2026"] = entry(
