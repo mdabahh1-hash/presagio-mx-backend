@@ -1,0 +1,1057 @@
+{
+ "_nota": "Recortado de las respuestas reales de ESPN (summary 401872922/401872660/401872659, Semana 1 NFL 2026) a las filas que usan los tests. El scoreboard está armado a mano con esos tres eventos en el orden del real: CLE@JAX antes que BUF@HOU, ambos 17:00Z.",
+ "scoreboard": {
+  "events": [
+   {
+    "id": "401872922",
+    "date": "2026-09-13T17:00Z",
+    "status": {
+     "type": {
+      "name": "STATUS_FINAL",
+      "state": "post",
+      "completed": true
+     }
+    },
+    "competitions": [
+     {
+      "competitors": [
+       {
+        "homeAway": "home",
+        "score": "34",
+        "team": {
+         "id": "30",
+         "abbreviation": "JAX",
+         "displayName": "Jacksonville Jaguars",
+         "shortDisplayName": "Jaguars",
+         "name": "Jaguars"
+        }
+       },
+       {
+        "homeAway": "away",
+        "score": "10",
+        "team": {
+         "id": "5",
+         "abbreviation": "CLE",
+         "displayName": "Cleveland Browns",
+         "shortDisplayName": "Browns",
+         "name": "Browns"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "401872660",
+    "date": "2026-09-13T17:00Z",
+    "status": {
+     "type": {
+      "name": "STATUS_FINAL",
+      "state": "post",
+      "completed": true
+     }
+    },
+    "competitions": [
+     {
+      "competitors": [
+       {
+        "homeAway": "home",
+        "score": "31",
+        "team": {
+         "id": "34",
+         "abbreviation": "HOU",
+         "displayName": "Houston Texans",
+         "shortDisplayName": "Texans",
+         "name": "Texans"
+        }
+       },
+       {
+        "homeAway": "away",
+        "score": "36",
+        "team": {
+         "id": "2",
+         "abbreviation": "BUF",
+         "displayName": "Buffalo Bills",
+         "shortDisplayName": "Bills",
+         "name": "Bills"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "401872659",
+    "date": "2026-09-13T17:00Z",
+    "status": {
+     "type": {
+      "name": "STATUS_FINAL",
+      "state": "post",
+      "completed": true
+     }
+    },
+    "competitions": [
+     {
+      "competitors": [
+       {
+        "homeAway": "home",
+        "score": "23",
+        "team": {
+         "id": "11",
+         "abbreviation": "IND",
+         "displayName": "Indianapolis Colts",
+         "shortDisplayName": "Colts",
+         "name": "Colts"
+        }
+       },
+       {
+        "homeAway": "away",
+        "score": "41",
+        "team": {
+         "id": "33",
+         "abbreviation": "BAL",
+         "displayName": "Baltimore Ravens",
+         "shortDisplayName": "Ravens",
+         "name": "Ravens"
+        }
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "summary": {
+  "401872660": {
+   "header": {
+    "competitions": [
+     {
+      "date": "2026-09-13T17:00Z",
+      "status": {
+       "type": {
+        "name": "STATUS_FINAL",
+        "state": "post",
+        "completed": true
+       }
+      },
+      "competitors": [
+       {
+        "homeAway": "home",
+        "score": "31",
+        "team": {
+         "id": "34",
+         "abbreviation": "HOU",
+         "displayName": "Houston Texans",
+         "name": "Texans"
+        }
+       },
+       {
+        "homeAway": "away",
+        "score": "36",
+        "team": {
+         "id": "2",
+         "abbreviation": "BUF",
+         "displayName": "Buffalo Bills",
+         "name": "Bills"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "boxscore": {
+    "players": [
+     {
+      "team": {
+       "id": "2",
+       "abbreviation": "BUF",
+       "displayName": "Buffalo Bills"
+      },
+      "statistics": [
+       {
+        "name": "passing",
+        "keys": [
+         "completions/passingAttempts",
+         "passingYards",
+         "yardsPerPassAttempt",
+         "passingTouchdowns",
+         "interceptions",
+         "sacks-sackYardsLost",
+         "adjQBR",
+         "QBRating"
+        ],
+        "labels": [
+         "C/ATT",
+         "YDS",
+         "AVG",
+         "TD",
+         "INT",
+         "SACKS",
+         "QBR",
+         "RTG"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "3918298",
+           "displayName": "Josh Allen",
+           "jersey": "17"
+          },
+          "stats": [
+           "20/29",
+           "334",
+           "11.5",
+           "2",
+           "0",
+           "2-11",
+           "84.5",
+           "130.5"
+          ]
+         }
+        ]
+       },
+       {
+        "name": "rushing",
+        "keys": [
+         "rushingAttempts",
+         "rushingYards",
+         "yardsPerRushAttempt",
+         "rushingTouchdowns",
+         "longRushing"
+        ],
+        "labels": [
+         "CAR",
+         "YDS",
+         "AVG",
+         "TD",
+         "LONG"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "4379399",
+           "displayName": "James Cook III",
+           "jersey": "4"
+          },
+          "stats": [
+           "13",
+           "57",
+           "4.4",
+           "0",
+           "12"
+          ]
+         },
+         {
+          "athlete": {
+           "id": "3918298",
+           "displayName": "Josh Allen",
+           "jersey": "17"
+          },
+          "stats": [
+           "6",
+           "23",
+           "3.8",
+           "2",
+           "21"
+          ]
+         }
+        ]
+       },
+       {
+        "name": "receiving",
+        "keys": [
+         "receptions",
+         "receivingYards",
+         "yardsPerReception",
+         "receivingTouchdowns",
+         "longReception",
+         "receivingTargets"
+        ],
+        "labels": [
+         "REC",
+         "YDS",
+         "AVG",
+         "TD",
+         "LONG",
+         "TGTS"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "4385690",
+           "displayName": "Dalton Kincaid",
+           "jersey": "86"
+          },
+          "stats": [
+           "5",
+           "130",
+           "26.0",
+           "0",
+           "40",
+           "6"
+          ]
+         }
+        ]
+       },
+       {
+        "name": "fumbles",
+        "keys": [
+         "fumbles",
+         "fumblesLost",
+         "fumblesRecovered"
+        ],
+        "labels": [
+         "FUM",
+         "LOST",
+         "REC"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "3918298",
+           "displayName": "Josh Allen",
+           "jersey": "17"
+          },
+          "stats": [
+           "1",
+           "0",
+           "1"
+          ]
+         }
+        ]
+       },
+       {
+        "name": "defensive",
+        "keys": [
+         "totalTackles",
+         "soloTackles",
+         "sacks",
+         "tacklesForLoss",
+         "passesDefended",
+         "QBHits",
+         "defensiveTouchdowns"
+        ],
+        "labels": [
+         "TOT",
+         "SOLO",
+         "SACKS",
+         "TFL",
+         "PD",
+         "QB HTS",
+         "TD"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "4259166",
+           "displayName": "Terrel Bernard",
+           "jersey": "8"
+          },
+          "stats": [
+           "12",
+           "6",
+           "0",
+           "1",
+           "0",
+           "0",
+           "0"
+          ]
+         }
+        ]
+       },
+       {
+        "name": "kickReturns",
+        "keys": [
+         "kickReturns",
+         "kickReturnYards",
+         "yardsPerKickReturn",
+         "longKickReturn",
+         "kickReturnTouchdowns"
+        ],
+        "labels": [
+         "NO",
+         "YDS",
+         "AVG",
+         "LONG",
+         "TD"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "4037235",
+           "displayName": "Greg Dortch",
+           "jersey": "19"
+          },
+          "stats": [
+           "3",
+           "82",
+           "27.3",
+           "37",
+           "0"
+          ]
+         }
+        ]
+       },
+       {
+        "name": "puntReturns",
+        "keys": [
+         "puntReturns",
+         "puntReturnYards",
+         "yardsPerPuntReturn",
+         "longPuntReturn",
+         "puntReturnTouchdowns"
+        ],
+        "labels": [
+         "NO",
+         "YDS",
+         "AVG",
+         "LONG",
+         "TD"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "4037235",
+           "displayName": "Greg Dortch",
+           "jersey": "19"
+          },
+          "stats": [
+           "2",
+           "10",
+           "5.0",
+           "10",
+           "0"
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "team": {
+       "id": "34",
+       "abbreviation": "HOU",
+       "displayName": "Houston Texans"
+      },
+      "statistics": [
+       {
+        "name": "passing",
+        "keys": [
+         "completions/passingAttempts",
+         "passingYards",
+         "yardsPerPassAttempt",
+         "passingTouchdowns",
+         "interceptions",
+         "sacks-sackYardsLost",
+         "adjQBR",
+         "QBRating"
+        ],
+        "labels": [
+         "C/ATT",
+         "YDS",
+         "AVG",
+         "TD",
+         "INT",
+         "SACKS",
+         "QBR",
+         "RTG"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "4432577",
+           "displayName": "C.J. Stroud",
+           "jersey": "7"
+          },
+          "stats": [
+           "26/38",
+           "274",
+           "7.2",
+           "2",
+           "0",
+           "3-17",
+           "68.3",
+           "106.7"
+          ]
+         }
+        ]
+       },
+       {
+        "name": "defensive",
+        "keys": [
+         "totalTackles",
+         "soloTackles",
+         "sacks",
+         "tacklesForLoss",
+         "passesDefended",
+         "QBHits",
+         "defensiveTouchdowns"
+        ],
+        "labels": [
+         "TOT",
+         "SOLO",
+         "SACKS",
+         "TFL",
+         "PD",
+         "QB HTS",
+         "TD"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "3919117",
+           "displayName": "Azeez Al-Shaair",
+           "jersey": "0"
+          },
+          "stats": [
+           "8",
+           "5",
+           "0",
+           "1",
+           "0",
+           "0",
+           "0"
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   "injuries": [
+    {
+     "team": {
+      "abbreviation": "HOU"
+     },
+     "injuries": []
+    },
+    {
+     "team": {
+      "abbreviation": "BUF"
+     },
+     "injuries": [
+      {
+       "status": "Out",
+       "type": {
+        "description": "out"
+       },
+       "athlete": {
+        "id": "3915411",
+        "displayName": "Ty Johnson"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "401872922": {
+   "header": {
+    "competitions": [
+     {
+      "date": "2026-09-13T17:00Z",
+      "status": {
+       "type": {
+        "name": "STATUS_FINAL",
+        "state": "post",
+        "completed": true
+       }
+      },
+      "competitors": [
+       {
+        "homeAway": "home",
+        "score": "34",
+        "team": {
+         "id": "30",
+         "abbreviation": "JAX",
+         "displayName": "Jacksonville Jaguars",
+         "name": "Jaguars"
+        }
+       },
+       {
+        "homeAway": "away",
+        "score": "10",
+        "team": {
+         "id": "5",
+         "abbreviation": "CLE",
+         "displayName": "Cleveland Browns",
+         "name": "Browns"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "boxscore": {
+    "players": [
+     {
+      "team": {
+       "id": "5",
+       "abbreviation": "CLE",
+       "displayName": "Cleveland Browns"
+      },
+      "statistics": [
+       {
+        "name": "passing",
+        "keys": [
+         "completions/passingAttempts",
+         "passingYards",
+         "yardsPerPassAttempt",
+         "passingTouchdowns",
+         "interceptions",
+         "sacks-sackYardsLost",
+         "adjQBR",
+         "QBRating"
+        ],
+        "labels": [
+         "C/ATT",
+         "YDS",
+         "AVG",
+         "TD",
+         "INT",
+         "SACKS",
+         "QBR",
+         "RTG"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "3122840",
+           "displayName": "Deshaun Watson",
+           "jersey": "4"
+          },
+          "stats": [
+           "16/22",
+           "205",
+           "9.3",
+           "1",
+           "1",
+           "5-20",
+           "34.2",
+           "97.7"
+          ]
+         }
+        ]
+       },
+       {
+        "name": "defensive",
+        "keys": [
+         "totalTackles",
+         "soloTackles",
+         "sacks",
+         "tacklesForLoss",
+         "passesDefended",
+         "QBHits",
+         "defensiveTouchdowns"
+        ],
+        "labels": [
+         "TOT",
+         "SOLO",
+         "SACKS",
+         "TFL",
+         "PD",
+         "QB HTS",
+         "TD"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "3915535",
+           "displayName": "Denzel Ward",
+           "jersey": "21"
+          },
+          "stats": [
+           "5",
+           "1",
+           "0",
+           "0",
+           "0",
+           "0",
+           "0"
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "team": {
+       "id": "30",
+       "abbreviation": "JAX",
+       "displayName": "Jacksonville Jaguars"
+      },
+      "statistics": [
+       {
+        "name": "passing",
+        "keys": [
+         "completions/passingAttempts",
+         "passingYards",
+         "yardsPerPassAttempt",
+         "passingTouchdowns",
+         "interceptions",
+         "sacks-sackYardsLost",
+         "adjQBR",
+         "QBRating"
+        ],
+        "labels": [
+         "C/ATT",
+         "YDS",
+         "AVG",
+         "TD",
+         "INT",
+         "SACKS",
+         "QBR",
+         "RTG"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "4360310",
+           "displayName": "Trevor Lawrence",
+           "jersey": "16"
+          },
+          "stats": [
+           "18/23",
+           "245",
+           "10.7",
+           "4",
+           "0",
+           "1-11",
+           "93.4",
+           "150.6"
+          ]
+         }
+        ]
+       },
+       {
+        "name": "fumbles",
+        "keys": [
+         "fumbles",
+         "fumblesLost",
+         "fumblesRecovered"
+        ],
+        "labels": [
+         "FUM",
+         "LOST",
+         "REC"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "3915239",
+           "displayName": "Josh Hines-Allen",
+           "jersey": "41"
+          },
+          "stats": [
+           "0",
+           "0",
+           "1"
+          ]
+         }
+        ]
+       },
+       {
+        "name": "defensive",
+        "keys": [
+         "totalTackles",
+         "soloTackles",
+         "sacks",
+         "tacklesForLoss",
+         "passesDefended",
+         "QBHits",
+         "defensiveTouchdowns"
+        ],
+        "labels": [
+         "TOT",
+         "SOLO",
+         "SACKS",
+         "TFL",
+         "PD",
+         "QB HTS",
+         "TD"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "3915239",
+           "displayName": "Josh Hines-Allen",
+           "jersey": "41"
+          },
+          "stats": [
+           "5",
+           "2",
+           "1.5",
+           "1",
+           "0",
+           "2",
+           "0"
+          ]
+         },
+         {
+          "athlete": {
+           "id": "3050073",
+           "displayName": "Foyesade Oluokun",
+           "jersey": "23"
+          },
+          "stats": [
+           "4",
+           "3",
+           "0",
+           "0",
+           "1",
+           "0",
+           "0"
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   "injuries": [
+    {
+     "team": {
+      "abbreviation": "JAX"
+     },
+     "injuries": [
+      {
+       "status": "Questionable",
+       "type": {
+        "description": "questionable"
+       },
+       "athlete": {
+        "id": "4432773",
+        "displayName": "Brian Thomas Jr."
+       }
+      }
+     ]
+    },
+    {
+     "team": {
+      "abbreviation": "CLE"
+     },
+     "injuries": []
+    }
+   ]
+  },
+  "401872659": {
+   "header": {
+    "competitions": [
+     {
+      "date": "2026-09-13T17:00Z",
+      "status": {
+       "type": {
+        "name": "STATUS_FINAL",
+        "state": "post",
+        "completed": true
+       }
+      },
+      "competitors": [
+       {
+        "homeAway": "home",
+        "score": "23",
+        "team": {
+         "id": "11",
+         "abbreviation": "IND",
+         "displayName": "Indianapolis Colts",
+         "name": "Colts"
+        }
+       },
+       {
+        "homeAway": "away",
+        "score": "41",
+        "team": {
+         "id": "33",
+         "abbreviation": "BAL",
+         "displayName": "Baltimore Ravens",
+         "name": "Ravens"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "boxscore": {
+    "players": [
+     {
+      "team": {
+       "id": "33",
+       "abbreviation": "BAL",
+       "displayName": "Baltimore Ravens"
+      },
+      "statistics": [
+       {
+        "name": "passing",
+        "keys": [
+         "completions/passingAttempts",
+         "passingYards",
+         "yardsPerPassAttempt",
+         "passingTouchdowns",
+         "interceptions",
+         "sacks-sackYardsLost",
+         "adjQBR",
+         "QBRating"
+        ],
+        "labels": [
+         "C/ATT",
+         "YDS",
+         "AVG",
+         "TD",
+         "INT",
+         "SACKS",
+         "QBR",
+         "RTG"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "3916387",
+           "displayName": "Lamar Jackson",
+           "jersey": "8"
+          },
+          "stats": [
+           "17/25",
+           "324",
+           "13.0",
+           "1",
+           "0",
+           "2-20",
+           "82.8",
+           "124.2"
+          ]
+         }
+        ]
+       },
+       {
+        "name": "rushing",
+        "keys": [
+         "rushingAttempts",
+         "rushingYards",
+         "yardsPerRushAttempt",
+         "rushingTouchdowns",
+         "longRushing"
+        ],
+        "labels": [
+         "CAR",
+         "YDS",
+         "AVG",
+         "TD",
+         "LONG"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "3916387",
+           "displayName": "Lamar Jackson",
+           "jersey": "8"
+          },
+          "stats": [
+           "7",
+           "40",
+           "5.7",
+           "1",
+           "19"
+          ]
+         }
+        ]
+       },
+       {
+        "name": "fumbles",
+        "keys": [
+         "fumbles",
+         "fumblesLost",
+         "fumblesRecovered"
+        ],
+        "labels": [
+         "FUM",
+         "LOST",
+         "REC"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "3916387",
+           "displayName": "Lamar Jackson",
+           "jersey": "8"
+          },
+          "stats": [
+           "1",
+           "1",
+           "0"
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "team": {
+       "id": "11",
+       "abbreviation": "IND",
+       "displayName": "Indianapolis Colts"
+      },
+      "statistics": [
+       {
+        "name": "passing",
+        "keys": [
+         "completions/passingAttempts",
+         "passingYards",
+         "yardsPerPassAttempt",
+         "passingTouchdowns",
+         "interceptions",
+         "sacks-sackYardsLost",
+         "adjQBR",
+         "QBRating"
+        ],
+        "labels": [
+         "C/ATT",
+         "YDS",
+         "AVG",
+         "TD",
+         "INT",
+         "SACKS",
+         "QBR",
+         "RTG"
+        ],
+        "athletes": [
+         {
+          "athlete": {
+           "id": "3917792",
+           "displayName": "Daniel Jones",
+           "jersey": "17"
+          },
+          "stats": [
+           "19/31",
+           "166",
+           "5.4",
+           "1",
+           "1",
+           "2-17",
+           "28.7",
+           "72.8"
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   "injuries": [
+    {
+     "team": {
+      "abbreviation": "IND"
+     },
+     "injuries": []
+    },
+    {
+     "team": {
+      "abbreviation": "BAL"
+     },
+     "injuries": []
+    }
+   ]
+  }
+ }
+}

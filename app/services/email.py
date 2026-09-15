@@ -5,6 +5,7 @@ from html import escape as _esc
 import httpx
 
 from app.config import settings
+from app.services.resolucion.sujeto import texto_identidad  # puro (sin BD ni red)
 
 logger = logging.getLogger(__name__)
 
@@ -210,6 +211,11 @@ async def send_resolution_plan_email(
     esc = plan.get("escalados", [])
     n, con_ops, vol = resumen.get("resoluciones", len(res)), resumen.get("con_operaciones", 0), resumen.get("volumen", 0)
 
+    def identidad(e: dict) -> str:
+        # accesorios de jugador: quién quedó confirmado y con qué id en cada fuente
+        t = texto_identidad(e.get("sujeto_confirmado"))
+        return f'<br><span style="color:rgba(245,240,232,0.55)">Identidad: {_esc(t)}</span>' if t else ""
+
     def fila(r: dict) -> str:
         warn = f' <span style="color:#FFD700">⚠️ {round(float(r.get("volume") or 0))} PT</span>' if (r.get("num_trades") or 0) else ""
         return (
@@ -217,7 +223,7 @@ async def send_resolution_plan_email(
             f'<td style="padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:12px">{_esc(r.get("pregunta") or r["id"])}{warn}</td>'
             f'<td style="padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:12px;font-weight:700">{_esc(str(r.get("veredicto")))}</td>'
             f'<td style="padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:12px">{_esc(r.get("resultado") or "")} '
-            f'<a href="{_esc(r.get("fuente_1") or "#")}" style="color:#8AB4FF">F1</a> <a href="{_esc(r.get("fuente_2") or "#")}" style="color:#8AB4FF">F2</a></td></tr>'
+            f'<a href="{_esc(r.get("fuente_1") or "#")}" style="color:#8AB4FF">F1</a> <a href="{_esc(r.get("fuente_2") or "#")}" style="color:#8AB4FF">F2</a>{identidad(r)}</td></tr>'
         )
 
     tabla = ('<table style="width:100%;border-collapse:collapse;margin:0 0 18px">' + "".join(fila(r) for r in res) + "</table>") if res else \
@@ -232,7 +238,7 @@ async def send_resolution_plan_email(
         citas = "".join(f'<br><i style="color:rgba(245,240,232,0.5)">“{_esc(str(c)[:200])}”</i>' for c in (e.get("citas") or [])[:3])
         warn = f' <span style="color:#FFD700">⚠️ {e.get("volume")} PT</span>' if (e.get("num_trades") or 0) else ""
         return (f'<li style="margin-bottom:8px;font-size:12px"><b>{_esc(e.get("pregunta") or e["id"])}</b>{warn}<br>'
-                f'<span style="color:rgba(245,240,232,0.55)">{_esc(e.get("razon") or "")}{sug}{ev}</span>{res}{citas}</li>')
+                f'<span style="color:rgba(245,240,232,0.55)">{_esc(e.get("razon") or "")}{sug}{ev}</span>{res}{identidad(e)}{citas}</li>')
 
     sin_receta = resumen.get("sin_receta") or 0
     aviso_skill = (f'<p style="margin:12px 0 0;font-size:12px;color:#FFD700">{sin_receta} no deportivos sin receta: '
@@ -270,11 +276,18 @@ async def send_resolution_plan_email(
 async def send_resolution_plan_applied_email(plan_id: int, resultado: dict) -> None:
     r, s, f = resultado.get("resueltos", []), resultado.get("saltados", []), resultado.get("fallidos", [])
     fallos = "".join(f'<li style="font-size:12px;color:#FF2D55">{_esc(x["id"])}: {_esc(x.get("razon") or "")}</li>' for x in f)
+    # accesorios de jugador resueltos: con qué identidad (ids por fuente) se liquidaron
+    con_sujeto = "".join(
+        f'<li style="font-size:12px">{_esc(x["id"])} → <b>{_esc(str(x.get("veredicto")))}</b><br>'
+        f'<span style="color:rgba(245,240,232,0.55)">Identidad: {_esc(texto_identidad(x["sujeto_confirmado"]))}</span></li>'
+        for x in r if texto_identidad(x.get("sujeto_confirmado"))
+    )
     body = f"""
       <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">✅ Plan #{plan_id} aplicado</p>
       <p style="margin: 0 0 18px; font-size: 14px; color: rgba(245,240,232,0.6);">
         Resueltos {len(r)} · saltados {len(s)} · fallidos {len(f)} · posiciones liquidadas {resultado.get("posiciones_liquidadas", 0)}
       </p>
+      {f'<ul style="padding-left:18px">{con_sujeto}</ul>' if con_sujeto else ''}
       {f'<ul style="padding-left:18px">{fallos}</ul>' if fallos else ''}
       <a href="{_SITE}/#/admin" style="display:inline-block; background:#FFD700; color:#07071A;
          text-decoration:none; font-weight:800; font-size:14px; padding:12px 24px; border-radius:10px;">Ir al panel de admin →</a>

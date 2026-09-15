@@ -21,8 +21,15 @@ from app.database import get_db
 from app.models.resolution_plan import ResolutionPlan
 from app.models.user import User
 from app.services.resolucion import nocturno
+from app.services.resolucion.sujeto import texto_identidad
 
 router = APIRouter(prefix="/admin/resolucion", tags=["admin"])
+
+
+def _identidad_html(e: dict) -> str:
+    """Identidad confirmada (ids por fuente) de un accesorio de jugador; vacío si no aplica."""
+    t = texto_identidad(e.get("sujeto_confirmado"))
+    return f"<br><span class='muted'>Identidad: {_esc(t)}</span>" if t else ""
 
 
 def _plan_out(p: ResolutionPlan) -> dict:
@@ -124,7 +131,7 @@ def _tabla_resoluciones(plan: dict) -> str:
         filas.append(
             f"<tr><td>{_esc(r.get('liga') or '')}</td><td>{_esc(r.get('pregunta') or r['id'])}{warn}</td>"
             f"<td class='v'>{_esc(str(r.get('veredicto')))}</td><td>{_esc(r.get('resultado') or '')} "
-            f"<a href='{_esc(r.get('fuente_1') or '#')}'>F1</a> <a href='{_esc(r.get('fuente_2') or '#')}'>F2</a></td></tr>"
+            f"<a href='{_esc(r.get('fuente_1') or '#')}'>F1</a> <a href='{_esc(r.get('fuente_2') or '#')}'>F2</a>{_identidad_html(r)}</td></tr>"
         )
     return "<table><tr><th>Liga</th><th>Mercado</th><th>Veredicto</th><th>Resultado y fuentes</th></tr>" + "".join(filas) + "</table>"
 
@@ -141,7 +148,7 @@ def _lista_escalados(plan: dict) -> str:
         res = f"<br>{_esc(str(e['resultado'])[:300])}" if e.get("resultado") else ""
         citas = "".join(f"<br><i class='muted'>“{_esc(str(c)[:200])}”</i>" for c in (e.get("citas") or [])[:3])
         vol = f" <span class='warn'>⚠️ {e.get('volume')} PT</span>" if (e.get("num_trades") or 0) else ""
-        items.append(f"<li><b>{_esc(e.get('pregunta') or e['id'])}</b>{vol}<br><span class='muted'>{_esc(e.get('razon') or '')}{sug}{ev}</span>{res}{citas}</li>")
+        items.append(f"<li><b>{_esc(e.get('pregunta') or e['id'])}</b>{vol}<br><span class='muted'>{_esc(e.get('razon') or '')}{sug}{ev}</span>{res}{_identidad_html(e)}{citas}</li>")
     return f"<div class='box'><b>Escalados ({len(esc)})</b> — no se resuelven con este plan; ciérralos en <a href='https://veredikt.mx/#/admin'>/admin</a>.<ul>{''.join(items)}</ul></div>"
 
 
@@ -175,7 +182,7 @@ async def pagina_aprobar(plan_id: int, t: str | None = None, db: AsyncSession = 
 def _resultado_html(res: dict | None) -> str:
     if not res:
         return ""
-    filas = "".join(f"<li class='ok'>{_esc(x['id'])} → {_esc(str(x.get('veredicto')))} ({x.get('positions_settled', 0)} posiciones)</li>" for x in res.get("resueltos", []))
+    filas = "".join(f"<li class='ok'>{_esc(x['id'])} → {_esc(str(x.get('veredicto')))} ({x.get('positions_settled', 0)} posiciones){_identidad_html(x)}</li>" for x in res.get("resueltos", []))
     filas += "".join(f"<li class='muted'>{_esc(x['id'])}: saltado ({_esc(x.get('razon') or '')})</li>" for x in res.get("saltados", []))
     filas += "".join(f"<li class='bad'>{_esc(x['id'])}: {_esc(x.get('razon') or '')}</li>" for x in res.get("fallidos", []))
     return (f"<div class='box'><b>Resueltos {len(res.get('resueltos', []))} · saltados {len(res.get('saltados', []))} · "

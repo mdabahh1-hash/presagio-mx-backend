@@ -204,7 +204,9 @@ class PlanInvalido(ValueError):
         self.errores = errores
 
 
-_CAMPOS_ENTRADA = ("id", "veredicto", "resultado", "fuente_1", "fuente_2", "confianza")
+# sujeto_confirmado: identidad por fuente de un accesorio de jugador; la vuelve a
+# exigir validar_entrada al aprobar, así que no se puede perder al guardar.
+_CAMPOS_ENTRADA = ("id", "veredicto", "resultado", "fuente_1", "fuente_2", "confianza", "sujeto_confirmado")
 
 
 async def proponer_plan(db: AsyncSession, plan: dict) -> ResolutionPlan:
@@ -234,7 +236,7 @@ async def proponer_plan(db: AsyncSession, plan: dict) -> ResolutionPlan:
             errores[mid] = errs
             continue
         enriquecidas.append({
-            **{k: e.get(k) for k in _CAMPOS_ENTRADA},
+            **{k: e.get(k) for k in _CAMPOS_ENTRADA if k != "sujeto_confirmado" or e.get(k)},
             "pregunta": detalle.get("question"),
             "liga": detalle.get("subcategory"),
             "volume": detalle.get("volume"),
@@ -321,7 +323,8 @@ async def aplicar_plan(db: AsyncSession, plan_id: int, plan: dict, notificar: bo
         posiciones += int(r.get("positions_settled") or 0)
         resueltos.append({"id": mid, "veredicto": e["veredicto"], "resultado": e.get("resultado"),
                           "fuente_1": e.get("fuente_1"), "fuente_2": e.get("fuente_2"),
-                          "positions_settled": r.get("positions_settled")})
+                          "positions_settled": r.get("positions_settled"),
+                          **({"sujeto_confirmado": e["sujeto_confirmado"]} if e.get("sujeto_confirmado") else {})})
     resultado = {
         "aplicado": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "resueltos": resueltos, "saltados": saltados, "fallidos": fallidos,

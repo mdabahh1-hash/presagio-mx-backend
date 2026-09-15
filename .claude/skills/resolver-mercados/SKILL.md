@@ -88,24 +88,52 @@ volumen, con `veredicto_sugerido` cuando ESPN sí tiene el dato:
 - "solo una fuente": TheSportsDB no encontró el partido → confirma el marcador con UNA
   página oficial (WebFetch) y, si coincide con ESPN, muévelo al plan con esa URL como
   `fuente_2`.
-- accesorios titular/gol (desde 2026-09-12): en Champions/Europa League entran solos al plan
-  cuando ESPN y el API oficial de la UEFA (`match.uefa.com/v5`: alineaciones completas y
-  goleadores, `fuentes.uefa_partidos` / `uefa_resumen`) coinciden, incluidos `NO` y
-  `CANCELAR` (no convocado). En otras ligas la segunda fuente es TheSportsDB, que gratis
-  RECORTA alineaciones y goles a 5 filas: solo confirma presencias (titular `YES`, gol
-  `YES`); todo `NO` queda escalado. También quedan escalados: discrepancias y "sin gol" de un
-  suplente (ninguna segunda fuente publica cambios, así que la participación solo la
-  confirma ESPN) → confirma con la página oficial del partido y muévelo al plan.
+- accesorios titular/gol (desde 2026-09-12; identidad desde 2026-09-14, ver "Identidad del
+  sujeto" abajo): en Champions/Europa League entran solos al plan cuando ESPN y el API oficial
+  de la UEFA (`match.uefa.com/v5`: alineaciones completas y goleadores,
+  `fuentes.uefa_partidos` / `uefa_resumen`) localizan al jugador por id en su equipo y
+  coinciden (`YES`, titular `NO`, gol `NO` con participación confirmada por ambas). En otras
+  ligas la segunda fuente es TheSportsDB, que gratis RECORTA alineaciones y goles a 5 filas y
+  no trae ids: solo confirma presencias (titular `YES`, gol `YES`) por nombre exacto y único
+  dentro del equipo; todo `NO` queda escalado. También quedan escalados: discrepancias, "sin
+  gol" de un suplente que solo confirma ESPN y el jugador ausente de ambas fuentes (nunca
+  `CANCELAR` automático) → confirma con la página oficial del partido y muévelo al plan.
 - aplazado / sin cruce / sin fuente automática (liga fuera de `resolucion/fuentes.py:LIGAS`,
   Leagues Cup) → investigación manual solo si tiene volumen; si no, déjalo escalado.
 - **NFL** (desde 2026-09-12): el ganador (outcomes por equipo, sede irrelevante) entra al plan
   con ESPN + TheSportsDB; las props (`anotará al menos N touchdown`, `lanzará N o más pases de
   touchdown`, `conseguirá N o más puntos de fantasy` con scoring estándar) entran con el box
   score de ESPN + el de CBS (`fuentes.cbs_boxscore_nfl`, URL
-  `NFL_AAAAMMDD_VIS@LOC/` con fecha local del este). Jugador ausente de ambos box scores =
-  inactivo → `CANCELAR`. Escalados: discrepancias, CBS caído (Railway podría estar bloqueado:
-  confirmar entonces con WebFetch a CBS) y fantasy con balón suelto perdido (CBS no publica
-  fumbles). Pro-Football-Reference bloquea y NFL.com no trae box score.
+  `NFL_AAAAMMDD_VIS@LOC/` con fecha local del este), con el jugador ubicado por id en ambos.
+  Escalados: jugador ausente de ambos box scores (sugiere `CANCELAR`, pero el box score no
+  publica inactivos: hay que confirmar que no jugó), discrepancias, CBS caído (Railway podría
+  estar bloqueado: confirmar entonces con WebFetch a CBS), fantasy con balón suelto perdido
+  (CBS no publica fumbles) y fantasy `NO` a ≤4 pts del umbral (las conversiones de 2 no vienen
+  en el box score). Pro-Football-Reference bloquea y NFL.com no trae box score.
+
+### Identidad del sujeto (accesorios de jugador, desde 2026-09-14)
+
+En la Semana 1 de 2026 el job sugirió `NO` a Josh Allen (QB, Bills) porque buscó por nombre y
+analizó a Josh Hines-Allen (DE, Jaguars). Desde entonces cada accesorio de jugador guarda
+`sujeto` = `{jugador, equipo, rival, posicion, alcance, ids: {espn, cbs, uefa?, tsdb?}}` (sale
+en `list --out`):
+- El partido se elige por `sujeto.equipo` + `rival`, **nunca** buscando el nombre en los
+  partidos del día. El jugador se ubica **por id** en cada fuente; el nombre solo es un
+  chequeo al lado del id.
+- Sin `sujeto` (mercado viejo) o con `alcance` ≠ `partido` → escalado **sin sugerencia**.
+  Se carga con `agent-resolver.py sujetos-generar` → revisar → `sujetos <yaml> --apply`
+  (PATCH en prod, solo con OK de Mark).
+- Cualquier duda (una sola fuente, `otro_equipo`, id que no cuadra, homónimos, fuente caída)
+  → escalado **sin sugerencia**. No la resuelvas con una página que solo nombra al jugador:
+  confirma equipo y dorsal.
+- Ausente en ambas fuentes con el partido confirmado → **siempre escalado**. Ausente del box
+  score o de la alineación no prueba que estuvo inactivo.
+- Un escalado de accesorio que muevas al plan a mano DEBE llevar `sujeto_confirmado` con los
+  mismos ids que `sujeto.ids` para cada host de `fuente_1`/`fuente_2` (espn.com → `espn`,
+  cbssports.com → `cbs`, uefa.com → `uefa`; thesportsdb.com → `tsdb` con `nombre` exacto).
+  Las fuentes de ids obligatorios de la liga (NFL ESPN + CBS; UEFA ESPN + UEFA) no se
+  sustituyen. Otro host exige `manual: {equipo, nota}`. Para `CANCELAR` basta el equipo.
+  `check-plan`, `proponer` y el servidor rechazan la entrada sin eso.
 
 ### Veredicto `CANCELAR`
 
@@ -113,8 +141,10 @@ Las normas de muchos mercados mandan cancelar (partido aplazado fuera de la vent
 inactivo que no participó, empate oficial en NFL). En el plan se escribe `"veredicto":
 "CANCELAR"` (binarios y multi) con las mismas dos fuentes: al aplicarse llama a
 `POST /admin/markets/{id}/cancel`, que devuelve a cada posición `shares × costo promedio` con
-fila de ledger `refund`, anula los picks de ligas y avisa por correo. Nunca resuelvas `NO` a un
-jugador que no jugó: es `CANCELAR`.
+fila de ledger `refund`, anula los picks de ligas y avisa por correo. En props un jugador que no
+jugó no se resuelve `NO` (las normas mandan cancelar), pero **no aparecer en las fuentes no
+prueba que estuvo inactivo**: ese caso nunca se cancela solo, se escala y lo decide Mark con la
+evidencia de que el jugador (ese, por id y equipo) no jugó.
 
 ### Aplazado con nueva fecha (Mark decide)
 
@@ -169,16 +199,29 @@ lo que confirmaste a mano (y deja en `escalados` lo que no):
  "resoluciones": [{"id": "pl-city-coventry-j3-2627", "veredicto": "local",
                    "resultado": "Manchester City 3-0 Coventry (30-ago-2026)",
                    "fuente_1": "https://www.premierleague.com/match/…",
-                   "fuente_2": "https://www.espn.com/soccer/match/…", "confianza": "alta"}],
+                   "fuente_2": "https://www.espn.com/soccer/match/…", "confianza": "alta"},
+                  {"id": "nfl-allen-2tdpass-w1-2026", "veredicto": "YES",
+                   "resultado": "BUF 36-31 HOU (13-sep-2026) — Josh Allen (BUF · ESPN 3918298 · CBS 2181054): 2 pases de TD",
+                   "fuente_1": "https://www.espn.com/nfl/boxscore/_/gameId/401872660",
+                   "fuente_2": "https://www.cbssports.com/nfl/gametracker/boxscore/NFL_20260913_BUF@HOU/",
+                   "confianza": "alta",
+                   "sujeto_confirmado": {"jugador": "Josh Allen", "equipo": "Buffalo Bills", "partido": "BUF@HOU",
+                     "espn": {"id": "3918298", "nombre": "Josh Allen", "abbr": "BUF", "equipo": "Buffalo Bills"},
+                     "cbs": {"id": "2181054", "nombre": "Josh Allen", "abbr": "BUF", "equipo": "Buffalo Bills"}}}],
  "escalados": [{"id": "…", "razon": "partido aplazado al 20-sep; tiene volumen → cancelar"}]}
 ```
+
+En accesorios de jugador `sujeto_confirmado` es obligatorio (ver "Identidad del sujeto"): los `id`
+deben ser los de `sujeto.ids` del mercado, nunca los que encuentres buscando el nombre.
 
 ```
 ./venv/bin/python agent-resolver.py check-plan resoluciones/AAAA-MM-DD.json
 ```
 
 Valida contra el API (solo lectura): el mercado sigue pendiente, el veredicto es válido para
-su tipo, las dos fuentes son URLs de dominios distintos, confianza `alta`, evento ya cerrado.
+su tipo, las dos fuentes son URLs de dominios distintos, confianza `alta`, evento ya cerrado y,
+en accesorios de jugador, `sujeto` en el mercado y `sujeto_confirmado` con los mismos ids
+(imprime la identidad confirmada: revísala antes de proponer).
 Corrige el plan hasta que salga `check-plan OK`. Un mercado que no pasa se mueve a escalados.
 
 Presenta a Mark, legible en el chat:

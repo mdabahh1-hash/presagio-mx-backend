@@ -2,8 +2,8 @@
 
 ESPN  — site.api.espn.com: scoreboard por liga y rango de fechas (jornada
         completa, marcador, estado) y summary por evento (alineaciones con
-        titulares, eventos clave con goles). Bloquea User-Agents de navegador y
-        de Python; acepta el de curl.
+        titulares y goles, con ids de equipo y de jugador). Bloquea User-Agents
+        de navegador y de Python; acepta el de curl.
 TSDB  — thesportsdb.com API v1 con la key pública `3`. La capa gratuita recorta
         los listados (eventsday devuelve 3 filas), así que solo se usa la
         búsqueda por partido (`searchevents.php?e=Local_vs_Visitante`), que sí
@@ -271,57 +271,93 @@ def espn_scoreboard(http: Http, liga: str, desde: datetime, hasta: datetime) -> 
     return [_espn_partido(e, liga) for e in data.get("events", [])]
 
 
+def _equipo_resumen(id_: str, nombre: str, alias: list[str], lado: str | None) -> dict:
+    """Equipo de un resumen de alineaciones (espn_summary / uefa_resumen /
+    tsdb_resumen): `jugadores` por id de la fuente, `filas` solo en TheSportsDB
+    (sin ids); `titulares`/`banca` son nombres para mostrar, nunca para localizar."""
+    return {"id": id_, "nombre": nombre, "alias": alias, "lado": lado, "titulares": [], "banca": [],
+            "jugadores": {}, "filas": []}
+
+
+def _agregar_jugador(eq: dict, pid: str, nombre: str, titular: bool, entro: bool | None) -> None:
+    (eq["titulares"] if titular else eq["banca"]).append(nombre)
+    # sin id la fila no se localiza por id; cruce.localizar_en_partido la ve por
+    # nombre solo para marcar `discrepa` (¿id equivocado?).
+    eq["jugadores"][pid or f"sin-id:{nombre}"] = {"id": pid, "nombre": nombre, "titular": titular, "entro": entro}
+
+
 def espn_summary(http: Http, liga: str, event_id: str) -> dict:
-    """Alineaciones (titulares y banca por equipo) y goles de un partido."""
+    """Alineaciones y goles de un partido de fútbol con los ids de ESPN, para
+    ubicar al jugador del sujeto por id (cruce.localizar_en_partido):
+    {fuente: 'espn', equipos: {team.id: {id, nombre, alias, lado, titulares,
+    banca, jugadores: {athlete.id: {id, nombre, titular, entro}}}}, goles:
+    [{minuto, tipo, equipo, equipo_id, jugador, jugador_id, texto}], completo,
+    publica_cambios, url}. El goleador es SOLO participants[0] (los siguientes
+    son asistentes); `entro` = roster.subbedIn (ESPN sí publica cambios)."""
     code = LIGAS[liga][0]
     data = http.get(f"{ESPN_API}/{code}/summary?event={event_id}")
-    equipos: dict[str, dict[str, list[str]]] = {}
-    cambios: list[str] = []  # jugadores que entraron de cambio (roster.subbedIn)
+    equipos: dict[str, dict] = {}
     for r in data.get("rosters", []):
-        nombre = r.get("team", {}).get("displayName", "?")
-        titulares = [x["athlete"]["displayName"] for x in r.get("roster", []) if x.get("starter")]
-        banca = [x["athlete"]["displayName"] for x in r.get("roster", []) if not x.get("starter")]
-        cambios += [x["athlete"]["displayName"] for x in r.get("roster", []) if not x.get("starter") and x.get("subbedIn")]
-        equipos[nombre] = {"titulares": titulares, "banca": banca}
+        t = r.get("team") or {}
+        tid, nombre = str(t.get("id") or ""), t.get("displayName") or "?"
+        alias = [n for n in (t.get("displayName"), t.get("shortDisplayName"), t.get("name"), t.get("abbreviation")) if n]
+        eq = _equipo_resumen(tid, nombre, alias, r.get("homeAway"))
+        for x in r.get("roster", []) or []:
+            ath = x.get("athlete") or {}
+            if not ath.get("displayName"):
+                continue
+            _agregar_jugador(eq, str(ath.get("id") or ""), ath["displayName"], bool(x.get("starter")), bool(x.get("subbedIn")))
+        equipos[tid or nombre] = eq
     goles = []
     for k in data.get("keyEvents", []) or []:
         tipo = (k.get("type") or {}).get("text", "")
         if not k.get("scoringPlay") and "Goal" not in tipo:
             continue
-        autores = [p.get("athlete", {}).get("displayName") for p in k.get("participants", [])]
+        t = k.get("team") or {}
+        autor = ((k.get("participants") or [{}])[0] or {}).get("athlete") or {}
         goles.append({
             "minuto": (k.get("clock") or {}).get("displayValue"),
             "tipo": tipo,  # "Goal", "Penalty - Scored", "Own Goal"…
-            "equipo": (k.get("team") or {}).get("displayName"),
-            "jugador": autores[0] if autores else None,
+            "equipo": t.get("displayName"), "equipo_id": str(t.get("id") or ""),
+            "jugador": autor.get("displayName"), "jugador_id": str(autor.get("id") or ""),
             "texto": k.get("text", ""),
         })
-    return {"equipos": equipos, "goles": goles, "cambios": cambios, "completo": True,
+    return {"fuente": "espn", "equipos": equipos, "goles": goles, "completo": True, "publica_cambios": True,
             "url": f"https://www.espn.com/soccer/lineups/_/gameId/{event_id}"}
 
 
 def tsdb_resumen(http: Http, id_evento: str) -> dict:
     """Segunda fuente para accesorios de fútbol fuera de la UEFA: alineaciones
     (lookuplineup: strSubstitute No = titular) y goles (lookuptimeline:
-    strTimeline "Goal"; "Own Goal" en el detalle) de TheSportsDB, en el mismo
-    formato que espn_summary para reutilizar cruce.sugerir_titular / sugerir_gol.
+    strTimeline "Goal"; "Own Goal" en el detalle) de TheSportsDB, con la forma
+    de espn_summary pero SIN ids: cada equipo trae `filas` [{nombre, titular}]
+    y cruce.localizar_en_partido solo acepta un nombre normalizado idéntico y
+    único dentro del equipo (`ambiguo` si se repite).
     OJO: la capa gratuita RECORTA ambos listados a 5 filas (`completo: False`):
     solo sirve para confirmar presencias (titular YES, gol YES), nunca ausencias.
-    Tampoco trae sustituciones: `cambios` va None."""
+    Tampoco trae sustituciones (`publica_cambios: False`)."""
     lineup = http.get(f"{TSDB_API}/lookuplineup.php?id={id_evento}").get("lineup") or []
-    equipos: dict[str, dict[str, list[str]]] = {}
+    equipos: dict[str, dict] = {}
+
+    def equipo(nombre: str | None) -> dict:
+        nombre = nombre or "?"
+        return equipos.setdefault(nombre, _equipo_resumen("", nombre, [nombre], None))
+
     for x in lineup:
-        eq = equipos.setdefault(x.get("strTeam") or "?", {"titulares": [], "banca": []})
-        (eq["titulares"] if (x.get("strSubstitute") or "No") == "No" else eq["banca"]).append(x.get("strPlayer") or "")
+        eq, n = equipo(x.get("strTeam")), x.get("strPlayer") or ""
+        titular = (x.get("strSubstitute") or "No") == "No"
+        (eq["titulares"] if titular else eq["banca"]).append(n)
+        eq["filas"].append({"nombre": n, "titular": titular})
     timeline = http.get(f"{TSDB_API}/lookuptimeline.php?id={id_evento}").get("timeline") or []
     goles = []
     for t in timeline:
         if (t.get("strTimeline") or "").lower() != "goal":
             continue
         detalle = t.get("strTimelineDetail") or "Goal"
-        goles.append({"minuto": f"{t.get('intTime')}'", "tipo": detalle, "equipo": t.get("strTeam"),
-                      "jugador": t.get("strPlayer"), "texto": f"{t.get('strPlayer')} ({detalle})"})
-    return {"equipos": equipos, "goles": goles, "cambios": None, "completo": False,
+        equipo(t.get("strTeam"))  # un goleador fuera de la alineación recortada también prueba presencia
+        goles.append({"minuto": f"{t.get('intTime')}'", "tipo": detalle, "equipo": t.get("strTeam"), "equipo_id": "",
+                      "jugador": t.get("strPlayer"), "jugador_id": "", "texto": f"{t.get('strPlayer')} ({detalle})"})
+    return {"fuente": "tsdb", "equipos": equipos, "goles": goles, "completo": False, "publica_cambios": False,
             "url": f"https://www.thesportsdb.com/event/{id_evento}"}
 
 
@@ -344,9 +380,16 @@ def _uefa_nombres(team: dict) -> list[str]:
     return out
 
 
+def _uefa_id(v) -> str:
+    """Id de la UEFA como string: llega como str o como int según el endpoint."""
+    return "" if v in (None, "") else str(v)
+
+
 def uefa_partidos(http: Http, liga: str, desde: datetime, hasta: datetime) -> list[dict]:
     """Partidos oficiales de la competencia entre dos fechas: id, kickoff, nombres
-    (con alias) de cada equipo, marcador, estado y goleadores."""
+    (con alias) e id de cada equipo (`home_id`/`away_id`), marcador, estado y
+    goleadores con `jugador_id` (player.id) y `equipo_id` (teamId de la fila,
+    nunca player.clubId, que es el club ACTUAL del jugador)."""
     comp = UEFA_COMPETICION[liga]
     season = desde.year + 1 if desde.month >= 7 else desde.year  # 2026/27 → 2027
     d1, d2 = (desde - timedelta(days=1)).strftime("%Y-%m-%d"), (hasta + timedelta(days=1)).strftime("%Y-%m-%d")
@@ -354,16 +397,22 @@ def uefa_partidos(http: Http, liga: str, desde: datetime, hasta: datetime) -> li
     out = []
     for m in data if isinstance(data, list) else []:
         total = (m.get("score") or {}).get("total") or {}
+        home_t, away_t = m.get("homeTeam") or {}, m.get("awayTeam") or {}
+        home_id, away_id = _uefa_id(home_t.get("id")), _uefa_id(away_t.get("id"))
         goles = []
         for s in ((m.get("playerEvents") or {}).get("scorers") or []):
             p = s.get("player") or {}
             tipo = s.get("goalType") or "SCORED"
+            equipo_id = _uefa_id(s.get("teamId"))
+            equipo = (home_t.get("internationalName") if equipo_id and equipo_id == home_id
+                      else away_t.get("internationalName") if equipo_id and equipo_id == away_id else None)
             goles.append({"minuto": (s.get("time") or {}).get("minute"), "tipo": "Own Goal" if "OWN" in tipo else tipo,
-                          "equipo": (s.get("teamId") or ""), "jugador": p.get("internationalName"),
+                          "equipo": equipo, "equipo_id": equipo_id,
+                          "jugador": p.get("internationalName"), "jugador_id": _uefa_id(p.get("id")),
                           "texto": f"{p.get('internationalName')} ({tipo})"})
         out.append({
             "id": str(m.get("id")), "kickoff": _dt(((m.get("kickOffTime") or {}).get("dateTime")) or "1970-01-01T00:00:00Z"),
-            "home": _uefa_nombres(m.get("homeTeam") or {}), "away": _uefa_nombres(m.get("awayTeam") or {}),
+            "home": _uefa_nombres(home_t), "away": _uefa_nombres(away_t), "home_id": home_id, "away_id": away_id,
             "home_score": total.get("home"), "away_score": total.get("away"), "estado": m.get("status"), "goles": goles,
         })
     return out
@@ -371,71 +420,104 @@ def uefa_partidos(http: Http, liga: str, desde: datetime, hasta: datetime) -> li
 
 def uefa_resumen(http: Http, liga: str, partido: dict) -> dict:
     """Alineaciones oficiales (11 titulares + banca) y goleadores de un partido
-    de la UEFA, en el formato de espn_summary. `completo: True`: una ausencia
-    en `field`/`bench` sí significa que no fue titular / no fue convocado. No
-    trae sustituciones (`cambios` None)."""
+    de la UEFA, con la forma de espn_summary: equipos por `team.id` (str) con
+    alias por lado (lineups + uefa_partidos) y `jugadores` por player.id (str).
+    `completo: True`: una ausencia en `field`/`bench` sí significa que no fue
+    titular / no fue convocado. No trae sustituciones (`publica_cambios: False`,
+    `entro` None)."""
     data = http.get(f"{UEFA_API}/matches/{partido['id']}/lineups")
-    equipos: dict[str, dict[str, list[str]]] = {}
-    for lado in ("homeTeam", "awayTeam"):
+    equipos: dict[str, dict] = {}
+    for lado, clave in (("homeTeam", "home"), ("awayTeam", "away")):
         t = data.get(lado) or {}
-        nombre = ((t.get("team") or {}).get("internationalName")) or lado
-        equipos[nombre] = {
-            "titulares": [((x.get("player") or {}).get("internationalName")) for x in t.get("field") or []],
-            "banca": [((x.get("player") or {}).get("internationalName")) for x in t.get("bench") or []],
-        }
+        team = t.get("team") or {}
+        tid = _uefa_id(team.get("id")) or _uefa_id(partido.get(f"{clave}_id"))
+        alias: list[str] = []
+        for n in _uefa_nombres(team) + list(partido.get(clave) or []):
+            if n and n not in alias:
+                alias.append(n)
+        nombre = team.get("internationalName") or (alias[0] if alias else lado)
+        eq = _equipo_resumen(tid, nombre, alias, clave)
+        for titular, filas in ((True, t.get("field") or []), (False, t.get("bench") or [])):
+            for x in filas:
+                p = x.get("player") or {}
+                _agregar_jugador(eq, _uefa_id(p.get("id")), p.get("internationalName") or "", titular, None)
+        equipos[tid or nombre] = eq
     slug = "uefachampionsleague" if UEFA_COMPETICION.get(liga) == "1" else "uefaeuropaleague"
-    return {"equipos": equipos, "goles": partido.get("goles") or [], "cambios": None, "completo": True,
-            "url": f"https://www.uefa.com/{slug}/match/{partido['id']}/"}
+    return {"fuente": "uefa", "equipos": equipos, "goles": partido.get("goles") or [], "completo": True,
+            "publica_cambios": False, "url": f"https://www.uefa.com/{slug}/match/{partido['id']}/"}
 
 
-# Categorías del box score de ESPN (NFL) que usan las props: cada una trae
-# `keys` con los nombres de estadística, así que se guardan por key.
-_NFL_CATEGORIAS = ("passing", "rushing", "receiving", "fumbles")
+# Categorías ofensivas del box score de ESPN (NFL) de las que salen las props.
+# El resto (defensive, interceptions, kickReturns, puntReturns, kicking,
+# punting) solo prueba que el jugador estuvo en el partido.
+NFL_CATEGORIAS_OFENSIVAS = ("passing", "rushing", "receiving")
 
 
 def espn_boxscore_nfl(http: Http, liga: str, event_id: str) -> dict:
-    """Estadísticas por jugador de un partido de NFL: {jugadores: {nombre:
-    {equipo, passing: {...}, rushing: {...}, receiving: {...}, fumbles: {...}}},
-    estado, url}. Solo aparecen los jugadores con alguna estadística registrada:
-    un jugador ausente del box score no participó (inactivo)."""
+    """Box score de un partido de NFL con TODAS las categorías, indexado por
+    `athlete.id` (dos jugadores con el mismo nombre ya no se funden):
+    {jugadores: {id: {id, nombre, abbr, equipo, equipo_id, passing: {...},
+    rushing: {...}, fumbles: {...}, defensive: {...}, kickReturns: {...}, ...}},
+    equipos: {abbr: displayName}, injuries: {abbr: [{id, nombre, estado}]},
+    estado, url}. Cada categoría trae `keys`, así que las stats van por key.
+    Solo aparecen los jugadores con alguna estadística; el box score NO publica
+    la lista de inactivos (ausente ≠ inactivo confirmado) e `injuries` es el
+    reporte de lesiones, no la lista de inactivos: solo sirve como dato."""
     code = LIGAS[liga][0]
     data = http.get(f"{ESPN_API}/{code}/summary?event={event_id}")
     jugadores: dict[str, dict] = {}
+    equipos: dict[str, str] = {}
     for team in (data.get("boxscore") or {}).get("players", []):
-        equipo = (team.get("team") or {}).get("displayName", "?")
+        t = team.get("team") or {}
+        abbr, equipo = t.get("abbreviation") or "?", t.get("displayName") or "?"
+        equipos[abbr] = equipo
         for cat in team.get("statistics", []):
             nombre_cat = cat.get("name")
-            if nombre_cat not in _NFL_CATEGORIAS:
+            if not nombre_cat:
                 continue
             keys = cat.get("keys") or cat.get("labels") or []
             for a in cat.get("athletes", []):
-                nombre = (a.get("athlete") or {}).get("displayName")
+                ath = a.get("athlete") or {}
+                nombre = ath.get("displayName")
                 if not nombre:
                     continue
-                stats = dict(zip(keys, a.get("stats", [])))
-                j = jugadores.setdefault(nombre, {"equipo": equipo})
-                j[nombre_cat] = stats
+                # sin id (no pasa en la muestra real) la fila no se puede
+                # localizar por id; cruce.localizar_jugador la ve por nombre
+                # solo para marcar `discrepa`.
+                clave = str(ath["id"]) if ath.get("id") else f"sin-id:{abbr}:{nombre}"
+                j = jugadores.setdefault(clave, {"id": str(ath.get("id") or ""), "nombre": nombre, "abbr": abbr,
+                                                 "equipo": equipo, "equipo_id": str(t.get("id") or "")})
+                j[nombre_cat] = dict(zip(keys, a.get("stats", [])))
+    injuries: dict[str, list[dict]] = {}
+    for t in data.get("injuries") or []:
+        abbr = (t.get("team") or {}).get("abbreviation") or "?"
+        injuries[abbr] = [{"id": str((i.get("athlete") or {}).get("id") or ""),
+                           "nombre": (i.get("athlete") or {}).get("displayName") or "",
+                           "estado": i.get("status") or ((i.get("type") or {}).get("description") or "")}
+                          for i in t.get("injuries") or []]
     tipo = ((data.get("header") or {}).get("competitions") or [{}])[0].get("status", {}).get("type", {})
     estado = _ESPN_ESTADOS.get(tipo.get("name"), FT if tipo.get("completed") else UNKNOWN)
-    return {"jugadores": jugadores, "estado": estado, "url": f"https://www.espn.com/nfl/boxscore/_/gameId/{event_id}"}
+    return {"jugadores": jugadores, "equipos": equipos, "injuries": injuries, "estado": estado,
+            "url": f"https://www.espn.com/nfl/boxscore/_/gameId/{event_id}"}
 
 
 # ── CBS Sports (segunda fuente de props NFL) ─────────────────────────────────
 
 # Abreviaturas de ESPN → CBS cuando difieren.
 CBS_ABBR = {"WSH": "WAS", "JAX": "JAC"}
-_CBS_SECCIONES = {"passing-ctr": "passing", "rushing-ctr": "rushing", "receiving-ctr": "receiving"}
+# Secciones con stats de props (primera celda de la cabecera, en minúsculas).
+# Las demás (Defense, Kicking, Punting, Kickoff Returns, Punt Returns) solo
+# cuentan como presencia del jugador.
 _CBS_KEYS = {
     "passing": {"YDS": "passingYards", "TD": "passingTouchdowns", "INT": "interceptions"},
     "rushing": {"ATT": "rushingAttempts", "YDS": "rushingYards", "TD": "rushingTouchdowns"},
     "receiving": {"TAR": "receivingTargets", "REC": "receptions", "YDS": "receivingYards", "TD": "receivingTouchdowns"},
 }
-_RE_CBS_SECCION = re.compile(r'class="([a-z-]+-ctr)"')
 _RE_CBS_CABECERA = re.compile(r'<tr class="header-row">(.*?)</tr>', re.S)
 _RE_CBS_CELDA = re.compile(r'<td class="(?:name|number)-element">\s*(.*?)\s*</td>', re.S)
 _RE_CBS_FILA = re.compile(r'<tr class="[^"]*data-row[^"]*">', re.S)
 _RE_CBS_EQUIPO = re.compile(r'data-team-abbr="([A-Z]+)"')
-_RE_CBS_JUGADOR = re.compile(r'/nfl/players/\d+/([a-z0-9-]+)/')
+_RE_CBS_JUGADOR = re.compile(r'/nfl/players/(\d+)/([a-z0-9-]+)/')
 
 
 def cbs_url_boxscore(kickoff_utc: datetime, away_abbr: str, home_abbr: str) -> str:
@@ -448,46 +530,45 @@ def cbs_url_boxscore(kickoff_utc: datetime, away_abbr: str, home_abbr: str) -> s
 
 
 def parsear_cbs_boxscore(html: str, url: str = "") -> dict:
-    """Box score de CBS → mismo formato que espn_boxscore_nfl (jugadores por
-    nombre completo, tomado del slug del enlace /nfl/players/{id}/{slug}/; keys
-    de ESPN). Solo Passing/Rushing/Receiving; CBS no publica fumbles perdidos."""
-    marcas = [(m.start(), _CBS_SECCIONES[m.group(1)]) for m in _RE_CBS_SECCION.finditer(html) if m.group(1) in _CBS_SECCIONES]
-    cabeceras: dict[int, list[str]] = {}
-    for m in _RE_CBS_CABECERA.finditer(html):
-        cabeceras[m.start()] = [re.sub(r"\s+", " ", c).strip() for c in _RE_CBS_CELDA.findall(m.group(1))]
-
-    def seccion_en(pos: int) -> str | None:
-        prev = [s for p, s in marcas if p < pos]
-        # la sección vigente es la última marca de sección antes de la fila; una
-        # marca de otro contenedor (defense-ctr…) no está en `marcas`, así que
-        # se corta por cabecera: la fila debe estar después de la última cabecera
-        return prev[-1] if prev else None
-
+    """Box score de CBS → {jugadores: {id CBS: {id, nombre, slug, abbr, equipo,
+    secciones: [...], passing?: {...}, rushing?: {...}, receiving?: {...}}}, url}.
+    El id y el nombre salen del enlace /nfl/players/{id}/{slug}/ (el texto del
+    enlace es corto: "J. Allen"); el equipo, de `data-team-abbr` de la fila
+    ('?' = no publicado, no "otro equipo"). La presencia se toma de TODAS las
+    secciones (también Defense y devoluciones); las stats, con keys de ESPN, solo
+    de Passing/Rushing/Receiving. CBS no publica fumbles perdidos."""
+    cabeceras = [(m.start(), [re.sub(r"\s+", " ", c).strip() for c in _RE_CBS_CELDA.findall(m.group(1))])
+                 for m in _RE_CBS_CABECERA.finditer(html)]
+    filas = [m.start() for m in _RE_CBS_FILA.finditer(html)]
     jugadores: dict[str, dict] = {}
-    for m in _RE_CBS_FILA.finditer(html):
-        ini = m.start()
-        sec = seccion_en(ini)
-        if sec is None:
+    for i, ini in enumerate(filas):
+        # la sección de la fila es la de la última cabecera antes de ella
+        labels = next((ls for p, ls in reversed(cabeceras) if p < ini), None)
+        if not labels:
             continue
-        cab_pos = max((p for p in cabeceras if p < ini), default=None)
-        if cab_pos is None:
-            continue
-        labels = cabeceras[cab_pos]
-        if not labels or labels[0].lower() != sec:
-            continue  # la cabecera vigente no es de esta sección (p. ej. fila de defensa)
-        link = _RE_CBS_JUGADOR.search(html, ini)
+        sec = labels[0].lower()
+        # el enlace del jugador debe estar en ESTA fila (antes de la siguiente)
+        link = _RE_CBS_JUGADOR.search(html, ini, filas[i + 1] if i + 1 < len(filas) else len(html))
         if not link:
-            break
+            continue
+        pid, slug = link.group(1), link.group(2)
+        eq = _RE_CBS_EQUIPO.search(html, ini, link.start())
+        abbr = eq.group(1) if eq else "?"
+        j = jugadores.setdefault(pid, {"id": pid, "nombre": " ".join(p.capitalize() for p in slug.split("-")),
+                                       "slug": slug, "abbr": abbr, "equipo": abbr, "secciones": []})
+        if j["abbr"] == "?" and abbr != "?":
+            j["abbr"] = j["equipo"] = abbr
+        if sec not in j["secciones"]:
+            j["secciones"].append(sec)
+        if sec not in _CBS_KEYS:
+            continue
         fin = html.find("</tr>", link.end())
         celdas = [re.sub(r"\s+", " ", c).strip() for c in _RE_CBS_CELDA.findall(html[link.end():fin])]
-        eq = _RE_CBS_EQUIPO.search(html, ini, link.start())
-        nombre = " ".join(p.capitalize() for p in link.group(1).split("-"))
         stats = {}
         for label, valor in zip(labels[1:], celdas):
             key = _CBS_KEYS[sec].get(label)
             if key:
                 stats[key] = valor
-        j = jugadores.setdefault(nombre, {"equipo": eq.group(1) if eq else "?"})
         j[sec] = stats
     return {"jugadores": jugadores, "url": url}
 

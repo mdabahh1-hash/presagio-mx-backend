@@ -318,3 +318,142 @@ async def test_prune_clasifica_y_quita(db):
     assert "prueba-binario-ok" not in nuevo and ID_VENCIDO not in nuevo
     sobrevivientes, _ = cargar_texto(nuevo)
     assert [s.id for s in sobrevivientes] == ["prueba-multi-nfl", "prueba-laliga-realmadrid-barcelona"]
+
+
+# ── accesorios de jugador: sujeto obligatorio (caso Josh Allen) ──────────────
+
+RULES_PROP = ("El mercado se resuelve con el box score oficial del partido de la Semana 1 entre los Bills y los Texans. "
+              "Cuentan solo los pases de touchdown lanzados por el jugador nombrado; no cuentan los de otro jugador "
+              "con nombre parecido. Si no participa en el partido, el mercado se cancela.")
+SUJETO_ALLEN = {"jugador": "Josh Allen", "equipo": "Bills", "rival": "Texans", "posicion": "QB", "alcance": "partido",
+                "ids": {"espn": 3918298, "cbs": "2181054"}}
+
+
+def _prop_yaml(**cambios) -> str:
+    """Documento YAML de una prop NFL; `cambios` pisa claves (None las quita)."""
+    import yaml
+
+    doc = {"tipo": "binario", "id": "nfl-allen-2tdpass-prueba",
+           "question": "¿Josh Allen lanzará 2 o más pases de touchdown contra los Texans en la Semana 1?",
+           "description": "Prop de prueba.", "category": "DEPORTES", "subcategory": "NFL", "kind": "accesorio",
+           "resolution_criteria": "Resuelve SÍ con 2 o más pases de TD del jugador.",
+           "resolution_source_url": "https://www.espn.com/nfl/", "rules": RULES_PROP, "context": CONTEXTO,
+           "ends_at": "2030-09-13T17:00:00Z", "initial_yes_price": 50, "sujeto": SUJETO_ALLEN}
+    for k, v in cambios.items():
+        if v is None:
+            doc.pop(k, None)
+        else:
+            doc[k] = v
+    return "---\n" + yaml.safe_dump(doc, allow_unicode=True, sort_keys=False)
+
+
+def _errores(texto: str) -> str:
+    with pytest.raises(SchemaError) as exc:
+        cargar_texto(texto)
+    return "\n".join(exc.value.errores)
+
+
+def test_prop_con_sujeto_valido_carga_normalizado():
+    specs, _ = cargar_texto(_prop_yaml())
+    assert specs[0].sujeto == {**SUJETO_ALLEN, "ids": {"espn": "3918298", "cbs": "2181054"}}  # ids de YAML sin comillas → str
+
+
+@pytest.mark.parametrize("cambios,fragmento", [
+    ({"sujeto": None}, "accesorio de jugador sin 'sujeto'"),
+    ({"sujeto": {**SUJETO_ALLEN, "ids": {"espn": "3918298"}}}, "sujeto: falta ids.cbs"),
+    ({"sujeto": {**SUJETO_ALLEN, "jugador": "Josh Hines-Allen"}}, "debe ser idéntico"),
+    ({"sujeto": {**SUJETO_ALLEN, "posicion": "DE"}}, "pases de TD exige posicion QB"),
+    ({"sujeto": {k: v for k, v in SUJETO_ALLEN.items() if k != "alcance"}}, "faltan claves en sujeto: alcance"),
+    ({"kind": None}, "requiere kind: accesorio"),
+], ids=["sin-sujeto", "sin-ids-cbs", "homonimo", "pases-de-un-DE", "sin-alcance", "sin-kind"])
+def test_prop_sin_identidad_valida_no_carga(cambios, fragmento):
+    assert fragmento in _errores(_prop_yaml(**cambios))
+
+
+def test_sujeto_fuera_de_un_accesorio_de_jugador_es_error():
+    texto = _prop_yaml(category="GLOBAL", subcategory=None, kind=None, question="¿Pasará la cosa global antes de 2030?")
+    assert "'sujeto' solo va en binarios de accesorio de jugador" in _errores(texto)
+
+
+def test_accesorio_de_evento_en_singular_no_exige_sujeto():
+    texto = _prop_yaml(id="ligamx-gol-antes-10-prueba", subcategory="Liga MX", sujeto=None,
+                       question="¿Se anotará un gol antes del minuto 10 en América vs Chivas?")
+    specs, _ = cargar_texto(texto)
+    assert specs[0].sujeto is None and specs[0].kind == "accesorio"
+
+
+def test_titular_de_champions_exige_ids_uefa():
+    sujeto = {"jugador": "Rayan Cherki", "equipo": "Manchester City", "rival": "FC Porto", "posicion": "M",
+              "alcance": "partido", "ids": {"espn": "5001"}}
+    texto = _prop_yaml(id="ucl-cherki-titular-prueba", subcategory="Champions League", sujeto=sujeto,
+                       question="¿Rayan Cherki será titular con Manchester City ante Porto en la Jornada 1 de la Champions?")
+    assert "sujeto: falta ids.uefa" in _errores(texto)
+    cargar_texto(texto.replace("espn: '5001'", "espn: '5001'\n    uefa: '250500'"))
+
+
+@pytest.mark.asyncio
+async def test_runner_guarda_el_sujeto(db):
+    specs, _ = cargar_texto(_prop_yaml())
+    r = await sembrar(specs, db, apply=True, log=lambda *_: None)
+    assert r.insertados == ["nfl-allen-2tdpass-prueba"]
+    m = (await db.execute(select(Market).where(Market.id == "nfl-allen-2tdpass-prueba"))).scalar_one()
+    assert m.sujeto == specs[0].sujeto and m.kind == "accesorio"
+
+
+def test_reemplazar_bloque_sujeto_conserva_el_resto():
+    from seeds.sujetos import reemplazar_bloque_sujeto
+
+    nuevo = {**SUJETO_ALLEN, "ids": {"espn": "3918298", "cbs": "2181054"}}
+    sin = _prop_yaml(sujeto=None).replace("---\n", "---\n# comentario interno\n", 1)
+    con = reemplazar_bloque_sujeto(sin, nuevo)  # sin bloque: se agrega al final
+    assert "# comentario interno" in con and cargar_texto(con)[0][0].sujeto == nuevo
+    viejo = sin + "sujeto:\n  jugador: Josh Allen\n  equipo: Bills\n  rival: Texans\n  alcance: partido\n# después\n"
+    otra = reemplazar_bloque_sujeto(viejo, nuevo)  # con bloque: se reemplaza en su lugar
+    assert otra.endswith("# después\n") and otra.count("sujeto:") == 1 and "cbs: '2181054'" in otra
+    assert cargar_texto(otra)[0][0].sujeto == nuevo
+
+
+def test_identificar_llena_ids_y_solo_escribe_sin_errores(tmp_path, monkeypatch, capsys):
+    """`sembrar-mercados.py identificar` sin red: buscar_ids simulado."""
+    import argparse
+    import importlib.util
+    import os
+
+    from app.services.resolucion import identidad
+
+    ruta = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sembrar-mercados.py")
+    spec = importlib.util.spec_from_file_location("sembrar_mercados", ruta)
+    cli = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cli)
+
+    archivo = tmp_path / "m.yaml"
+    escrito = _prop_yaml(sujeto={"equipo": "Bills", "rival": "Texans", "alcance": "partido"})
+    archivo.write_text(YAML_OK + escrito, encoding="utf-8")
+    pedidos = []
+
+    def fake_buscar_ids(http, liga, base, fecha=None):
+        pedidos.append((liga, dict(base), fecha))
+        return {**base, "posicion": "QB", "ids": {"espn": "3918298", "cbs": "2181054"}}, [], []
+
+    monkeypatch.setattr(identidad, "buscar_ids", fake_buscar_ids)
+    args = argparse.Namespace(archivo=str(archivo), only=None, apply=False)
+    cli.cmd_identificar(args)  # dry-run: no escribe
+    assert archivo.read_text(encoding="utf-8") == YAML_OK + escrito
+    # jugador sale de la pregunta; solo se consulta el accesorio de jugador
+    assert pedidos == [("NFL", {"jugador": "Josh Allen", "equipo": "Bills", "rival": "Texans", "alcance": "partido"},
+                        datetime(2030, 9, 13, 17, 0, tzinfo=timezone.utc))]
+
+    cli.cmd_identificar(argparse.Namespace(archivo=str(archivo), only=None, apply=True))
+    texto = archivo.read_text(encoding="utf-8")
+    assert texto.startswith(YAML_OK)  # los demás documentos, byte a byte
+    specs, _ = cargar_texto(texto)
+    assert next(s for s in specs if s.id == "nfl-allen-2tdpass-prueba").sujeto == \
+        {**SUJETO_ALLEN, "ids": {"espn": "3918298", "cbs": "2181054"}}
+
+    # cualquier error: código 1 y el archivo no cambia
+    archivo.write_text(YAML_OK + escrito, encoding="utf-8")
+    monkeypatch.setattr(identidad, "buscar_ids", lambda *a, **k: ({}, ["CBS (BUF): 2 jugadores con el nombre exacto"], []))
+    with pytest.raises(SystemExit) as ex:
+        cli.cmd_identificar(argparse.Namespace(archivo=str(archivo), only=None, apply=True))
+    assert ex.value.code == 1 and archivo.read_text(encoding="utf-8") == YAML_OK + escrito
+    assert "no se escribió nada" in capsys.readouterr().out

@@ -82,6 +82,8 @@ async def migrate_columns() -> None:
         "ALTER TABLE resolution_plans ADD COLUMN IF NOT EXISTS origen VARCHAR(20) NOT NULL DEFAULT 'nocturno'",
         # Receta de resolución mecánica para mercados de dato publicado (no deportivos).
         "ALTER TABLE markets ADD COLUMN IF NOT EXISTS auto_resolucion JSON",
+        # Identidad del jugador de un accesorio (ids por fuente) para resolver sin homónimos.
+        "ALTER TABLE markets ADD COLUMN IF NOT EXISTS sujeto JSON",
     ]
     async with engine.begin() as conn:
         for s in stmts:

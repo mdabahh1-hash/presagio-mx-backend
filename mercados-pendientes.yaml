@@ -8,6 +8,8 @@
 #   ./venv/bin/python sembrar-mercados.py                  # dry-run contra la BD
 #   ./venv/bin/python sembrar-mercados.py sembrar --apply  # escribe
 #   ./venv/bin/python sembrar-mercados.py prune [--apply]  # quita los terminados
+#   ./venv/bin/python sembrar-mercados.py identificar [--only ID …] [--apply]
+#                                          # llena sujeto.ids de los accesorios de jugador (con red)
 #
 # Tipos (ver seeds/schema.py para la validación completa):
 #
@@ -29,6 +31,19 @@
 #                     fed_tasa / banxico_tasa (params.decision + params.tipo mantiene|sube|baja),
 #                     inegi_inflacion (params.periodo), federal_register_eo.
 #                     Sin receta el mercado se escala para resolverlo a mano.
+#                     sujeto — OBLIGATORIO en accesorios de jugador (touchdown / pases de TD /
+#                     fantasy en NFL; titular / gol en las ligas de
+#                     app/services/resolucion/fuentes.py:LIGAS), con kind: accesorio. Sin él
+#                     `validar` da ERROR (el job resolvería por nombre y tomaría homónimos):
+#                       sujeto: {jugador (idéntico al de la pregunta), equipo, rival, posicion,
+#                                alcance (partido | temporada: temporada siempre se resuelve a mano),
+#                                ids: {espn, cbs, uefa?, tsdb?}}
+#                     ids obligatorios: NFL espn + cbs; fútbol espn, + uefa en Champions/Europa
+#                     League; tsdb opcional. Pases de TD exige posicion QB. Escribe a mano
+#                     jugador, equipo, rival y alcance y corre `identificar --only ID --apply`:
+#                     busca ids y posicion en el plantel del equipo (nombre idéntico y único,
+#                     nunca fuzzy); con cualquier error sale con código 1 y no escribe.
+#                     POST /api/markets no los crea (ACCESORIO_SOLO_YAML).
 #
 #   tipo: multi     — igual que binario sin initial_yes_price, más
 #                     outcomes: [{key, label, pct}]   (los pct suman 100)
@@ -54,3 +69,32 @@
 # trending: true
 # context: |
 #   Clásico de la Jornada 10 en el Bernabéu. …
+#
+# Ejemplo de accesorio de jugador (prop NFL; sujeto ya llenado por identificar):
+#
+# ---
+# tipo: binario
+# id: nfl-allen-2tdpass-w1-2026
+# question: ¿Josh Allen lanzará 2 o más pases de touchdown ante los Texans en la Semana 1 de la NFL?
+# description: Bills contra Texans en la Semana 1 de la NFL 2026.
+# category: DEPORTES
+# subcategory: NFL
+# kind: accesorio
+# resolution_criteria: >-
+#   Resuelve SÍ si Josh Allen (Bills) lanza 2 o más pases de touchdown ante los Texans. …
+# resolution_source_url: https://www.nfl.com/scores/
+# rules_cuerpo: |
+#   Resuelve SÍ si Josh Allen (Bills) lanza 2 o más pases de touchdown en el partido Bills vs. Texans …
+# context: |
+#   Josh Allen, MVP de la temporada 2024, es el quarterback más productivo de los Bills. …
+# ends_at: 2026-09-13T17:00:00Z
+# initial_yes_price: 55
+# sujeto:
+#   jugador: Josh Allen          # a mano
+#   equipo: Buffalo Bills        # a mano: el partido se elige por equipo + rival
+#   rival: Houston Texans        # a mano
+#   posicion: QB                 # identificar
+#   alcance: partido             # a mano
+#   ids:
+#     espn: '3918298'            # identificar (Josh Hines-Allen, DE de JAX, es 3915239)
+#     cbs: '2181054'             # identificar (Hines-Allen es 2184628)

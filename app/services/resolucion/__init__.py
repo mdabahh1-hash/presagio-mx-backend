@@ -6,7 +6,12 @@
 - `plan`: arma el plan de resoluciones (`resoluciones/AAAA-MM-DD.json`) que
   después valida y ejecuta `agent-resolver.py` (`check-plan`, `apply --yes`).
 
-Regla: solo va al plan un 1X2 cuyo marcador final coincide en las DOS fuentes.
-Todo lo demás (una sola fuente, aplazado, sin cruce claro, accesorios) sale como
-escalado con la evidencia encontrada para que lo revise una persona.
+- `sujeto` / `identidad`: identidad del jugador de un accesorio (columna
+  markets.sujeto: equipo, rival e ids por fuente) y su búsqueda con red al sembrar.
+
+Regla: solo va al plan lo que coincide en las DOS fuentes (1X2 por marcador;
+accesorios de jugador con identidad confirmada por id en ambas). Todo lo demás
+(una sola fuente, aplazado, sin cruce claro, sin sujeto, homónimos, jugador
+ausente) sale como escalado con la evidencia encontrada para que lo revise una
+persona; si la identidad no quedó confirmada, sin veredicto sugerido.
 """

@@ -1,0 +1,97 @@
+{
+ "_nota": "Armado a mano con las formas de ESPN verificadas el 2026-09-14 ({code}/teams y teams/{abbr}/roster agrupado en athletes[].items[]). Josh Allen 3918298 es real; Kyle Allen solo prueba el homónimo parcial dentro del plantel.",
+ "teams": {
+  "sports": [
+   {
+    "leagues": [
+     {
+      "teams": [
+       {
+        "team": {
+         "id": "2",
+         "abbreviation": "BUF",
+         "displayName": "Buffalo Bills",
+         "shortDisplayName": "Bills",
+         "name": "Bills"
+        }
+       },
+       {
+        "team": {
+         "id": "30",
+         "abbreviation": "JAX",
+         "displayName": "Jacksonville Jaguars",
+         "shortDisplayName": "Jaguars",
+         "name": "Jaguars"
+        }
+       },
+       {
+        "team": {
+         "id": "34",
+         "abbreviation": "HOU",
+         "displayName": "Houston Texans",
+         "shortDisplayName": "Texans",
+         "name": "Texans"
+        }
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "roster": {
+  "athletes": [
+   {
+    "position": "offense",
+    "items": [
+     {
+      "id": "3918298",
+      "displayName": "Josh Allen",
+      "fullName": "Josh Allen",
+      "jersey": "17",
+      "position": {
+       "abbreviation": "QB"
+      }
+     },
+     {
+      "id": "3115293",
+      "displayName": "Kyle Allen",
+      "fullName": "Kyle Allen",
+      "jersey": "9",
+      "position": {
+       "abbreviation": "QB"
+      }
+     }
+    ]
+   },
+   {
+    "position": "defense",
+    "items": [
+     {
+      "id": "4259166",
+      "displayName": "Terrel Bernard",
+      "fullName": "Terrel Bernard",
+      "jersey": "8",
+      "position": {
+       "abbreviation": "LB"
+      }
+     }
+    ]
+   },
+   {
+    "position": "specialTeam",
+    "items": [
+     {
+      "id": "3917232",
+      "displayName": "Tyler Bass",
+      "fullName": "Tyler Bass",
+      "jersey": "16",
+      "position": {
+       "abbreviation": "PK"
+      }
+     }
+    ]
+   }
+  ]
+ }
+}

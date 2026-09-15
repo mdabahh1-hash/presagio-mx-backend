@@ -48,7 +48,7 @@ async def sembrar(specs: list[MarketSpec], db: AsyncSession, apply: bool,
             category=MarketCategory[s.category], subcategory=s.subcategory, kind=s.kind,
             image_url=s.image_url, resolution_criteria=s.resolution_criteria,
             resolution_source_url=s.resolution_source_url, rules=s.rules, context=s.context,
-            auto_resolucion=s.auto_resolucion,
+            auto_resolucion=s.auto_resolucion, sujeto=s.sujeto,
             ends_at=s.ends_at, b=s.b, volume=0.0, num_trades=0,
             status=MarketStatus.OPEN, trending=s.trending,
         )

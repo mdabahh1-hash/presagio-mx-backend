@@ -1,10 +1,13 @@
 """Validación de una entrada del plan contra el estado actual del mercado.
-Función pura (sin red ni BD): la usan `agent-resolver.py check-plan` y la
-aprobación del plan nocturno."""
+Función pura (sin red ni BD): la usan `agent-resolver.py check-plan`,
+`proponer_plan` y `aplicar_plan` (aprobación por correo). En accesorios de
+jugador exige además la identidad confirmada por id (sujeto.errores_identidad)."""
 from __future__ import annotations
 
 from datetime import datetime
 from urllib.parse import urlparse
+
+from .sujeto import errores_identidad
 
 
 def host(url: str) -> str:
@@ -69,7 +72,7 @@ def validar_entrada(entrada: dict, detalle: dict | None, ahora: datetime) -> lis
 
     veredicto = str(entrada.get("veredicto") or "").strip()
     if veredicto == "CANCELAR":
-        pass  # válido para binarios y multi: reembolsa (aplazado fuera de ventana, inactivo, empate NFL)
+        pass  # válido para binarios y multi: reembolsa (aplazado fuera de ventana, empate NFL, no participó confirmado a mano)
     elif detalle.get("market_type") == "multi":
         keys = [o.get("outcome_key") for o in (detalle.get("outcomes") or [])]
         if veredicto not in keys:
@@ -102,4 +105,8 @@ def validar_entrada(entrada: dict, detalle: dict | None, ahora: datetime) -> lis
 
     if not str(entrada.get("resultado") or "").strip():
         errores.append("falta 'resultado' (hecho verificado)")
+
+    # Accesorios de jugador: el mercado necesita `sujeto` y la entrada, la
+    # identidad confirmada por id en cada fuente (caso Josh Allen, Semana 1).
+    errores += errores_identidad(detalle, entrada)
     return errores

@@ -176,3 +176,74 @@ async def test_endpoint_patch_reabre_aplazado(client, db, make_user, make_multi_
     await resolution.resolve(db, m.id, outcome_key="local")
     r = await client.patch(f"/api/admin/markets/{m.id}", json={"question": "x"}, headers=auth_headers(admin))
     assert r.status_code == 400 and r.json()["detail"]["code"] == "MARKET_ALREADY_RESOLVED"
+
+
+# ── sujeto de accesorios de jugador (caso Josh Allen) ────────────────────────
+
+PREGUNTA_ALLEN = "¿Josh Allen lanzará 2 o más pases de touchdown contra los Texans en la Semana 1?"
+SUJETO_ALLEN = {"jugador": "Josh Allen", "equipo": "Bills", "rival": "Texans", "posicion": "QB", "alcance": "partido",
+                "ids": {"espn": "3918298", "cbs": "2181054"}}
+
+
+async def _sujeto_en_bd(db, market_id):
+    m = (await db.execute(select(Market).where(Market.id == market_id).execution_options(populate_existing=True))).scalar_one()
+    return m.question, m.sujeto
+
+
+async def test_endpoint_patch_sujeto(client, db, make_user, make_binary_market):
+    from app.models.market import MarketCategory
+    admin = await _admin(make_user, db)
+    m = await make_binary_market("nfl-allen-2tdpass-w1-2026")
+    m.question, m.category, m.subcategory, m.kind = PREGUNTA_ALLEN, MarketCategory.DEPORTES, "NFL", "accesorio"
+    await db.commit()
+    url = f"/api/admin/markets/{m.id}"
+
+    # válido (ids de YAML sin comillas, posición en minúsculas) → se guarda normalizado y lo expone el API
+    crudo = {**SUJETO_ALLEN, "posicion": "qb", "ids": {"espn": 3918298, "cbs": "2181054"}}
+    r = await client.patch(url, json={"sujeto": crudo}, headers=auth_headers(admin))
+    assert r.status_code == 200, r.text
+    assert r.json()["cambios"] == ["sujeto"]
+    assert await _sujeto_en_bd(db, m.id) == (PREGUNTA_ALLEN, SUJETO_ALLEN)
+    assert (await client.get(f"/api/markets/{m.id}")).json()["sujeto"] == SUJETO_ALLEN
+
+    # el homónimo → 422 y no cambia nada
+    r = await client.patch(url, json={"sujeto": {**SUJETO_ALLEN, "jugador": "Josh Hines-Allen"}}, headers=auth_headers(admin))
+    assert r.status_code == 422 and r.json()["detail"]["code"] == "SUJETO_INVALIDO"
+    assert "idéntico" in r.json()["detail"]["message"]
+    # cambiar la pregunta a otro jugador re-valida el sujeto existente
+    r = await client.patch(url, json={"question": PREGUNTA_ALLEN.replace("Josh Allen", "Kyle Allen")}, headers=auth_headers(admin))
+    assert r.status_code == 422 and r.json()["detail"]["code"] == "SUJETO_INVALIDO"
+    assert await _sujeto_en_bd(db, m.id) == (PREGUNTA_ALLEN, SUJETO_ALLEN)
+
+    # {} lo borra
+    r = await client.patch(url, json={"sujeto": {}}, headers=auth_headers(admin))
+    assert r.status_code == 200 and r.json()["cambios"] == ["sujeto"]
+    assert (await _sujeto_en_bd(db, m.id))[1] is None
+
+    # sujeto en un mercado que no es de jugador → 422
+    otro = await make_binary_market("tech-sin-jugador")
+    r = await client.patch(f"/api/admin/markets/{otro.id}", json={"sujeto": SUJETO_ALLEN}, headers=auth_headers(admin))
+    assert r.status_code == 422 and r.json()["detail"]["code"] == "SUJETO_INVALIDO"
+
+
+async def test_post_prop_de_jugador_solo_por_yaml(client, db, make_user):
+    from datetime import datetime, timedelta, timezone
+    admin = await _admin(make_user, db)
+    base = {"description": "d", "category": "Deportes", "subcategory": "NFL", "kind": "accesorio",
+            "resolution_criteria": "Prueba", "ends_at": (datetime.now(timezone.utc) + timedelta(days=5)).isoformat()}
+    r = await client.post("/api/markets", json={**base, "id": "nfl-allen-post", "question": PREGUNTA_ALLEN},
+                          headers=auth_headers(admin))
+    assert r.status_code == 422 and r.json()["detail"]["code"] == "ACCESORIO_SOLO_YAML"
+    assert (await db.execute(select(func.count()).select_from(Market))).scalar_one() == 0
+    # accesorio de equipo: no parsea como jugador y sigue pasando
+    r = await client.post("/api/markets", json={**base, "id": "nfl-bills-30pts",
+                                                "question": "¿Los Bills anotarán 30 o más puntos contra los Texans en la Semana 1?"},
+                          headers=auth_headers(admin))
+    assert r.status_code == 201, r.text
+    assert r.json()["kind"] == "accesorio" and r.json()["sujeto"] is None
+    # accesorio de evento con verbo en singular: "Se" no es un jugador
+    r = await client.post("/api/markets", json={**base, "id": "ligamx-gol-antes-10", "subcategory": "Liga MX",
+                                                "question": "¿Se anotará un gol antes del minuto 10 en América vs Chivas?"},
+                          headers=auth_headers(admin))
+    assert r.status_code == 201, r.text
+    assert r.json()["sujeto"] is None

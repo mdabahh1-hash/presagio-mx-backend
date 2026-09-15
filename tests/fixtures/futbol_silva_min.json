@@ -1,0 +1,293 @@
+{
+ "_nota": "Armado a mano con las formas de ESPN summary (rosters[].roster[], keyEvents[].participants: [0] goleador, [1] asistente) y de match.uefa.com v5 (matches, lineups). Ids de equipo mezclados int/str a propósito; ids de jugador de relleno.",
+ "scoreboard": {
+  "events": [
+   {
+    "id": "401900001",
+    "date": "2026-09-16T19:00Z",
+    "status": {
+     "type": {
+      "name": "STATUS_FINAL",
+      "state": "post",
+      "completed": true
+     }
+    },
+    "competitions": [
+     {
+      "competitors": [
+       {
+        "homeAway": "home",
+        "score": "1",
+        "team": {
+         "id": "382",
+         "abbreviation": "MNC",
+         "displayName": "Manchester City",
+         "shortDisplayName": "Man City",
+         "name": "Man City"
+        }
+       },
+       {
+        "homeAway": "away",
+        "score": "1",
+        "team": {
+         "id": "437",
+         "abbreviation": "POR",
+         "displayName": "FC Porto",
+         "shortDisplayName": "Porto",
+         "name": "Porto"
+        }
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "summary": {
+  "rosters": [
+   {
+    "homeAway": "home",
+    "team": {
+     "id": 382,
+     "displayName": "Manchester City",
+     "abbreviation": "MNC"
+    },
+    "roster": [
+     {
+      "starter": true,
+      "subbedIn": false,
+      "athlete": {
+       "id": "9100",
+       "displayName": "Bernardo Silva"
+      }
+     },
+     {
+      "starter": true,
+      "subbedIn": false,
+      "athlete": {
+       "id": "9101",
+       "displayName": "Erling Haaland"
+      }
+     },
+     {
+      "starter": false,
+      "subbedIn": true,
+      "athlete": {
+       "id": "9102",
+       "displayName": "Phil Foden"
+      }
+     },
+     {
+      "starter": false,
+      "subbedIn": false,
+      "athlete": {
+       "id": "9103",
+       "displayName": "Jack Grealish"
+      }
+     }
+    ]
+   },
+   {
+    "homeAway": "away",
+    "team": {
+     "id": "437",
+     "displayName": "FC Porto",
+     "abbreviation": "POR"
+    },
+    "roster": [
+     {
+      "starter": true,
+      "subbedIn": false,
+      "athlete": {
+       "id": "9200",
+       "displayName": "Silva"
+      }
+     },
+     {
+      "starter": true,
+      "subbedIn": false,
+      "athlete": {
+       "id": "9201",
+       "displayName": "Galeno"
+      }
+     }
+    ]
+   }
+  ],
+  "keyEvents": [
+   {
+    "type": {
+     "text": "Goal"
+    },
+    "scoringPlay": true,
+    "clock": {
+     "displayValue": "12'"
+    },
+    "team": {
+     "id": "437",
+     "displayName": "FC Porto"
+    },
+    "text": "Goal! Silva (Galeno)",
+    "participants": [
+     {
+      "athlete": {
+       "id": "9200",
+       "displayName": "Silva"
+      }
+     },
+     {
+      "athlete": {
+       "id": "9201",
+       "displayName": "Galeno"
+      }
+     }
+    ]
+   },
+   {
+    "type": {
+     "text": "Goal"
+    },
+    "scoringPlay": true,
+    "clock": {
+     "displayValue": "55'"
+    },
+    "team": {
+     "id": 382,
+     "displayName": "Manchester City"
+    },
+    "text": "Goal! Haaland (Bernardo Silva)",
+    "participants": [
+     {
+      "athlete": {
+       "id": "9101",
+       "displayName": "Erling Haaland"
+      }
+     },
+     {
+      "athlete": {
+       "id": "9100",
+       "displayName": "Bernardo Silva"
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "uefa_partidos": [
+  {
+   "id": "2049600",
+   "kickOffTime": {
+    "dateTime": "2026-09-16T19:00:00Z"
+   },
+   "status": "FINISHED",
+   "homeTeam": {
+    "id": 52919,
+    "internationalName": "Man City",
+    "translations": {
+     "displayOfficialName": {
+      "EN": "Manchester City"
+     }
+    }
+   },
+   "awayTeam": {
+    "id": "50064",
+    "internationalName": "Porto",
+    "translations": {
+     "displayOfficialName": {
+      "EN": "FC Porto"
+     }
+    }
+   },
+   "score": {
+    "total": {
+     "home": 1,
+     "away": 1
+    }
+   },
+   "playerEvents": {
+    "scorers": [
+     {
+      "goalType": "SCORED",
+      "teamId": "50064",
+      "time": {
+       "minute": 12
+      },
+      "player": {
+       "id": 250001,
+       "internationalName": "Silva",
+       "clubId": "52919"
+      }
+     },
+     {
+      "goalType": "SCORED",
+      "teamId": 52919,
+      "time": {
+       "minute": 55
+      },
+      "player": {
+       "id": "250010",
+       "internationalName": "Erling Haaland"
+      }
+     }
+    ]
+   }
+  }
+ ],
+ "uefa_lineups": {
+  "homeTeam": {
+   "team": {
+    "id": "52919",
+    "internationalName": "Man City"
+   },
+   "field": [
+    {
+     "player": {
+      "id": 250000,
+      "internationalName": "Bernardo Silva"
+     }
+    },
+    {
+     "player": {
+      "id": "250010",
+      "internationalName": "Erling Haaland"
+     }
+    }
+   ],
+   "bench": [
+    {
+     "player": {
+      "id": 250011,
+      "internationalName": "Phil Foden"
+     }
+    },
+    {
+     "player": {
+      "id": 250012,
+      "internationalName": "Jack Grealish"
+     }
+    }
+   ]
+  },
+  "awayTeam": {
+   "team": {
+    "id": 50064,
+    "internationalName": "Porto"
+   },
+   "field": [
+    {
+     "player": {
+      "id": "250001",
+      "internationalName": "Silva"
+     }
+    },
+    {
+     "player": {
+      "id": 250002,
+      "internationalName": "Galeno"
+     }
+    }
+   ],
+   "bench": []
+  }
+ }
+}

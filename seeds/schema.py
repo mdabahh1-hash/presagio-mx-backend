@@ -1,7 +1,9 @@
 """Carga y validación de mercados-pendientes.yaml → lista de MarketSpec.
 
-No importa nada de app.* a propósito: `sembrar-mercados.py validar` debe
-funcionar sin BD ni SECRET_KEY. Las categorías van como NOMBRE del enum
+De app.* solo importa módulos puros de app/services/resolucion (sujeto.py, y
+recetas.py de forma diferida): `sembrar-mercados.py validar` debe funcionar sin
+BD ni SECRET_KEY y sin red (los ids del sujeto se buscan aparte con
+`sembrar-mercados.py identificar`). Las categorías van como NOMBRE del enum
 (POLITICA_MX, no "Política"); un test las ancla a app.models.market.MarketCategory.
 """
 from __future__ import annotations
@@ -13,6 +15,7 @@ from pathlib import Path
 
 import yaml
 
+from app.services.resolucion.sujeto import normalizar_sujeto, requiere_sujeto, validar_sujeto
 from market_content._common import binario_rules, multi_rules
 from seeds.expand import expandir_partido
 from seeds.plantillas import B_DEFAULT, SUBCATEGORIAS_CONOCIDAS
@@ -60,6 +63,7 @@ class MarketSpec:
     outcomes: list[OutcomeSpec] = field(default_factory=list)
     origen: str = ""  # "partido" si vino del atajo (solo para el reporte)
     auto_resolucion: dict | None = None  # receta mecánica (app/services/resolucion/recetas.py)
+    sujeto: dict | None = None  # identidad del jugador de un accesorio (app/services/resolucion/sujeto.py)
 
 
 class SchemaError(Exception):
@@ -168,6 +172,10 @@ def _normalizar(doc: dict, ctx: str, errores: list[str]) -> MarketSpec | None:
             errores.append(f"{ctx}: initial_yes_price no es numérico")
             prior = None
 
+    sujeto = doc.get("sujeto")
+    if isinstance(sujeto, dict):
+        sujeto = normalizar_sujeto(sujeto)  # ids de YAML sin comillas (int) → str
+
     if len(errores) > antes or ends_at is None:
         return None
     return MarketSpec(
@@ -179,7 +187,7 @@ def _normalizar(doc: dict, ctx: str, errores: list[str]) -> MarketSpec | None:
         resolution_source_url=doc.get("resolution_source_url"), b=b,
         trending=bool(doc.get("trending", False)), initial_yes_price=prior,
         outcomes=outcomes, origen=str(doc.get("_origen", "")),
-        auto_resolucion=doc.get("auto_resolucion"),
+        auto_resolucion=doc.get("auto_resolucion"), sujeto=sujeto,
     )
 
 
@@ -224,6 +232,22 @@ def _validar(specs: list[MarketSpec], avisos: list[str]) -> list[str]:
             e.append(f"{c}: DEPORTES requiere subcategory")
         if s.kind is not None and (s.category != "DEPORTES" or s.kind not in KINDS):
             e.append(f"{c}: kind solo puede ser 'partido'|'accesorio' y solo en DEPORTES")
+        # Accesorio de jugador (touchdown / pases / fantasy / titular / gol en una
+        # liga con fuente automática): sin sujeto con ids el job resolvería por
+        # nombre y podría tomar a un homónimo (caso Josh Allen, Semana 1 de 2026).
+        spec = requiere_sujeto(s.category, s.tipo, s.subcategory, s.question)
+        if spec:
+            if s.kind != "accesorio":
+                e.append(f"{c}: accesorio de jugador ({spec['tipo']}) requiere kind: accesorio")
+            if not s.sujeto:
+                e.append(f"{c}: accesorio de jugador sin 'sujeto' {{jugador, equipo, rival, posicion, alcance, ids}}: "
+                         f"escribe jugador/equipo/rival/alcance y llena los ids con "
+                         f"`sembrar-mercados.py identificar --only {c} --apply`")
+            else:
+                e += [f"{c}: sujeto: {x}" for x in validar_sujeto(spec, s.sujeto, s.subcategory)]
+        elif s.sujeto is not None:
+            e.append(f"{c}: 'sujeto' solo va en binarios de accesorio de jugador (touchdown / pases de TD / "
+                     "fantasy / titular / gol) de una liga con fuente automática")
         if s.subcategory and s.subcategory not in SUBCATEGORIAS_CONOCIDAS:
             avisos.append(f"{c}: subcategoría nueva '{s.subcategory}' → agregarla al frontend "
                           "src/lib/categories.ts (SUBCATEGORIES y, si es deporte, SPORT_GROUPS)")

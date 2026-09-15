@@ -327,6 +327,62 @@ async def test_plan_con_cancelar_reembolsa(client, db, correos, make_user, make_
     assert m.status == MarketStatus.CANCELLED
 
 
+async def test_plan_de_prop_exige_y_conserva_sujeto_confirmado(client, db, correos, make_user, make_binary_market):
+    """Defensa en profundidad (caso Josh Allen): un accesorio de jugador solo se
+    propone/aplica con sujeto en el mercado y sujeto_confirmado con sus ids; la
+    identidad se guarda en el plan, sale en la página de aprobación, en el
+    resultado y en el correo de aplicado."""
+    from app.models.market import MarketCategory
+
+    admin = await _admin(make_user, db)
+    b1 = await make_binary_market("nfl-allen-2tdpass-w1-2026")
+    b1.question = "¿Josh Allen lanzará 2 o más pases de touchdown contra los Texans en la Semana 1?"
+    b1.category = MarketCategory.DEPORTES
+    b1.subcategory = "NFL"
+    b1.kind = "accesorio"
+    await db.commit()
+    await _vencer(db, b1)
+    confirmado = {"jugador": "Josh Allen", "equipo": "Buffalo Bills", "partido": "BUF@HOU",
+                  "espn": {"id": "3918298", "nombre": "Josh Allen", "equipo": "Buffalo Bills"},
+                  "cbs": {"id": "2181054", "nombre": "Josh Allen", "equipo": "Buffalo Bills"}}
+    entrada = {"id": b1.id, "veredicto": "YES", "resultado": "BUF 36-31 HOU: 2 pases de TD", "confianza": "alta",
+               "fuente_1": "https://www.espn.com/nfl/game/_/gameId/401872660",
+               "fuente_2": "https://www.cbssports.com/nfl/gametracker/boxscore/NFL_20260913_BUF@HOU/",
+               "sujeto_confirmado": confirmado}
+
+    # sin sujeto en el mercado: no se guarda
+    r = await client.post("/api/admin/resolucion/planes/proponer", json={"resoluciones": [entrada]}, headers=auth_headers(admin))
+    assert r.status_code == 422 and any("sin sujeto" in e for e in r.json()["detail"]["errores"][b1.id])
+
+    b1.sujeto = {"jugador": "Josh Allen", "equipo": "Bills", "rival": "Texans", "posicion": "QB", "alcance": "partido",
+                 "ids": {"espn": "3918298", "cbs": "2181054"}}
+    await db.commit()
+    # con el id del homónimo (Josh Hines-Allen, JAX): tampoco
+    hines = {**entrada, "sujeto_confirmado": {**confirmado, "espn": {"id": "3915239", "nombre": "Josh Hines-Allen",
+                                                                       "equipo": "Buffalo Bills"}}}
+    r = await client.post("/api/admin/resolucion/planes/proponer", json={"resoluciones": [hines]}, headers=auth_headers(admin))
+    assert r.status_code == 422 and any("espn.id" in e for e in r.json()["detail"]["errores"][b1.id])
+    assert (await db.execute(select(ResolutionPlan))).scalars().all() == []
+
+    r = await client.post("/api/admin/resolucion/planes/proponer", json={"resoluciones": [entrada]}, headers=auth_headers(admin))
+    assert r.status_code == 201, r.text
+    row = (await db.execute(select(ResolutionPlan).where(ResolutionPlan.id == r.json()["id"]))).scalar_one()
+    assert row.plan["resoluciones"][0]["sujeto_confirmado"] == confirmado
+    import asyncio
+    await asyncio.sleep(0)
+    assert any("Identidad: Josh Allen · Buffalo Bills · BUF@HOU · ESPN 3918298 · CBS 2181054" in h for _, h in correos)
+
+    t = nocturno.make_plan_token(row.id, row.nonce)
+    r = await client.get(f"/api/admin/resolucion/planes/{row.id}/aprobar?t={t}")
+    assert r.status_code == 200 and "ESPN 3918298 · CBS 2181054" in r.text
+    r = await client.post(f"/api/admin/resolucion/planes/{row.id}/aprobar?t={t}")
+    assert r.status_code == 200 and "aplicado" in r.text
+    fresh = (await db.execute(select(ResolutionPlan).where(ResolutionPlan.id == row.id).execution_options(populate_existing=True))).scalar_one()
+    assert fresh.status == "applied" and fresh.resultado["resueltos"][0]["sujeto_confirmado"] == confirmado
+    await asyncio.sleep(0)
+    assert any("aplicado" in h and "ESPN 3918298" in h for s, h in correos if "Plan del agente" not in s)
+
+
 # ── dos corridas al día ──────────────────────────────────────────────────────
 
 def test_horas_y_proxima_corrida(monkeypatch):

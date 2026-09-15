@@ -61,6 +61,7 @@ class MarketDetail(MarketBase):
     rules: str | None = None
     context: str | None = None
     auto_resolucion: dict | None = None  # receta mecánica (recetas.py); la usa agent-resolver.py
+    sujeto: dict | None = None  # identidad del jugador de un accesorio (resolucion/sujeto.py)
 
 
 class MarketCreate(BaseModel):
@@ -95,3 +96,4 @@ class MarketPatch(BaseModel):
     context: str | None = None
     outcome_labels: dict[str, str] | None = None  # outcome_key → etiqueta nueva
     auto_resolucion: dict | None = None  # receta mecánica; {} la borra
+    sujeto: dict | None = None  # identidad del jugador de un accesorio; {} la borra

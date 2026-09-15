@@ -104,6 +104,16 @@ async def create_market(
     db: AsyncSession = Depends(get_db),
 ):
     require_admin(current_user)
+    # Accesorios de jugador (touchdown / pases / fantasy / titular / gol) solo por
+    # YAML: necesitan `sujeto` con ids por fuente (sembrar-mercados.py identificar).
+    # Los accesorios de equipo o de evento no parsean como prop y siguen pasando.
+    from app.services.resolucion.sujeto import requiere_sujeto
+
+    if requiere_sujeto(payload.category, "binary", payload.subcategory, payload.question):
+        raise HTTPException(status_code=422, detail={
+            "code": "ACCESORIO_SOLO_YAML",
+            "message": "Los accesorios de jugador se siembran por mercados-pendientes.yaml con sujeto (sembrar-mercados.py identificar)",
+        })
     # Check slug unique
     exists = await db.execute(select(Market).where(Market.id == payload.id))
     if exists.scalar_one_or_none():

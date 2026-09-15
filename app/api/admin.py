@@ -84,6 +84,22 @@ async def patch_market(
                 raise HTTPException(status_code=422, detail={"code": "RECETA_INVALIDA", "message": "; ".join(errs)})
             market.auto_resolucion = payload.auto_resolucion
         cambios.append("auto_resolucion")
+    if payload.sujeto is not None or (payload.question is not None and market.sujeto):
+        from app.services.resolucion.sujeto import normalizar_sujeto, requiere_sujeto, validar_sujeto
+
+        # market.question ya trae la pregunta nueva (si llegó): el sujeto se
+        # valida contra ella, y un sujeto existente se re-valida al cambiarla.
+        if payload.sujeto == {}:
+            market.sujeto = None
+        else:
+            sujeto = payload.sujeto if payload.sujeto is not None else market.sujeto
+            spec = requiere_sujeto(market.category, market.market_type, market.subcategory, market.question)
+            errs = validar_sujeto(spec, sujeto, market.subcategory)
+            if errs:
+                raise HTTPException(status_code=422, detail={"code": "SUJETO_INVALIDO", "message": "; ".join(errs)})
+            market.sujeto = normalizar_sujeto(sujeto)
+        if payload.sujeto is not None:
+            cambios.append("sujeto")
     if payload.outcome_labels:
         res = await db.execute(select(Outcome).where(Outcome.market_id == market_id))
         por_key = {o.outcome_key: o for o in res.scalars().all()}

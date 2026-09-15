@@ -21,16 +21,35 @@ Comandos:
       app/services/resolucion/recetas.py) en mercados ya sembrados, vía PATCH.
       Sin --apply solo valida.
 
+  ./venv/bin/python agent-resolver.py sujetos-generar --out resoluciones/sujetos-AAAA-MM-DD.yaml [--only ID ...]
+      Backfill de identidad (solo lectura: GET al API y a ESPN/CBS/UEFA). Para
+      los accesorios de jugador activos (open + pending_resolution) arma
+      `sujeto` desde market_content (nfl.py:PROPS, futbol_accesorios.py) o el
+      sujeto que ya tenga el mercado, y busca los ids por fuente con
+      identidad.buscar_ids (nombre idéntico y único en el plantel del equipo,
+      nunca fuzzy). Escribe un YAML id → sujeto con los que pasaron; los que
+      fallan van como comentario y el comando sale con código 1. Revisar a mano.
+
+  ./venv/bin/python agent-resolver.py sujetos resoluciones/sujetos-AAAA-MM-DD.yaml [--apply] [--only ID ...]
+      Escribe `sujeto` (identidad del jugador: equipo, rival, posición,
+      alcance, ids por fuente) en mercados ya sembrados, vía PATCH. Sin --apply
+      solo valida (validar_sujeto contra la pregunta del mercado) e imprime.
+      --apply escribe en PRODUCCIÓN: solo con OK de Mark.
+
   ./venv/bin/python agent-resolver.py plan-auto --out resoluciones/AAAA-MM-DD.json [--liga "Serie A" ...]
       Arma el plan SIN LLM: cruza los 1X2 pendientes con ESPN y TheSportsDB
       (paquete resolucion/). Solo entran con confianza alta los partidos cuyo
-      marcador coincide en ambas fuentes; el resto (aplazados, una sola fuente,
-      accesorios de titular/gol con sugerencia de ESPN) queda en escalados.
+      marcador coincide en ambas fuentes; el resto (aplazados, una sola fuente)
+      queda en escalados. Accesorios de jugador (props NFL, titular/gol): el
+      partido sale de sujeto.equipo + rival y el jugador se ubica por id; sin
+      sujeto o con cualquier duda de identidad, escalado sin sugerencia.
 
   ./venv/bin/python agent-resolver.py check-plan resoluciones/AAAA-MM-DD.json
       Valida un plan contra el API (solo lectura): mercado sigue pendiente,
       veredicto válido para el tipo, dos fuentes de hosts distintos, confianza
-      alta, evento ya cerrado. Sale con código 1 si hay errores.
+      alta, evento ya cerrado y, en accesorios de jugador, sujeto en el mercado
+      y `sujeto_confirmado` con los mismos ids por fuente (imprime la
+      identidad). Sale con código 1 si hay errores.
 
   ./venv/bin/python agent-resolver.py proponer resoluciones/AAAA-MM-DD.json [--only ID ...]
       Flujo normal desde 2026-09-12: valida el plan (check-plan) y lo sube al
@@ -54,7 +73,8 @@ Comandos:
   ./venv/bin/python agent-resolver.py cancel <market_id>
       Cancela UN mercado (reembolsa shares*avg_cost, anula picks de ligas).
       En un plan, el veredicto "CANCELAR" hace lo mismo (aplazado fuera de
-      ventana, jugador inactivo, empate en NFL).
+      ventana, empate en NFL). Que un jugador no participó nunca se da por
+      hecho: el job lo escala y Mark lo confirma a mano.
 
   ./venv/bin/python agent-resolver.py patch <market_id> --json '{...}'
       Edita un mercado no resuelto: {"status":"open","ends_at":"…Z"} reabre un
@@ -72,6 +92,13 @@ Formato del plan (JSON):
                      "resultado": "Bayern 3-0 Schalke", "fuente_1": "https://...",
                      "fuente_2": "https://...", "confianza": "alta"}],
    "escalados": [{"id": "...", "razon": "..."}]}
+  Accesorios de jugador: cada resolución lleva además
+   "sujeto_confirmado": {"jugador": "Josh Allen", "equipo": "Buffalo Bills", "partido": "BUF@HOU",
+                         "espn": {"id": "3918298", "nombre": "Josh Allen", "equipo": "Buffalo Bills"},
+                         "cbs": {"id": "2181054", "nombre": "Josh Allen", "equipo": "Buffalo Bills"}}
+   con un bloque por host de fuente (espn/cbs/uefa: id = sujeto.ids; thesportsdb:
+   "tsdb" con nombre y equipo; otro host: "manual": {"equipo", "nota"}). CANCELAR
+   solo exige el equipo.
 """
 import argparse
 import json
@@ -89,6 +116,7 @@ ENV_FILE = os.path.join(REPO, ".env.agent")
 LOG_FILE = os.path.join(REPO, "resoluciones", "log.jsonl")
 
 sys.path.insert(0, REPO)
+from app.services.resolucion.sujeto import texto_identidad  # noqa: E402  (puro, sin BD)
 from app.services.resolucion.validar import validar_entrada  # noqa: E402  (puro, sin BD)
 
 CAMPOS_COMPACTOS = (
@@ -163,16 +191,21 @@ def _auth(path: str, data: dict | None = None, method: str | None = None) -> dic
 
 # ── list ─────────────────────────────────────────────────────────────────────
 
-def _fetch_pending() -> list[dict]:
+def _fetch_markets(status: str) -> list[dict]:
+    """Listado público paginado; status 'active' = open + pending_resolution."""
     markets, offset = [], 0
     while True:
-        page = _req(f"/markets?status=pending_resolution&sort=ending&limit=100&offset={offset}")
+        page = _req(f"/markets?status={status}&sort=ending&limit=100&offset={offset}")
         if isinstance(page, dict):
             sys.exit(f"ERROR listando mercados: {page}")
         markets.extend(page)
         if len(page) < 100:
             return markets
         offset += 100
+
+
+def _fetch_pending() -> list[dict]:
+    return _fetch_markets("pending_resolution")
 
 
 def _detail(m: dict) -> dict:
@@ -191,6 +224,7 @@ def _proyectar(detail: dict, compact: bool) -> dict:
     out["resolution_source_url"] = detail.get("resolution_source_url")
     out["rules"] = detail.get("rules")
     out["auto_resolucion"] = detail.get("auto_resolucion")
+    out["sujeto"] = detail.get("sujeto")  # identidad del jugador (accesorios); la usa plan-auto
     out["outcomes"] = [
         {"outcome_key": o.get("outcome_key"), "label": o.get("label"), "price": o.get("price")}
         for o in outcomes
@@ -260,12 +294,18 @@ def check_plan(path: str, only: list[str] | None = None) -> tuple[list[dict], di
         con_posiciones += 1 if ops > 0 else 0
         marca = "✗" if errs else " "
         print(f"{marca}{e['id']:<41} {str(e.get('veredicto')):<10} {vol:>7.0f} {ops:>4}  {e.get('resultado', '')}")
+        ident = texto_identidad(e.get("sujeto_confirmado"))
+        if ident:
+            print(f"{'':<42} identidad: {ident}")
         if errs:
             errores[e["id"]] = errs
 
     print(f"\n{len(entradas)} resoluciones · {con_posiciones} con operaciones · {vol_total:.0f} PT de volumen")
     for esc in plan.get("escalados") or []:
         print(f"  ESCALADO {esc.get('id')}: {esc.get('razon')}")
+        ident = texto_identidad(esc.get("sujeto_confirmado"))
+        if ident:
+            print(f"    identidad: {ident}")
     if errores:
         print(f"\n{len(errores)} mercado(s) con errores:")
         for mid, errs in errores.items():
@@ -432,21 +472,27 @@ def cmd_patch(market_id: str, raw_json: str) -> None:
         sys.exit(f"FALLÓ {market_id}: {json.dumps(r, ensure_ascii=False)}")
 
 
+def _cargar_mapa(path: str, que: str) -> dict:
+    """YAML/JSON con un mapa id → valor (recetas, sujetos)."""
+    with open(path) as f:
+        raw = f.read()
+    if path.endswith(".json"):
+        mapa = json.loads(raw)
+    else:
+        import yaml  # PyYAML ya es dependencia del sembrador
+
+        mapa = yaml.safe_load(raw) or {}
+    if not isinstance(mapa, dict):
+        sys.exit(f"ERROR: el archivo debe ser un mapa id → {que}")
+    return mapa
+
+
 def cmd_recetas(path: str, apply: bool, only: list[str] | None) -> None:
     """Aplica recetas (id → auto_resolucion) de un YAML/JSON a mercados existentes
     vía PATCH. Sin --apply solo valida e imprime."""
     from app.services.resolucion.recetas import validar_receta
 
-    with open(path) as f:
-        raw = f.read()
-    if path.endswith(".json"):
-        recetas = json.loads(raw)
-    else:
-        import yaml  # PyYAML ya es dependencia del sembrador
-
-        recetas = yaml.safe_load(raw) or {}
-    if not isinstance(recetas, dict):
-        sys.exit("ERROR: el archivo debe ser un mapa id → receta")
+    recetas = _cargar_mapa(path, "receta")
     ids = [i for i in recetas if not only or i in set(only)]
     detalles = _detalles(ids)
     errores = 0
@@ -474,6 +520,177 @@ def cmd_recetas(path: str, apply: bool, only: list[str] | None) -> None:
         else:
             print(f"FALLÓ {mid}: {json.dumps(resp, ensure_ascii=False)}")
     print(f"\n{ok}/{len(ids)} recetas aplicadas.")
+
+
+# ── sujetos (identidad del jugador en accesorios ya sembrados) ───────────────
+
+def _bases_market_content() -> dict[str, tuple[dict, str | None]]:
+    """id → (sujeto base {jugador, equipo, rival, alcance}, kickoff ISO) desde el
+    contenido redactado de cada accesorio: nfl.py:PROPS y futbol_accesorios.py.
+    Sin posicion ni ids: los llena identidad.buscar_ids."""
+    import re
+
+    from app.services.resolucion.cruce import UMBRAL, similitud
+    from market_content import futbol_accesorios as fa
+    from market_content import nfl
+
+    bases: dict[str, tuple[dict, str | None]] = {}
+    for mid, _tipo, jugador, equipo, rival, kickoff, _ctx in nfl.PROPS:
+        bases[mid] = ({"jugador": jugador, "equipo": equipo, "rival": rival, "alcance": "partido"}, kickoff)
+    for mid, jugador, club, rival, fecha, _ctx in fa.UCL_TITULARES + fa.UCL_GOLES:
+        bases[mid] = ({"jugador": jugador, "equipo": club, "rival": rival, "alcance": "partido"}, fecha)
+    for mid, jugador, club, partido, _fuente, cierre, _ventana, _url, _ctx in fa.LIGA_TITULARES:
+        # "Sevilla vs. Atlético de Madrid (Jornada 3 …)": el rival es el lado que no es el club
+        lados = [x.strip() for x in re.sub(r"\s*\(.*\)\s*$", "", partido).split(" vs. ")]
+        rivales = [x for x in lados if similitud(x, club) < UMBRAL]
+        base = {"jugador": jugador, "equipo": club, "alcance": "partido"}
+        if len(lados) == 2 and len(rivales) == 1:
+            base["rival"] = rivales[0]
+        bases[mid] = (base, cierre)
+    return bases
+
+
+def _fecha_iso(v) -> datetime | None:
+    try:
+        return datetime.fromisoformat(str(v).replace("Z", "+00:00")) if v else None
+    except ValueError:
+        return None
+
+
+def cmd_sujetos_generar(out_path: str, only: list[str] | None) -> None:
+    """Arma el YAML id → sujeto de los accesorios de jugador activos (solo
+    lectura: GET al API y a ESPN/CBS/UEFA). Los que fallan van comentados y el
+    comando sale con código 1; nada se escribe en el API."""
+    import yaml
+
+    from app.services.resolucion import identidad
+    from app.services.resolucion.fuentes import Http
+    from app.services.resolucion.sujeto import spec_de_mercado, validar_sujeto
+
+    # status=active (open + pending_resolution): _fetch_pending no vería los
+    # accesorios que todavía no cierran.
+    activos = [m for m in _fetch_markets("active") if spec_de_mercado(m)]
+    if only:
+        faltan = set(only) - {m["id"] for m in activos}
+        if faltan:
+            sys.exit(f"ERROR: --only incluye ids que no son accesorios de jugador activos: {sorted(faltan)}")
+        activos = [m for m in activos if m["id"] in set(only)]
+    if not activos:
+        print("Ningún accesorio de jugador activo: no se escribe nada.")
+        return
+    detalles = _detalles([m["id"] for m in activos])
+    bases = _bases_market_content()
+    http = Http()
+    ok: dict[str, dict] = {}
+    fallidos: dict[str, tuple[dict, list[str]]] = {}
+    for m in activos:
+        mid = m["id"]
+        d = detalles.get(mid) or {}
+        if d.get("http_error"):
+            fallidos[mid] = ({}, [f"detalle no disponible en el API: {d}"])
+            continue
+        liga, spec = d.get("subcategory"), spec_de_mercado(d)
+        contenido, kickoff = bases.get(mid, (None, None))
+        if isinstance(d.get("sujeto"), dict) and d["sujeto"]:
+            base, origen = dict(d["sujeto"]), "sujeto actual del mercado (se re-verifica)"
+        elif contenido:
+            base, origen = dict(contenido), "market_content"
+        else:
+            fallidos[mid] = ({}, ["sin base en market_content ni sujeto en el mercado: escribir jugador, equipo, rival "
+                                  "y alcance a mano y correr `sujetos` con ese YAML"])
+            continue
+        fecha = _fecha_iso(kickoff) or _fecha_iso(d.get("ends_at"))
+        sujeto, errores, avisos = identidad.buscar_ids(http, liga, base, fecha)
+        if not errores:
+            errores = validar_sujeto(spec, sujeto, liga)
+        for a in avisos:
+            print(f"  aviso {mid}: {a}")
+        if errores:
+            fallidos[mid] = (sujeto, errores)
+            print(f"✗ {mid} ({origen}): {'; '.join(errores)}")
+            continue
+        ok[mid] = sujeto
+        ids_txt = " · ".join(f"{k.upper()} {v}" for k, v in sujeto["ids"].items())
+        print(f"✓ {mid:<40} {sujeto['jugador']} ({sujeto['equipo']} vs {sujeto.get('rival')}, {sujeto['posicion']}) {ids_txt}")
+
+    lineas = [
+        f"# Sujetos (identidad del jugador) de accesorios activos: agent-resolver.py sujetos-generar, "
+        f"{datetime.now(timezone.utc).isoformat(timespec='seconds')}.",
+        "# Ids buscados por nombre idéntico y único en el plantel del equipo (identidad.buscar_ids, nunca fuzzy).",
+        "# Revisar a mano → agent-resolver.py sujetos <este archivo> (dry-run) → --apply solo con OK de Mark.",
+        "",
+    ]
+    for mid, s in ok.items():
+        lineas.append(yaml.safe_dump({mid: s}, allow_unicode=True, sort_keys=False, default_flow_style=False).rstrip())
+        lineas.append("")
+    if fallidos:
+        lineas.append("# ── con errores: NO se aplican; corregir la base y volver a generar, o escribirlos a mano ──")
+        for mid, (s, errores) in fallidos.items():
+            lineas.append(f"# {mid}:")
+            lineas += [f"#   error: {e}" for e in errores]
+            if s:
+                lineas += [f"#   {x}" for x in yaml.safe_dump(s, allow_unicode=True, sort_keys=False).rstrip().splitlines()]
+    os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
+    with open(out_path, "w") as f:
+        f.write("\n".join(lineas).rstrip() + "\n")
+    print(f"\n{len(ok)} sujetos listos · {len(fallidos)} con errores → {out_path} ({http.consultas} consultas)")
+    if fallidos:
+        sys.exit(1)
+
+
+def cmd_sujetos(path: str, apply: bool, only: list[str] | None) -> None:
+    """Escribe `sujeto` (id → sujeto de un YAML/JSON) en mercados existentes vía
+    PATCH. Sin --apply solo valida (validar_sujeto contra la pregunta actual del
+    mercado) e imprime. `{}` borra el sujeto. El PATCH vuelve a validar."""
+    from app.services.resolucion.sujeto import normalizar_sujeto, spec_de_mercado, validar_sujeto
+
+    sujetos = _cargar_mapa(path, "sujeto")
+    if only:
+        faltan = set(only) - set(sujetos)
+        if faltan:
+            sys.exit(f"ERROR: --only incluye ids que no están en el archivo: {sorted(faltan)}")
+    ids = [i for i in sujetos if not only or i in set(only)]
+    detalles = _detalles(ids)
+    cuerpos: dict[str, dict] = {}
+    errores = 0
+    for mid in ids:
+        s = sujetos[mid]
+        d = detalles.get(mid) or {}
+        if not d or d.get("http_error"):
+            print(f"✗ {mid}: no existe en el API"); errores += 1; continue
+        if d.get("status") not in ("open", "pending_resolution"):
+            print(f"✗ {mid}: status '{d.get('status')}' (solo mercados sin resolver)"); errores += 1; continue
+        if s == {}:
+            cuerpos[mid] = {}
+            print(f"  {mid:<40} BORRAR sujeto" + ("" if d.get("sujeto") else " (ya no tiene)"))
+            continue
+        if not isinstance(s, dict):
+            print(f"✗ {mid}: el sujeto debe ser un mapa"); errores += 1; continue
+        s = normalizar_sujeto(s)
+        errs = validar_sujeto(spec_de_mercado(d), s, d.get("subcategory"))
+        if errs:
+            print(f"✗ {mid}: {'; '.join(errs)}"); errores += 1; continue
+        actual = d.get("sujeto")
+        estado = "sin sujeto" if not actual else ("igual al actual" if actual == s else "REEMPLAZA el actual")
+        ids_txt = " · ".join(f"{k.upper()} {v}" for k, v in s["ids"].items())
+        print(f"  {mid:<40} {s['jugador']} ({s['equipo']} vs {s.get('rival')}, {s['posicion']}, {s['alcance']}) {ids_txt} · {estado}")
+        cuerpos[mid] = s
+    if errores:
+        sys.exit(f"\n{errores} sujeto(s) con errores; no se aplicó nada.")
+    if not apply:
+        print(f"\n{len(ids)} sujetos válidos. Corre con --apply para escribirlos (PATCH /admin/markets/{{id}}; PRODUCCIÓN, solo con OK de Mark).")
+        return
+    ok = 0
+    for mid in ids:
+        resp = _auth(f"/admin/markets/{mid}", data={"sujeto": cuerpos[mid]}, method="PATCH")
+        if isinstance(resp, dict) and resp.get("ok"):
+            ok += 1
+            print(f"APLICADO {mid}")
+        else:
+            print(f"FALLÓ {mid}: {json.dumps(resp, ensure_ascii=False)}")
+    print(f"\n{ok}/{len(ids)} sujetos aplicados.")
+    if ok < len(ids):
+        sys.exit(1)
 
 
 def cmd_plan_auto(out_path: str, ligas: list[str] | None, desde: str | None = None) -> None:
@@ -551,6 +768,13 @@ def main() -> None:
     prc.add_argument("archivo")
     prc.add_argument("--apply", action="store_true")
     prc.add_argument("--only", nargs="+")
+    psg = sub.add_parser("sujetos-generar", help="armar el YAML id → sujeto de los accesorios de jugador activos (solo lectura)")
+    psg.add_argument("--out", required=True, help="p. ej. resoluciones/sujetos-AAAA-MM-DD.yaml")
+    psg.add_argument("--only", nargs="+")
+    psj = sub.add_parser("sujetos", help="escribir sujeto (id → sujeto) en mercados existentes vía PATCH")
+    psj.add_argument("archivo")
+    psj.add_argument("--apply", action="store_true", help="escribe en PRODUCCIÓN (solo con OK de Mark)")
+    psj.add_argument("--only", nargs="+")
     pp = sub.add_parser("plan-auto")
     pp.add_argument("--out", required=True)
     pp.add_argument("--liga", action="append", help="limitar a una subcategoría (repetible)")
@@ -592,6 +816,10 @@ def main() -> None:
         cmd_list(a.compact, a.out, a.sin_deportes, a.categoria)
     elif a.cmd == "recetas":
         cmd_recetas(a.archivo, a.apply, a.only)
+    elif a.cmd == "sujetos-generar":
+        cmd_sujetos_generar(a.out, a.only)
+    elif a.cmd == "sujetos":
+        cmd_sujetos(a.archivo, a.apply, a.only)
     elif a.cmd == "plan-auto":
         cmd_plan_auto(a.out, a.liga, a.desde)
     elif a.cmd == "check-plan":

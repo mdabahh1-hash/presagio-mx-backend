@@ -57,6 +57,11 @@ class Market(Base):
     # dato publicado leer, con qué fuentes y contra qué umbral. NULL = el
     # agente no lo resuelve solo (deportes usan sus propias fuentes).
     auto_resolucion: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Identidad del jugador de un accesorio (touchdown / pases / fantasy /
+    # titular / gol): {jugador, equipo, rival, posicion, alcance, ids: {espn,
+    # cbs, uefa?, tsdb?}}. El resolvedor elige el partido por equipo y ubica al
+    # jugador por id en cada fuente (app/services/resolucion/sujeto.py).
+    sujeto: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     # Imagen cuadrada del mercado: URL absoluta https:// o ruta relativa al
     # frontend (p. ej. "/img/markets/sub/liga-mx.svg"). Sin imagen el frontend
     # cae a la de la subcategoría/categoría.
