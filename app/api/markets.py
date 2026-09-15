@@ -6,10 +6,11 @@ from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.models.market import Market, MarketStatus, MarketCategory
 from app.models.price_history import PriceHistory
-from app.schemas.market import MarketList, MarketDetail, MarketCreate, MarketKind, PricePoint
+from app.schemas.market import MarketList, MarketDetail, MarketCreate, MarketKind, PricePoint, MoverOut
 from app.core.auth import get_current_user, require_admin
 from app.core import lmsr
 from app.models.user import User
+from app.services.movers import calcular_movers
 
 router = APIRouter(prefix="/markets", tags=["markets"])
 
@@ -71,6 +72,18 @@ async def list_markets(
     stmt = stmt.limit(limit).offset(offset).options(selectinload(Market.outcomes))
     result = await db.execute(stmt)
     return result.scalars().all()
+
+
+# Va antes de /{market_id} para que la ruta dinámica no lo capture.
+@router.get("/movers", response_model=list[MoverOut])
+async def list_movers(
+    hours: int = Query(24, ge=1, le=720),
+    limit: int = Query(50, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+):
+    """Página "Noticias": mercados que más se movieron en las últimas `hours`
+    horas, por |cambio| en puntos porcentuales (ver app/services/movers.py)."""
+    return await calcular_movers(db, hours, limit)
 
 
 @router.get("/{market_id}", response_model=MarketDetail)

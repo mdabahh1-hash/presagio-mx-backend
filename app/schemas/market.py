@@ -16,6 +16,31 @@ class PricePoint(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class MoverPoint(BaseModel):
+    recorded_at: datetime
+    price: float
+
+
+class MoverOut(BaseModel):
+    """Un mercado en la página "Noticias": cuánto se movió en la ventana
+    (`change` en puntos porcentuales; en multi, el outcome que más se movió)."""
+    id: str
+    question: str
+    category: MarketCategory
+    subcategory: str | None = None
+    image_url: str | None = None
+    market_type: str
+    status: MarketStatus
+    ends_at: datetime
+    outcome_key: str | None = None
+    outcome_label: str | None = None
+    price: float
+    price_before: float
+    change: float
+    volume_delta: float
+    points: list[MoverPoint]
+
+
 class OutcomeOut(BaseModel):
     outcome_key: str
     label: str
