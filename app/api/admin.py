@@ -45,7 +45,8 @@ async def patch_market(
 ):
     """Edita un mercado NO resuelto: reabrirlo (`status: open` + `ends_at`
     futuro, p. ej. un partido aplazado con nueva fecha), cambiar pregunta,
-    normas, contexto o etiquetas de outcomes. Nunca toca precios ni posiciones."""
+    descripción, criterios, fuente, normas, contexto o etiquetas de outcomes.
+    Nunca toca precios ni posiciones."""
     _require_admin(current_user)
     result = await db.execute(select(Market).where(Market.id == market_id).with_for_update())
     market = result.scalar_one_or_none()
@@ -68,7 +69,7 @@ async def patch_market(
             if hasattr(market, attr):
                 setattr(market, attr, None)
         cambios.append("status")
-    for campo in ("question", "rules", "context"):
+    for campo in ("question", "description", "resolution_criteria", "resolution_source_url", "rules", "context"):
         valor = getattr(payload, campo)
         if valor is not None:
             setattr(market, campo, valor)

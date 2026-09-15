@@ -88,10 +88,14 @@ class MarketResolve(BaseModel):
 
 class MarketPatch(BaseModel):
     """Edición admin de un mercado no resuelto: reabrir un aplazado con su nueva
-    fecha, corregir pregunta/normas/contexto o las etiquetas de los outcomes."""
+    fecha, corregir pregunta/descripción/criterios/fuente/normas/contexto o las
+    etiquetas de los outcomes."""
     status: Literal["open"] | None = None   # solo se puede volver a abrir
     ends_at: datetime | None = None
-    question: str | None = None
+    question: str | None = Field(default=None, min_length=1, max_length=500)
+    description: str | None = Field(default=None, min_length=1, max_length=4000)
+    resolution_criteria: str | None = Field(default=None, min_length=1, max_length=4000)
+    resolution_source_url: str | None = Field(default=None, max_length=500)
     rules: str | None = None
     context: str | None = None
     outcome_labels: dict[str, str] | None = None  # outcome_key → etiqueta nueva

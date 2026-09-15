@@ -172,6 +172,21 @@ async def test_endpoint_patch_reabre_aplazado(client, db, make_user, make_multi_
     labels = {o.outcome_key: o.label for o in (await db.execute(select(Outcome).where(Outcome.market_id == m.id))).scalars().all()}
     assert labels["local"] == "🏠 D.C. United" and labels["visitante"] == "✈️ FC Cincinnati" and labels["empate"] == "Opción empate"
 
+    # descripción, criterios y fuente (caso Canelo: fecha vieja en campos que no se mostraban)
+    body = {"description": "Combate del 31 de octubre de 2026 en Riad.",
+            "resolution_criteria": "Resuelve SÍ si gana por cualquier vía el 31 de octubre de 2026.",
+            "resolution_source_url": "https://boxrec.com"}
+    r = await client.patch(f"/api/admin/markets/{m.id}", json=body, headers=auth_headers(admin))
+    assert r.status_code == 200, r.text
+    assert set(r.json()["cambios"]) == {"description", "resolution_criteria", "resolution_source_url"}
+    detalle = (await client.get(f"/api/markets/{m.id}")).json()
+    assert detalle["description"] == body["description"]
+    assert detalle["resolution_criteria"] == body["resolution_criteria"]
+    assert detalle["resolution_source_url"] == "https://boxrec.com"
+    # descripción vacía → 422
+    r = await client.patch(f"/api/admin/markets/{m.id}", json={"description": ""}, headers=auth_headers(admin))
+    assert r.status_code == 422
+
     # resuelto → no editable
     await resolution.resolve(db, m.id, outcome_key="local")
     r = await client.patch(f"/api/admin/markets/{m.id}", json={"question": "x"}, headers=auth_headers(admin))
