@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import create_tables, migrate_enums, migrate_columns, AsyncSessionLocal
 from app.config import settings
-from app.api import auth, markets, trades, comments, users, websockets, admin, proposals, passkeys, leagues, resolucion
+from app.api import auth, markets, trades, comments, users, websockets, admin, proposals, passkeys, leagues, resolucion, contenido
 import app.models  # noqa: F401  (registers every table — incl. leagues — on Base.metadata before create_all)
 from app.services.seed import seed_markets
 from app.services.ledger_backfill import backfill_ledger
@@ -99,6 +99,7 @@ app.include_router(proposals.router, prefix="/api")
 app.include_router(passkeys.router, prefix="/api")
 app.include_router(leagues.router, prefix="/api")
 app.include_router(resolucion.router, prefix="/api")
+app.include_router(contenido.router, prefix="/api")
 
 # WebSocket routes (no prefix — path is /ws/...)
 app.include_router(websockets.router)
