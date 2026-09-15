@@ -1,0 +1,13 @@
+# Sujetos (identidad del jugador) de accesorios activos: agent-resolver.py sujetos-generar, 2026-09-15T02:27Z.
+# Ids buscados por nombre idéntico y único en el plantel del equipo (identidad.buscar_ids, nunca fuzzy).
+# Aplicado con OK de Mark: agent-resolver.py sujetos resoluciones/sujetos-2026-09-14.yaml --apply
+
+nfl-mahomes-2tdpass-w1-2026:
+  jugador: Patrick Mahomes
+  equipo: Chiefs
+  rival: Broncos
+  posicion: QB
+  alcance: partido
+  ids:
+    espn: '3139477'
+    cbs: '2142052'
