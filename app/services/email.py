@@ -26,17 +26,21 @@ def _fmt_mx(dt: datetime) -> str:
     return f"{d.day} {_MX_MONTHS[d.month - 1]}, {d:%H:%M} (CDMX)"
 
 
-async def _send(to_email: str, subject: str, html: str) -> None:
-    """Low-level send via Resend. No-op (logged) if no API key configured."""
+async def _send(to_email: str, subject: str, html: str, text: str | None = None) -> None:
+    """Low-level send via Resend. No-op (logged) if no API key configured.
+    `text` (opcional) es la versión texto plano del mismo correo."""
     if not settings.RESEND_API_KEY:
         logger.info(f"[DEV] Email a {to_email}: {subject}")
         return
+    payload: dict = {"from": _FROM, "to": [to_email], "subject": subject, "html": html}
+    if text:
+        payload["text"] = text
     try:
         async with httpx.AsyncClient() as client:
             resp = await client.post(
                 "https://api.resend.com/emails",
                 headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
-                json={"from": _FROM, "to": [to_email], "subject": subject, "html": html},
+                json=payload,
                 timeout=15,
             )
             if not resp.is_success:
@@ -59,111 +63,223 @@ def _wrap(body_html: str) -> str:
     """
 
 
+# ---------------------------------------------------------------------------
+# Correos de usuario (marca v2, tema claro). Espejo de los tokens light de
+# veredikt-mx/src/index.css (`html[data-theme='light']`): hex sólidos porque
+# los clientes de correo no entienden rgba ni variables CSS. Un solo botón
+# dorado por correo; verde/rojo solo para Acierto/Fallo y PT; sin emoji.
+# `_wrap` (arriba) es el shell viejo y sigue en uso SOLO en los correos al admin.
+# ---------------------------------------------------------------------------
+_FONT = "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+_C = {
+    "fondo": "#F7F7F5",    # --bg-surface
+    "tarjeta": "#FFFFFF",  # --bg-card
+    "suave": "#F2F2EF",    # --bg-elevated
+    "borde": "#E6E6E4",    # --border-subtle sobre blanco
+    "texto": "#111111",    # --text-primary
+    "texto2": "#616161",   # --text-secondary
+    "texto3": "#808080",   # --text-tertiary
+    "oro": "#E6B422",      # --accent-fill (light): solo el CTA
+    "verde": "#0F8A4B",    # --green (light)
+    "rojo": "#D11F3D",     # --red (light)
+}
+_LOGO_URL = f"{_SITE}/logo.png"
+_PERFIL_URL = f"{_SITE}/#/perfil"
+
+
+def _asunto(prefijo: str, pregunta: str, limite: int = 70) -> str:
+    q = pregunta if len(pregunta) <= limite else pregunta[: limite - 1].rstrip() + "…"
+    return f"{prefijo}: {q}"
+
+
+def _p(texto_html: str, *, color: str | None = None, size: int = 14, margin: str = "0 0 16px") -> str:
+    return (f'<p style="margin:{margin};font-family:{_FONT};font-size:{size}px;line-height:1.5;'
+            f'color:{color or _C["texto2"]};">{texto_html}</p>')
+
+
+def _valor(texto: str, color: str | None = None) -> str:
+    return f'<span style="color:{color or _C["texto"]};">{_esc(texto)}</span>'
+
+
+def _bloque_mercado(pregunta: str, filas: list[tuple[str, str]]) -> str:
+    """Pregunta del mercado sobre fondo suave y, debajo, filas planas
+    label/valor separadas por hairline (como `.list-row` en el sitio)."""
+    tr = "".join(
+        f'<tr>'
+        f'<td style="padding:11px 0;border-bottom:1px solid {_C["borde"]};font-family:{_FONT};font-size:12px;'
+        f'font-weight:500;color:{_C["texto3"]};">{_esc(label)}</td>'
+        f'<td align="right" style="padding:11px 0;border-bottom:1px solid {_C["borde"]};font-family:{_FONT};'
+        f'font-size:14px;font-weight:600;color:{_C["texto"]};font-variant-numeric:tabular-nums;">{valor_html}</td>'
+        f'</tr>'
+        for label, valor_html in filas
+    )
+    filas_html = (f'<tr><td style="padding:4px 0 0;"><table role="presentation" width="100%" cellpadding="0" '
+                  f'cellspacing="0" border="0">{tr}</table></td></tr>') if tr else ""
+    return (
+        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px;">'
+        f'<tr><td style="background:{_C["suave"]};border-radius:12px;padding:14px 16px;font-family:{_FONT};'
+        f'font-size:15px;font-weight:500;line-height:1.4;color:{_C["texto"]};">{_esc(pregunta)}</td></tr>'
+        f'{filas_html}</table>'
+    )
+
+
+def _boton(texto: str, url: str) -> str:
+    """CTA primario (el único oro del correo) + enlace de texto de respaldo."""
+    return (
+        f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 10px;">'
+        f'<tr><td style="background:{_C["oro"]};border-radius:8px;">'
+        f'<a href="{_esc(url)}" style="display:inline-block;padding:13px 22px;font-family:{_FONT};font-size:14px;'
+        f'font-weight:600;line-height:18px;color:{_C["texto"]};text-decoration:none;">{_esc(texto)}</a>'
+        f'</td></tr></table>'
+        f'<p style="margin:0;font-family:{_FONT};font-size:12px;line-height:1.5;color:{_C["texto3"]};word-break:break-all;">'
+        f'O abre este enlace: <a href="{_esc(url)}" style="color:{_C["texto2"]};text-decoration:underline;">{_esc(url)}</a></p>'
+    )
+
+
+def _pie_notificaciones(motivo: str) -> str:
+    return (f'{_esc(motivo)} Puedes desactivar estas notificaciones en '
+            f'<a href="{_PERFIL_URL}" style="color:{_C["texto3"]};text-decoration:underline;">tu perfil</a>.')
+
+
+def _shell_usuario(titulo: str, preheader: str, cuerpo_html: str, pie_html: str) -> str:
+    """Documento HTML completo: tabla centrada de 520px, header con logo y
+    wordmark (texto vivo, nunca dorado), tarjeta con el cuerpo y pie."""
+    return f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>{_esc(titulo)}</title>
+</head>
+<body style="margin:0;padding:0;background:{_C["fondo"]};">
+<div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:{_C["fondo"]};">{_esc(preheader)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:{_C["fondo"]};">
+<tr><td align="center" style="padding:32px 16px;">
+<table role="presentation" width="520" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:520px;">
+<tr><td style="padding:0 4px 18px;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+<td style="padding-right:9px;"><img src="{_LOGO_URL}" width="27" height="24" alt="" style="display:block;border:0;"></td>
+<td style="font-family:{_FONT};font-size:17px;font-weight:700;letter-spacing:0.04em;line-height:1;color:{_C["texto"]};">VEREDIKT</td>
+</tr></table>
+</td></tr>
+<tr><td style="background:{_C["tarjeta"]};border:1px solid {_C["borde"]};border-radius:12px;padding:28px 28px 26px;">
+<h1 style="margin:0 0 16px;font-family:{_FONT};font-size:20px;font-weight:600;line-height:1.3;color:{_C["texto"]};">{_esc(titulo)}</h1>
+{cuerpo_html}
+</td></tr>
+<tr><td style="padding:18px 4px 0;font-family:{_FONT};font-size:12px;line-height:1.5;color:{_C["texto3"]};">
+<p style="margin:0 0 6px;">VEREDIKT · El veredicto del mercado.</p>
+<p style="margin:0;">{pie_html}</p>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>"""
+
+
+def _texto_plano(titulo: str, lineas: list[str], url: str | None = None, pie: str | None = None) -> str:
+    """Versión texto plano (Resend la manda como alternativa multipart)."""
+    partes = ["VEREDIKT", "", titulo, ""] + list(lineas)
+    if url:
+        partes += ["", url]
+    if pie:
+        partes += ["", pie]
+    return "\n".join(partes) + "\n"
+
+
+_PIE_TEXTO = f"Puedes desactivar estas notificaciones en {_PERFIL_URL}"
+
+
 async def send_verification_email(to_email: str, display_name: str, code: str) -> None:
-    body = f"""
-      <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">Hola {_esc(display_name)},</p>
-      <p style="margin: 0 0 28px; font-size: 14px; color: rgba(245,240,232,0.6);">
-        Tu código de verificación es:
-      </p>
-      <div style="background: rgba(255,215,0,0.08); border: 1px solid rgba(255,215,0,0.3);
-                  border-radius: 12px; padding: 28px; text-align: center; margin-bottom: 28px;">
-        <span style="font-family: 'Courier New', monospace; font-size: 42px; font-weight: 700;
-                     letter-spacing: 14px; color: #FFD700;">{code}</span>
-      </div>
-      <p style="margin: 0; font-size: 12px; color: rgba(245,240,232,0.35);">
-        Válido por 15 minutos. Si no creaste esta cuenta, ignora este correo.
-      </p>
-    """
-    await _send(to_email, f"{code} es tu código de verificación VEREDIKT", _wrap(body))
+    titulo = "Tu código de verificación"
+    aviso = "Vence en 15 minutos. Si no creaste una cuenta en VEREDIKT, ignora este correo."
+    cuerpo = (
+        _p(f"Hola {_esc(display_name)},")
+        + _p("Usa este código para confirmar tu correo.")
+        + f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px;">'
+          f'<tr><td align="center" style="background:{_C["suave"]};border-radius:12px;padding:22px 16px;font-family:{_FONT};'
+          f'font-size:32px;font-weight:700;letter-spacing:6px;line-height:1;color:{_C["texto"]};'
+          f'font-variant-numeric:tabular-nums;">{_esc(code)}</td></tr></table>'
+        + _p(aviso, size=13, margin="0")
+    )
+    html = _shell_usuario(titulo, f"{code} es tu código. Vence en 15 minutos.", cuerpo,
+                          "Correo automático, no respondas a este mensaje.")
+    text = _texto_plano(titulo, [f"Hola {display_name},", "", f"Tu código: {code}", "", aviso])
+    await _send(to_email, f"{code} es tu código de verificación VEREDIKT", html, text)
 
 
 async def send_market_cancelled_email(to_email: str, display_name: str, question: str, refund: float) -> None:
     """Aviso a quien tenía posición en un mercado cancelado: se le devolvió lo que pagó."""
-    body = f"""
-      <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">Hola {_esc(display_name)},</p>
-      <p style="margin: 0 0 18px; font-size: 14px; color: rgba(245,240,232,0.6);">
-        Un mercado en el que participaste se canceló (evento aplazado, jugador inactivo o sin resultado válido):
-      </p>
-      <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,215,0,0.18);
-                  border-radius: 12px; padding: 20px; margin-bottom: 22px;">
-        <div style="font-size: 15px; font-weight: 700; color: #F5F0E8; margin-bottom: 12px;">{_esc(question)}</div>
-        <div style="font-size: 18px; font-weight: 800; color: #F5F0E8; margin-bottom: 6px;">Mercado cancelado</div>
-        <div style="font-size: 14px; color: rgba(245,240,232,0.7);">
-          Te devolvimos lo que habías invertido: <b style="color:#00FF88">+{round(refund)} PT</b>. No cuenta como acierto ni como fallo.
-        </div>
-      </div>
-      <a href="{_SITE}" style="display:inline-block; background:#FFD700; color:#07071A;
-         text-decoration:none; font-weight:800; font-size:14px; padding:12px 24px; border-radius:10px;">
-        Ver mercados →
-      </a>
-    """
-    await _send(to_email, "Mercado cancelado: te devolvimos tus puntos", _wrap(body))
+    titulo = "Mercado cancelado"
+    url = f"{_SITE}/#/mercados"
+    devuelto = f"+{round(refund)} PT"
+    motivo = "Un mercado en el que participabas se canceló por evento aplazado, jugador inactivo o sin resultado válido."
+    detalle = "Te devolvimos lo que pagaste por tus acciones. No cuenta como acierto ni como fallo."
+    cuerpo = (
+        _p(f"Hola {_esc(display_name)},")
+        + _p(motivo)
+        + _bloque_mercado(question, [("Devuelto", _valor(devuelto, _C["verde"]))])
+        + _p(detalle)
+        + _boton("Ver mercados", url)
+    )
+    html = _shell_usuario(titulo, f"Te devolvimos {devuelto}. {question}", cuerpo,
+                          _pie_notificaciones("Recibes este correo porque participaste en este mercado."))
+    text = _texto_plano(titulo, [f"Hola {display_name},", "", question, f"Devuelto: {devuelto}", "", motivo, detalle],
+                        url, _PIE_TEXTO)
+    await _send(to_email, _asunto("Mercado cancelado", question), html, text)
 
 
 async def send_resolution_email(
-    to_email: str, display_name: str, question: str, won: bool, payout: float
+    to_email: str, display_name: str, question: str, won: bool, payout: float, market_id: str | None = None
 ) -> None:
     """Notify a position holder that a market they traded resolved."""
+    url = f"{_SITE}/#/mercado/{market_id}" if market_id else f"{_SITE}/#/mercados"
+    puntos = f"+{round(payout)} PT" if won else "0 PT"
     if won:
-        headline = "✅ ¡Ganaste!"
-        color = "#00FF88"
-        detail = f"Tu predicción fue correcta. Ganaste <b style=\"color:#00FF88\">+{round(payout)} PT</b>."
+        titulo, prefijo, resultado = "Acertaste", "Acertaste", "Acierto"
+        filas = [("Resultado", _valor(resultado, _C["verde"])), ("Puntos", _valor(puntos, _C["verde"]))]
+        detalle = "Cada acción ganadora pagó 1 PT. Los puntos ya están en tu cuenta."
+        preheader = f"Acierto, {puntos}. {question}"
     else:
-        headline = "Resultado del mercado"
-        color = "#FF2D55"
-        detail = "Esta vez tu predicción no acertó. ¡Va la próxima!"
-
-    body = f"""
-      <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">Hola {_esc(display_name)},</p>
-      <p style="margin: 0 0 18px; font-size: 14px; color: rgba(245,240,232,0.6);">
-        El mercado en el que participaste ya se resolvió:
-      </p>
-      <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,215,0,0.18);
-                  border-radius: 12px; padding: 20px; margin-bottom: 22px;">
-        <div style="font-size: 15px; font-weight: 700; color: #F5F0E8; margin-bottom: 12px;">{_esc(question)}</div>
-        <div style="font-size: 18px; font-weight: 800; color: {color}; margin-bottom: 6px;">{headline}</div>
-        <div style="font-size: 14px; color: rgba(245,240,232,0.7);">{detail}</div>
-      </div>
-      <a href="{_SITE}" style="display:inline-block; background:#FFD700; color:#07071A;
-         text-decoration:none; font-weight:800; font-size:14px; padding:12px 24px; border-radius:10px;">
-        Ver mercados →
-      </a>
-      <p style="margin: 24px 0 0; font-size: 11px; color: rgba(245,240,232,0.3);">
-        Recibes este correo porque participaste en este mercado. Puedes desactivar las
-        notificaciones en tu perfil en {_SITE}/#/perfil
-      </p>
-    """
-    await _send(to_email, "Tu mercado en VEREDIKT se resolvió", _wrap(body))
+        titulo, prefijo, resultado = "Este mercado se resolvió", "Se resolvió", "Fallo"
+        filas = [("Resultado", _valor(resultado, _C["rojo"])), ("Puntos", _valor(puntos))]
+        detalle = "Esta vez no acertaste. Tu posición se liquidó en 0 PT."
+        preheader = f"Fallo. {question}"
+    cuerpo = (
+        _p(f"Hola {_esc(display_name)},")
+        + _p("El mercado en el que participaste ya tiene veredicto.")
+        + _bloque_mercado(question, filas)
+        + _p(detalle)
+        + _boton("Ver mercado", url)
+    )
+    html = _shell_usuario(titulo, preheader, cuerpo,
+                          _pie_notificaciones("Recibes este correo porque participaste en este mercado."))
+    text = _texto_plano(titulo, [f"Hola {display_name},", "", question, f"Resultado: {resultado}", f"Puntos: {puntos}", "", detalle],
+                        url, _PIE_TEXTO)
+    await _send(to_email, _asunto(prefijo, question), html, text)
 
 
 async def send_closing_soon_email(
     to_email: str, display_name: str, question: str, ends_at: datetime, market_id: str
 ) -> None:
     """Heads-up to an open-position holder that their market closes within ~24h."""
-    market_url = f"{_SITE}/#/mercado/{market_id}"
-    body = f"""
-      <p style="margin: 0 0 8px; font-size: 16px; color: #F5F0E8;">Hola {_esc(display_name)},</p>
-      <p style="margin: 0 0 18px; font-size: 14px; color: rgba(245,240,232,0.6);">
-        Un mercado en el que tienes una posición abierta está por cerrar:
-      </p>
-      <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,215,0,0.18);
-                  border-radius: 12px; padding: 20px; margin-bottom: 22px;">
-        <div style="font-size: 15px; font-weight: 700; color: #F5F0E8; margin-bottom: 12px;">{_esc(question)}</div>
-        <div style="font-size: 14px; font-weight: 800; color: #FFD700;">⏰ Cierra el {_fmt_mx(ends_at)}</div>
-      </div>
-      <p style="margin: 0 0 22px; font-size: 13px; color: rgba(245,240,232,0.6);">
-        Si quieres ajustar tu posición, hazlo antes del cierre. Después ya no se podrá operar.
-      </p>
-      <a href="{market_url}" style="display:inline-block; background:#FFD700; color:#07071A;
-         text-decoration:none; font-weight:800; font-size:14px; padding:12px 24px; border-radius:10px;">
-        Ver mercado →
-      </a>
-      <p style="margin: 24px 0 0; font-size: 11px; color: rgba(245,240,232,0.3);">
-        Recibes este correo porque tienes una posición abierta en este mercado. Puedes desactivar las
-        notificaciones en tu perfil en {_SITE}/#/perfil
-      </p>
-    """
-    await _send(to_email, "⏰ Tu mercado en VEREDIKT cierra pronto", _wrap(body))
+    titulo = "Tu mercado cierra pronto"
+    url = f"{_SITE}/#/mercado/{market_id}"
+    cierre = _fmt_mx(ends_at)
+    detalle = "Tienes una posición abierta. Si quieres ajustarla, hazlo antes del cierre; después ya no se puede operar."
+    cuerpo = (
+        _p(f"Hola {_esc(display_name)},")
+        + _p("Un mercado en el que tienes posición está por cerrar.")
+        + _bloque_mercado(question, [("Cierra", _valor(cierre))])
+        + _p(detalle)
+        + _boton("Ver mercado", url)
+    )
+    html = _shell_usuario(titulo, f"Cierra el {cierre}. {question}", cuerpo,
+                          _pie_notificaciones("Recibes este correo porque tienes una posición abierta en este mercado."))
+    text = _texto_plano(titulo, [f"Hola {display_name},", "", question, f"Cierra: {cierre}", "", detalle], url, _PIE_TEXTO)
+    await _send(to_email, _asunto("Cierra pronto", question), html, text)
 
 
 async def send_admin_resolution_reminder(markets: list[tuple[str, str, datetime]]) -> None:

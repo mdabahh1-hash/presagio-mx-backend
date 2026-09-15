@@ -17,7 +17,7 @@ from tests.conftest import auth_headers
 def correos(monkeypatch):
     enviados: list[tuple[str, str]] = []
 
-    async def fake_send(to, subject, html):
+    async def fake_send(to, subject, html, **kw):
         enviados.append((subject, html))
 
     monkeypatch.setattr(email_mod, "_send", fake_send)

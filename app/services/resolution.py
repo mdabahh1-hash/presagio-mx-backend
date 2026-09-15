@@ -123,7 +123,7 @@ async def resolve(
 
     question = market.question
     for entry in notify.values():
-        spawn(send_resolution_email(entry["email"], entry["name"], question, entry["payout"] > 0, entry["payout"]))
+        spawn(send_resolution_email(entry["email"], entry["name"], question, entry["payout"] > 0, entry["payout"], market_id=market_id))
 
     return {"ok": True, "resolution": etiqueta, "positions_settled": len(positions)}
 
