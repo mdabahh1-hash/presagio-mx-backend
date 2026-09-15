@@ -61,6 +61,10 @@ async def list_markets(
         # (pending_resolution) ones go last instead of topping the list.
         pending_last = case((Market.status == MarketStatus.PENDING_RESOLUTION, 1), else_=0)
         stmt = stmt.order_by(pending_last, Market.ends_at, Market.id)
+    elif sort == "new":
+        # Pestaña "Nuevo": lo último sembrado primero; los ya vencidos al final.
+        pending_last = case((Market.status == MarketStatus.PENDING_RESOLUTION, 1), else_=0)
+        stmt = stmt.order_by(pending_last, desc(Market.created_at), Market.id)
     else:
         stmt = stmt.order_by(desc(Market.volume), Market.id)
 
