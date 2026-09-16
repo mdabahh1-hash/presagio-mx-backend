@@ -14,15 +14,20 @@ Formato (todas las claves en español; `?` = opcional):
         "actualizado": "2026-09-15",       # ISO
         "resumen"?:    str,                # una línea bajo el h1 de la landing
         "hero": {"secundario_id"?: str},   # mercado de la 2.ª línea (gris) de la gráfica de 90 días
-        "proyeccion"?: {                   # barra de escaños + tabla de partidos
+        "proyeccion"?: {                   # barra de escaños + tabla de partidos (calculadas en vivo)
             "titulo": str, "total": int, "umbral": int, "umbral_etiqueta": str,
-            "mercado_umbral_id"?: str,     # "Prob. de {umbral}+" = yes_price vivo de este mercado
-            "bloques": [{"partido": str, "escanos": int}, ...],   # orden = orden en la barra
+            "mercado_umbral_id"?: str,     # "Prob. de {umbral}+" = yes_price vivo de este mercado (binario)
+            "bloques": [{                  # orden = orden en la barra; un mercado multi por partido
+                "partido": str,
+                "mercado_id": str,         # multi cuyas outcomes son rangos de escaños
+                "escanos_por_opcion": {outcome_key: int},   # escaños representativos de cada rango
+            }, ...],                       # esperados = Σ precio × escaños; el frontend lo calcula
             "coalicion": [str, ...],       # claves de partido; la primera es el partido principal
             "nota"?: str,
         },
         "cronologia"?: {
             "titulo": str, "subtitulo"?: str,
+            "fuente_url"?: str,            # https; enlace "Fuente" de la tarjeta (calendario oficial)
             "hitos": [{"fecha": "AAAA-MM-DD", "etiqueta": str, "texto": str, "clave": bool}, ...],
         },                                 # asc por fecha; exactamente un hito con clave=True (oro)
         "partidos": [{"clave": str, "nombre": str, "siglas": str}, ...],
@@ -55,9 +60,16 @@ def check() -> list[str]:
 
         pr = c.get("proyeccion")
         if pr:
-            suma = sum(b["escanos"] for b in pr["bloques"])
-            if suma > pr["total"]:
-                problemas.append(f"{clave}: los bloques suman {suma} > total {pr['total']}")
+            ids = [b["mercado_id"] for b in pr["bloques"]]
+            if len(set(ids)) != len(ids):
+                problemas.append(f"{clave}: mercado_id repetido en bloques")
+            for b in pr["bloques"]:
+                mapa = b.get("escanos_por_opcion") or {}
+                if len(mapa) < 2:
+                    problemas.append(f"{clave}: {b['partido']} necesita al menos 2 rangos en escanos_por_opcion")
+                fuera = [k for k, v in mapa.items() if not 0 <= v <= pr["total"]]
+                if fuera:
+                    problemas.append(f"{clave}: {b['partido']} con escaños fuera de 0..{pr['total']}: {fuera}")
             if pr["umbral"] > pr["total"]:
                 problemas.append(f"{clave}: umbral {pr['umbral']} > total {pr['total']}")
             en_bloques = {b["partido"] for b in pr["bloques"]}
@@ -76,6 +88,9 @@ def check() -> list[str]:
             claves = sum(1 for h in cr["hitos"] if h.get("clave"))
             if claves != 1:
                 problemas.append(f"{clave}: la cronología debe tener exactamente un hito clave ({claves})")
+            fuente = cr.get("fuente_url")
+            if fuente and not fuente.startswith("https://"):
+                problemas.append(f"{clave}: fuente_url de la cronología debe ser https ({fuente})")
 
         for f in c.get("fuentes", []):
             if f["host"].startswith("www.") or "/" in f["host"]:

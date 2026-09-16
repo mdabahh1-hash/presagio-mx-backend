@@ -14,12 +14,20 @@ class Hito(BaseModel):
 class Cronologia(BaseModel):
     titulo: str
     subtitulo: str | None = None
+    # Enlace "Fuente" de la tarjeta (calendario oficial); https.
+    fuente_url: str | None = Field(default=None, pattern=r"^https://")
     hitos: list[Hito] = Field(min_length=2)
 
 
 class Bloque(BaseModel):
+    """Un partido de la barra: su mercado multi de rangos y los escaños representativos por opción.
+
+    Los escaños esperados NO viven aquí: el frontend los calcula con los precios vivos
+    (Σ precio × escanos_por_opcion). Las keys deben ser las outcomes del mercado.
+    """
     partido: str
-    escanos: int = Field(ge=0)
+    mercado_id: str
+    escanos_por_opcion: dict[str, int] = Field(min_length=2)
 
 
 class Proyeccion(BaseModel):
@@ -34,9 +42,13 @@ class Proyeccion(BaseModel):
 
     @model_validator(mode="after")
     def _coherente(self):
-        suma = sum(b.escanos for b in self.bloques)
-        if suma > self.total:
-            raise ValueError(f"los bloques suman {suma} > total {self.total}")
+        ids = [b.mercado_id for b in self.bloques]
+        if len(set(ids)) != len(ids):
+            raise ValueError("mercado_id repetido en bloques")
+        for b in self.bloques:
+            fuera = [k for k, v in b.escanos_por_opcion.items() if not 0 <= v <= self.total]
+            if fuera:
+                raise ValueError(f"{b.partido}: escaños fuera de 0..{self.total} en {fuera}")
         if self.umbral > self.total:
             raise ValueError(f"umbral {self.umbral} > total {self.total}")
         en_bloques = {b.partido for b in self.bloques}

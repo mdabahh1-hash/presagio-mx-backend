@@ -1,8 +1,9 @@
-"""Curaduría editorial de Política (landing /mercados?cat=Política). NO se calcula: lo edita Mark.
+"""Curaduría editorial de Política (landing /mercados?cat=Política y píldora Política de la Home).
 
-Formato en `contenido_categorias/__init__.py` y `app/schemas/contenido.py`. Los números de la
-proyección y las fechas de la cronología marcados EDITORIAL vienen del mock del diseño y
-hay que confirmarlos contra el INE antes de darlos por buenos.
+Formato en `contenido_categorias/__init__.py` y `app/schemas/contenido.py`. Regla editorial (Mark,
+2026-09-15): nada ilustrativo en pantalla. Cada cifra sale de un mercado (la proyección se calcula
+en vivo con los precios de los seis mercados de rangos) o de una fuente oficial enlazada (la
+cronología es el calendario que aprobó el Consejo General del INE el 30 de julio de 2026).
 """
 
 CONTENIDO: dict = {
@@ -13,7 +14,7 @@ CONTENIDO: dict = {
         "Estos mercados siguen la mayoría en la Cámara, la participación y la agenda de la presidenta."
     ),
     "hero": {
-        # Segunda línea (gris) de la gráfica de 90 días; el destacado lo decide el trending.
+        # Segunda línea (gris) de la gráfica de 90 días; el destacado lo decide el trending. Binario.
         "secundario_id": "morena-250-diputados-2027",
     },
     "proyeccion": {
@@ -21,30 +22,47 @@ CONTENIDO: dict = {
         "total": 500,
         "umbral": 334,
         "umbral_etiqueta": "mayoría calificada",
+        # "Prob. de 334+" = yes_price vivo de este mercado (binario; un multi tiene yes_price 0).
         "mercado_umbral_id": "coalicion-morena-334-diputados-2027",
-        # EDITORIAL: confirmar. Cifras ilustrativas del mock; el resto hasta 500 se pinta neutro.
+        # Escaños esperados por partido = Σ precio(opción) × escanos_por_opcion[opción], calculado en el
+        # frontend con los precios vivos del mercado multi `mercado_id` (mercados-pendientes.yaml,
+        # ids diputados-2027-rango-*). Las keys deben ser EXACTAMENTE las outcomes del mercado
+        # (lo comprueba tests/test_contenido_categorias.py). Valor por rango: punto medio del rango
+        # cerrado; en los abiertos, el borde menos/más la mitad del ancho del rango contiguo.
         "bloques": [
-            {"partido": "Morena", "escanos": 248},
-            {"partido": "PVEM", "escanos": 59},
-            {"partido": "PT", "escanos": 40},
-            {"partido": "PAN", "escanos": 72},
-            {"partido": "PRI", "escanos": 35},
-            {"partido": "MC", "escanos": 29},
+            {"partido": "Morena", "mercado_id": "diputados-2027-rango-morena",
+             "escanos_por_opcion": {"r_menos_200": 188, "r_200_224": 212, "r_225_249": 237, "r_250_274": 262, "r_275_mas": 288}},
+            {"partido": "PVEM", "mercado_id": "diputados-2027-rango-pvem",
+             "escanos_por_opcion": {"r_menos_30": 22, "r_30_44": 37, "r_45_59": 52, "r_60_74": 67, "r_75_mas": 83}},
+            {"partido": "PT", "mercado_id": "diputados-2027-rango-pt",
+             "escanos_por_opcion": {"r_menos_20": 12, "r_20_34": 27, "r_35_49": 42, "r_50_64": 57, "r_65_mas": 73}},
+            {"partido": "PAN", "mercado_id": "diputados-2027-rango-pan",
+             "escanos_por_opcion": {"r_menos_50": 42, "r_50_64": 57, "r_65_79": 72, "r_80_94": 87, "r_95_mas": 103}},
+            {"partido": "PRI", "mercado_id": "diputados-2027-rango-pri",
+             "escanos_por_opcion": {"r_menos_20": 15, "r_20_29": 25, "r_30_39": 35, "r_40_49": 45, "r_50_mas": 55}},
+            {"partido": "MC", "mercado_id": "diputados-2027-rango-mc",
+             "escanos_por_opcion": {"r_menos_20": 15, "r_20_29": 25, "r_30_39": 35, "r_40_49": 45, "r_50_mas": 55}},
         ],
         "coalicion": ["Morena", "PVEM", "PT"],
-        "nota": "Proyección editorial a partir de los mercados, no una encuesta.",
+        "nota": (
+            "Escaños esperados: suma de probabilidad × punto medio de cada rango, con los precios vivos de "
+            "seis mercados independientes (uno por partido). No es una encuesta."
+        ),
     },
     "cronologia": {
         "titulo": "Rumbo al 6 de junio de 2027",
-        "subtitulo": "Cronología electoral",
-        # EDITORIAL: confirmar fechas de registro, campañas y asignación contra el calendario del INE.
+        "subtitulo": "Calendario del INE",
+        # Plan Integral y Calendario del PEF 2026-2027, aprobado por el Consejo General del INE el
+        # 30 de julio de 2026 (nota oficial de Central Electoral). `fecha` = inicio del periodo.
+        "fuente_url": "https://centralelectoral.ine.mx/2026/07/31/planeara-y-organizara-ine-mas-de-500-actividades-del-proceso-electoral-federal-2026%E2%80%912027/",
         "hitos": [
-            {"fecha": "2026-11-15", "etiqueta": "15 nov 2026", "texto": "Límite para aprobar el PEF 2027", "clave": False},
-            {"fecha": "2026-12-15", "etiqueta": "Dic 2026", "texto": "Presupuesto del INE publicado en el DOF", "clave": False},
-            {"fecha": "2027-04-01", "etiqueta": "Abr 2027", "texto": "Cierre de registro de candidaturas", "clave": False},
-            {"fecha": "2027-04-15", "etiqueta": "Abr–may 2027", "texto": "Campañas federales y locales", "clave": False},
+            {"fecha": "2026-09-10", "etiqueta": "10 sep 2026", "texto": "Inicio del Proceso Electoral Federal 2026-2027", "clave": False},
+            {"fecha": "2027-01-04", "etiqueta": "4 ene – 12 feb", "texto": "Precampañas", "clave": False},
+            {"fecha": "2027-03-22", "etiqueta": "22 mar – 3 abr", "texto": "Registro de candidaturas", "clave": False},
+            {"fecha": "2027-04-04", "etiqueta": "4 abr – 2 jun", "texto": "Campañas electorales", "clave": False},
             {"fecha": "2027-06-06", "etiqueta": "6 jun 2027", "texto": "Jornada electoral · 500 diputaciones y 17 gubernaturas", "clave": True},
-            {"fecha": "2027-08-15", "etiqueta": "Ago 2027", "texto": "Asignación definitiva validada por el INE", "clave": False},
+            {"fecha": "2027-06-09", "etiqueta": "9 – 11 jun", "texto": "Cómputos distritales", "clave": False},
+            {"fecha": "2027-08-01", "etiqueta": "1 – 23 ago", "texto": "Asignación de diputaciones de representación proporcional", "clave": False},
         ],
     },
     # `clave` es la que usan `bloques`, `coalicion` y `src/lib/partyColors.ts` en el frontend.
@@ -64,11 +82,12 @@ CONTENIDO: dict = {
         {"host": "dof.gob.mx", "etiqueta": "DOF"},
         {"host": "gaceta.diputados.gob.mx", "etiqueta": "Gaceta Parlamentaria"},
     ],
-    # Tercer dato de la meta de la fila (umbral o hecho estable, ≈40 caracteres).
+    # Tercer dato de la meta de la fila (umbral o hecho estable, ≈40 caracteres). Solo ids con
+    # normas en market_content (lo exige el test); los multi de rangos no llevan nota.
     "notas": {
         "coalicion-morena-334-diputados-2027": "Mayoría calificada · 334 de 500",
         "morena-250-diputados-2027": "Morena solo · 250 de 500",
-        "morena-2027": "Mayoría absoluta · más de 251",
+        "morena-2027": "Morena + aliados · más de 251",
         "morena-10-gubernaturas-2027": "17 gubernaturas en juego",
         "participacion-federal-2027-60": "La intermedia de 2021 rondó 52%",
         "pef-2027-aprobacion-15-nov": "Límite constitucional: 15 de noviembre",
