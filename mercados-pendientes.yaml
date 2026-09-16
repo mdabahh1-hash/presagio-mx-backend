@@ -98,3 +98,154 @@
 #   ids:
 #     espn: '3918298'            # identificar (Josh Hines-Allen, DE de JAX, es 3915239)
 #     cbs: '2181054'             # identificar (Hines-Allen es 2184628)
+
+# ── Política · rangos de diputaciones 2027 (2026-09-15) ─────────────────────
+# Seis multi, uno por partido, con 5 rangos exhaustivos (sin «Otro»: las normas van completas).
+# La landing de Política calcula los escaños esperados con estos precios y los puntos medios
+# de cada rango declarados en contenido_categorias/politica.py (mismas keys de outcome).
+# Bancada actual: sitl.diputados.gob.mx/LXVI_leg/info_diputados.php (datos al 23/03/2026).
+# RP 2024: acuerdo INE/CG2129/2024 (DOF). Calendario: Consejo General del INE, 30-jul-2026.
+
+---
+tipo: multi
+id: diputados-2027-rango-morena
+question: ¿Cuántas diputaciones federales tendrá Morena tras la elección de 2027?
+description: >-
+  Rangos de escaños (300 de mayoría relativa + 200 de representación proporcional) según la asignación definitiva del INE. Cuenta solo la bancada de Morena, no la de sus aliados.
+category: POLITICA_MX
+subcategory: Elecciones
+resolution_criteria: >-
+  Gana el rango que contenga el número de diputaciones federales asignadas de forma definitiva a Morena por el Consejo General del INE (y en su caso el TEPJF) tras la elección del 6 de junio de 2027, según las constancias oficiales de asignación.
+resolution_source_url: https://www.ine.mx
+rules: >-
+  Resuelve al rango que contenga el total de diputaciones federales (mayoría relativa más representación proporcional) asignadas de forma definitiva a Morena tras la elección del 6 de junio de 2027, según las constancias del Consejo General del INE y, si hay impugnaciones, la resolución definitiva del TEPJF. Cuenta únicamente lo asignado al partido en su constancia, no los cambios de bancada posteriores ni los escaños de otros partidos aunque compitan en coalición con él. Si el partido no participa o pierde el registro, gana el rango más bajo. Si una reforma cambia el tamaño de la Cámara, los límites de cada rango se reescalan en proporción al nuevo total, redondeando al entero más cercano. El mercado cierra el 6 de junio de 2027 y se resuelve cuando la asignación quede firme, normalmente en agosto de 2027. Gana exactamente un rango: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  Al 23 de marzo de 2026 el grupo parlamentario de Morena tiene 254 de las 500 diputaciones (179 de mayoría relativa y 75 de representación proporcional), según la Cámara de Diputados. En la asignación de representación proporcional de 2024 (acuerdo INE/CG2129/2024, publicado en el DOF) recibió 75 de las 200 curules plurinominales. El Proceso Electoral Federal 2026-2027 inició el 10 de septiembre de 2026; la jornada es el 6 de junio de 2027 y el INE asignará las diputaciones de representación proporcional a más tardar el 23 de agosto de 2027, según el Plan Integral y Calendario que aprobó su Consejo General el 30 de julio de 2026.
+ends_at: 2027-06-06T14:00:00Z
+# Apertura: 254 curules hoy (179 MR); las intermedias suelen desgastar al oficialismo y las encuestas de 2026 lo muestran a la baja.
+outcomes:
+  - {key: r_menos_200, label: "Menos de 200", pct: 10}
+  - {key: r_200_224, label: "200 a 224", pct: 23}
+  - {key: r_225_249, label: "225 a 249", pct: 32}
+  - {key: r_250_274, label: "250 a 274", pct: 26}
+  - {key: r_275_mas, label: "275 o más", pct: 9}
+
+---
+tipo: multi
+id: diputados-2027-rango-pvem
+question: ¿Cuántas diputaciones federales tendrá el PVEM tras la elección de 2027?
+description: >-
+  Rangos de escaños (300 de mayoría relativa + 200 de representación proporcional) según la asignación definitiva del INE. Cuenta solo la bancada de el PVEM, no la de sus aliados.
+category: POLITICA_MX
+subcategory: Elecciones
+resolution_criteria: >-
+  Gana el rango que contenga el número de diputaciones federales asignadas de forma definitiva a el PVEM por el Consejo General del INE (y en su caso el TEPJF) tras la elección del 6 de junio de 2027, según las constancias oficiales de asignación.
+resolution_source_url: https://www.ine.mx
+rules: >-
+  Resuelve al rango que contenga el total de diputaciones federales (mayoría relativa más representación proporcional) asignadas de forma definitiva a el Partido Verde Ecologista de México (PVEM) tras la elección del 6 de junio de 2027, según las constancias del Consejo General del INE y, si hay impugnaciones, la resolución definitiva del TEPJF. Cuenta únicamente lo asignado al partido en su constancia, no los cambios de bancada posteriores ni los escaños de otros partidos aunque compitan en coalición con él. Si el partido no participa o pierde el registro, gana el rango más bajo. Si una reforma cambia el tamaño de la Cámara, los límites de cada rango se reescalan en proporción al nuevo total, redondeando al entero más cercano. El mercado cierra el 6 de junio de 2027 y se resuelve cuando la asignación quede firme, normalmente en agosto de 2027. Gana exactamente un rango: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  Al 23 de marzo de 2026 el grupo parlamentario de el PVEM tiene 61 de las 500 diputaciones (41 de mayoría relativa y 20 de representación proporcional), según la Cámara de Diputados. En la asignación de representación proporcional de 2024 (acuerdo INE/CG2129/2024, publicado en el DOF) recibió 20 de las 200 curules plurinominales. El Proceso Electoral Federal 2026-2027 inició el 10 de septiembre de 2026; la jornada es el 6 de junio de 2027 y el INE asignará las diputaciones de representación proporcional a más tardar el 23 de agosto de 2027, según el Plan Integral y Calendario que aprobó su Consejo General el 30 de julio de 2026.
+ends_at: 2027-06-06T14:00:00Z
+# Apertura: 61 curules hoy, casi todas de distritos cedidos por la coalición; depende del convenio de 2027.
+outcomes:
+  - {key: r_menos_30, label: "Menos de 30", pct: 12}
+  - {key: r_30_44, label: "30 a 44", pct: 28}
+  - {key: r_45_59, label: "45 a 59", pct: 30}
+  - {key: r_60_74, label: "60 a 74", pct: 20}
+  - {key: r_75_mas, label: "75 o más", pct: 10}
+
+---
+tipo: multi
+id: diputados-2027-rango-pt
+question: ¿Cuántas diputaciones federales tendrá el PT tras la elección de 2027?
+description: >-
+  Rangos de escaños (300 de mayoría relativa + 200 de representación proporcional) según la asignación definitiva del INE. Cuenta solo la bancada de el PT, no la de sus aliados.
+category: POLITICA_MX
+subcategory: Elecciones
+resolution_criteria: >-
+  Gana el rango que contenga el número de diputaciones federales asignadas de forma definitiva a el PT por el Consejo General del INE (y en su caso el TEPJF) tras la elección del 6 de junio de 2027, según las constancias oficiales de asignación.
+resolution_source_url: https://www.ine.mx
+rules: >-
+  Resuelve al rango que contenga el total de diputaciones federales (mayoría relativa más representación proporcional) asignadas de forma definitiva a el Partido del Trabajo (PT) tras la elección del 6 de junio de 2027, según las constancias del Consejo General del INE y, si hay impugnaciones, la resolución definitiva del TEPJF. Cuenta únicamente lo asignado al partido en su constancia, no los cambios de bancada posteriores ni los escaños de otros partidos aunque compitan en coalición con él. Si el partido no participa o pierde el registro, gana el rango más bajo. Si una reforma cambia el tamaño de la Cámara, los límites de cada rango se reescalan en proporción al nuevo total, redondeando al entero más cercano. El mercado cierra el 6 de junio de 2027 y se resuelve cuando la asignación quede firme, normalmente en agosto de 2027. Gana exactamente un rango: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  Al 23 de marzo de 2026 el grupo parlamentario de el PT tiene 49 de las 500 diputaciones (36 de mayoría relativa y 13 de representación proporcional), según la Cámara de Diputados. En la asignación de representación proporcional de 2024 (acuerdo INE/CG2129/2024, publicado en el DOF) recibió 13 de las 200 curules plurinominales. El Proceso Electoral Federal 2026-2027 inició el 10 de septiembre de 2026; la jornada es el 6 de junio de 2027 y el INE asignará las diputaciones de representación proporcional a más tardar el 23 de agosto de 2027, según el Plan Integral y Calendario que aprobó su Consejo General el 30 de julio de 2026.
+ends_at: 2027-06-06T14:00:00Z
+# Apertura: 49 curules hoy (36 MR vía coalición); mismo riesgo de convenio que el PVEM.
+outcomes:
+  - {key: r_menos_20, label: "Menos de 20", pct: 12}
+  - {key: r_20_34, label: "20 a 34", pct: 28}
+  - {key: r_35_49, label: "35 a 49", pct: 36}
+  - {key: r_50_64, label: "50 a 64", pct: 17}
+  - {key: r_65_mas, label: "65 o más", pct: 7}
+
+---
+tipo: multi
+id: diputados-2027-rango-pan
+question: ¿Cuántas diputaciones federales tendrá el PAN tras la elección de 2027?
+description: >-
+  Rangos de escaños (300 de mayoría relativa + 200 de representación proporcional) según la asignación definitiva del INE. Cuenta solo la bancada de el PAN, no la de sus aliados.
+category: POLITICA_MX
+subcategory: Elecciones
+resolution_criteria: >-
+  Gana el rango que contenga el número de diputaciones federales asignadas de forma definitiva a el PAN por el Consejo General del INE (y en su caso el TEPJF) tras la elección del 6 de junio de 2027, según las constancias oficiales de asignación.
+resolution_source_url: https://www.ine.mx
+rules: >-
+  Resuelve al rango que contenga el total de diputaciones federales (mayoría relativa más representación proporcional) asignadas de forma definitiva a el Partido Acción Nacional (PAN) tras la elección del 6 de junio de 2027, según las constancias del Consejo General del INE y, si hay impugnaciones, la resolución definitiva del TEPJF. Cuenta únicamente lo asignado al partido en su constancia, no los cambios de bancada posteriores ni los escaños de otros partidos aunque compitan en coalición con él. Si el partido no participa o pierde el registro, gana el rango más bajo. Si una reforma cambia el tamaño de la Cámara, los límites de cada rango se reescalan en proporción al nuevo total, redondeando al entero más cercano. El mercado cierra el 6 de junio de 2027 y se resuelve cuando la asignación quede firme, normalmente en agosto de 2027. Gana exactamente un rango: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  Al 23 de marzo de 2026 el grupo parlamentario de el PAN tiene 69 de las 500 diputaciones (30 de mayoría relativa y 39 de representación proporcional), según la Cámara de Diputados. En la asignación de representación proporcional de 2024 (acuerdo INE/CG2129/2024, publicado en el DOF) recibió 40 de las 200 curules plurinominales. El Proceso Electoral Federal 2026-2027 inició el 10 de septiembre de 2026; la jornada es el 6 de junio de 2027 y el INE asignará las diputaciones de representación proporcional a más tardar el 23 de agosto de 2027, según el Plan Integral y Calendario que aprobó su Consejo General el 30 de julio de 2026.
+ends_at: 2027-06-06T14:00:00Z
+# Apertura: 69 curules hoy; segunda fuerza en las encuestas de 2026 pero sin repunte claro.
+outcomes:
+  - {key: r_menos_50, label: "Menos de 50", pct: 15}
+  - {key: r_50_64, label: "50 a 64", pct: 30}
+  - {key: r_65_79, label: "65 a 79", pct: 32}
+  - {key: r_80_94, label: "80 a 94", pct: 16}
+  - {key: r_95_mas, label: "95 o más", pct: 7}
+
+---
+tipo: multi
+id: diputados-2027-rango-pri
+question: ¿Cuántas diputaciones federales tendrá el PRI tras la elección de 2027?
+description: >-
+  Rangos de escaños (300 de mayoría relativa + 200 de representación proporcional) según la asignación definitiva del INE. Cuenta solo la bancada de el PRI, no la de sus aliados.
+category: POLITICA_MX
+subcategory: Elecciones
+resolution_criteria: >-
+  Gana el rango que contenga el número de diputaciones federales asignadas de forma definitiva a el PRI por el Consejo General del INE (y en su caso el TEPJF) tras la elección del 6 de junio de 2027, según las constancias oficiales de asignación.
+resolution_source_url: https://www.ine.mx
+rules: >-
+  Resuelve al rango que contenga el total de diputaciones federales (mayoría relativa más representación proporcional) asignadas de forma definitiva a el Partido Revolucionario Institucional (PRI) tras la elección del 6 de junio de 2027, según las constancias del Consejo General del INE y, si hay impugnaciones, la resolución definitiva del TEPJF. Cuenta únicamente lo asignado al partido en su constancia, no los cambios de bancada posteriores ni los escaños de otros partidos aunque compitan en coalición con él. Si el partido no participa o pierde el registro, gana el rango más bajo. Si una reforma cambia el tamaño de la Cámara, los límites de cada rango se reescalan en proporción al nuevo total, redondeando al entero más cercano. El mercado cierra el 6 de junio de 2027 y se resuelve cuando la asignación quede firme, normalmente en agosto de 2027. Gana exactamente un rango: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  Al 23 de marzo de 2026 el grupo parlamentario de el PRI tiene 37 de las 500 diputaciones (12 de mayoría relativa y 25 de representación proporcional), según la Cámara de Diputados. En la asignación de representación proporcional de 2024 (acuerdo INE/CG2129/2024, publicado en el DOF) recibió 26 de las 200 curules plurinominales. El Proceso Electoral Federal 2026-2027 inició el 10 de septiembre de 2026; la jornada es el 6 de junio de 2027 y el INE asignará las diputaciones de representación proporcional a más tardar el 23 de agosto de 2027, según el Plan Integral y Calendario que aprobó su Consejo General el 30 de julio de 2026.
+ends_at: 2027-06-06T14:00:00Z
+# Apertura: 37 curules hoy, solo 12 de MR; su piso depende de conservar el registro y la RP.
+outcomes:
+  - {key: r_menos_20, label: "Menos de 20", pct: 18}
+  - {key: r_20_29, label: "20 a 29", pct: 32}
+  - {key: r_30_39, label: "30 a 39", pct: 30}
+  - {key: r_40_49, label: "40 a 49", pct: 14}
+  - {key: r_50_mas, label: "50 o más", pct: 6}
+
+---
+tipo: multi
+id: diputados-2027-rango-mc
+question: ¿Cuántas diputaciones federales tendrá Movimiento Ciudadano tras la elección de 2027?
+description: >-
+  Rangos de escaños (300 de mayoría relativa + 200 de representación proporcional) según la asignación definitiva del INE. Cuenta solo la bancada de Movimiento Ciudadano, no la de sus aliados.
+category: POLITICA_MX
+subcategory: Elecciones
+resolution_criteria: >-
+  Gana el rango que contenga el número de diputaciones federales asignadas de forma definitiva a Movimiento Ciudadano por el Consejo General del INE (y en su caso el TEPJF) tras la elección del 6 de junio de 2027, según las constancias oficiales de asignación.
+resolution_source_url: https://www.ine.mx
+rules: >-
+  Resuelve al rango que contenga el total de diputaciones federales (mayoría relativa más representación proporcional) asignadas de forma definitiva a Movimiento Ciudadano (MC) tras la elección del 6 de junio de 2027, según las constancias del Consejo General del INE y, si hay impugnaciones, la resolución definitiva del TEPJF. Cuenta únicamente lo asignado al partido en su constancia, no los cambios de bancada posteriores ni los escaños de otros partidos aunque compitan en coalición con él. Si el partido no participa o pierde el registro, gana el rango más bajo. Si una reforma cambia el tamaño de la Cámara, los límites de cada rango se reescalan en proporción al nuevo total, redondeando al entero más cercano. El mercado cierra el 6 de junio de 2027 y se resuelve cuando la asignación quede firme, normalmente en agosto de 2027. Gana exactamente un rango: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  Al 23 de marzo de 2026 el grupo parlamentario de Movimiento Ciudadano tiene 29 de las 500 diputaciones (1 de mayoría relativa y 28 de representación proporcional), según la Cámara de Diputados. En la asignación de representación proporcional de 2024 (acuerdo INE/CG2129/2024, publicado en el DOF) recibió 26 de las 200 curules plurinominales. El Proceso Electoral Federal 2026-2027 inició el 10 de septiembre de 2026; la jornada es el 6 de junio de 2027 y el INE asignará las diputaciones de representación proporcional a más tardar el 23 de agosto de 2027, según el Plan Integral y Calendario que aprobó su Consejo General el 30 de julio de 2026.
+ends_at: 2027-06-06T14:00:00Z
+# Apertura: 29 curules hoy (1 de MR); crece en encuestas de 2026 pero casi todo su peso es plurinominal.
+outcomes:
+  - {key: r_menos_20, label: "Menos de 20", pct: 15}
+  - {key: r_20_29, label: "20 a 29", pct: 30}
+  - {key: r_30_39, label: "30 a 39", pct: 28}
+  - {key: r_40_49, label: "40 a 49", pct: 17}
+  - {key: r_50_mas, label: "50 o más", pct: 10}
