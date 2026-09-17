@@ -6,12 +6,14 @@ from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.models.market import Market, MarketStatus, MarketCategory
 from app.models.price_history import PriceHistory
-from app.schemas.market import MarketList, MarketDetail, MarketCreate, MarketKind, PricePoint, MoverOut, ResumenCategoria
+from app.schemas.market import MarketList, MarketDetail, MarketCreate, MarketKind, PricePoint, MoverOut, ResumenCategoria, EnVivoOut
 from app.core.auth import get_current_user, require_admin
 from app.core import lmsr
 from app.models.user import User
 from app.services.movers import calcular_movers
 from app.services.resumen import resumen_categoria
+from app.services import en_vivo
+from app.config import settings
 
 router = APIRouter(prefix="/markets", tags=["markets"])
 
@@ -98,6 +100,15 @@ async def get_resumen(
     """Agregados de una categoría para su landing: mercados abiertos y volumen
     (total y de 7 días) por subcategoría (ver app/services/resumen.py)."""
     return await resumen_categoria(db, category)
+
+
+@router.get("/en-vivo", response_model=list[EnVivoOut])
+async def list_en_vivo():
+    """Marcador y minuto de los partidos en ventana (poller de ESPN, app/services/en_vivo.py).
+    [] si el poller está apagado (EN_VIVO_ENABLED)."""
+    if not settings.EN_VIVO_ENABLED:
+        return []
+    return en_vivo.estados()
 
 
 @router.get("/{market_id}", response_model=MarketDetail)

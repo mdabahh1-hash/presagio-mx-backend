@@ -91,6 +91,11 @@ class Settings(BaseSettings):
     # solos al armar el plan (el correo es un reporte); los escalados siguen
     # esperando al admin. False: todo espera el clic de aprobación.
     RESOLUCION_AUTO_APROBAR_1X2: bool = False
+    # Marcador en vivo para la landing de Deportes (app/services/en_vivo.py): poller
+    # del scoreboard de ESPN de los partidos en ventana. Informativo: un partido en
+    # juego ya cerró (ends_at = kickoff). True en Railway.
+    EN_VIVO_ENABLED: bool = False
+    EN_VIVO_INTERVALO_SEGUNDOS: int = 120
 
 
 settings = Settings()

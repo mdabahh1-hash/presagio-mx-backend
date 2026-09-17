@@ -154,6 +154,10 @@ class Partido:
     estado: str            # FT, AET, POSTPONED, ...
     alias: list[str] = field(default_factory=list)  # nombres alternos [home..., away...]
     liga: str = ""
+    # Marcador en vivo (app/services/en_vivo.py); solo ESPN y solo en LIVE
+    reloj: str | None = None     # status.displayClock ("58'", "12:34")
+    periodo: int | None = None   # status.period (fútbol 1/2, NFL cuarto)
+    detalle: str | None = None   # status.type.shortDetail ("2nd Half", "FT")
 
     @property
     def marcador(self) -> str:
@@ -238,7 +242,8 @@ def _espn_partido(e: dict, liga: str) -> Partido:
     c = e["competitions"][0]
     por_lado = {x["homeAway"]: x for x in c["competitors"]}
     h, a = por_lado["home"], por_lado["away"]
-    tipo = e["status"]["type"]
+    st = e["status"]
+    tipo = st["type"]
     estado = _ESPN_ESTADOS.get(tipo.get("name"), FT if tipo.get("completed") else UNKNOWN)
 
     def score(x: dict) -> int | None:
@@ -258,6 +263,9 @@ def _espn_partido(e: dict, liga: str) -> Partido:
         home_score=score(h) if estado in (FT, AET, LIVE) else None,
         away_score=score(a) if estado in (FT, AET, LIVE) else None,
         estado=estado, alias=nombres(h) + ["|"] + nombres(a), liga=liga,
+        reloj=st.get("displayClock") if estado == LIVE else None,
+        periodo=st.get("period") if estado == LIVE else None,
+        detalle=tipo.get("shortDetail"),
     )
 
 

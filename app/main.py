@@ -13,6 +13,7 @@ from app.services.ledger_backfill import backfill_ledger
 from app.services.referral import assign_codes_to_all
 from app.services.market_maintenance import run_market_maintenance, get_maintenance_status
 from app.services.resolucion.nocturno import nightly_loop, get_nightly_status
+from app.services.en_vivo import en_vivo_loop, get_en_vivo_status
 
 # How often the background job runs (closing-soon notices, auto-close, admin reminders).
 MAINTENANCE_INTERVAL_SECONDS = 900  # 15 min
@@ -60,10 +61,14 @@ async def lifespan(app: FastAPI):
     task = asyncio.create_task(_maintenance_loop())
     # Plan de resolución nocturno (ESPN + TheSportsDB → correo con aprobación).
     nightly = asyncio.create_task(nightly_loop()) if settings.RESOLUCION_NOCTURNA_ENABLED else None
+    # Marcador en vivo de la landing de Deportes (ESPN, sin LLM).
+    vivo = asyncio.create_task(en_vivo_loop()) if settings.EN_VIVO_ENABLED else None
     yield
     task.cancel()
     if nightly:
         nightly.cancel()
+    if vivo:
+        vivo.cancel()
 
 
 app = FastAPI(
@@ -131,4 +136,6 @@ async def maintenance_health():
         "healthy": healthy,
         "nightly": {**get_nightly_status(), "enabled": settings.RESOLUCION_NOCTURNA_ENABLED,
                     "hora_utc": settings.RESOLUCION_NOCTURNA_HORA_UTC},
+        "en_vivo": {**get_en_vivo_status(), "enabled": settings.EN_VIVO_ENABLED,
+                    "interval_seconds": settings.EN_VIVO_INTERVALO_SEGUNDOS},
     }

@@ -131,6 +131,20 @@ class MarketPatch(BaseModel):
     sujeto: dict | None = None  # identidad del jugador de un accesorio; {} la borra
 
 
+class EnVivoOut(BaseModel):
+    """Estado en vivo de un partido en ventana (GET /markets/en-vivo; app/services/en_vivo.py)."""
+    market_id: str
+    estado: str                   # SCHEDULED | LIVE | FT | AET | POSTPONED | CANCELLED | UNKNOWN
+    local: str
+    visitante: str
+    marcador_local: int | None = None
+    marcador_visitante: int | None = None
+    reloj: str | None = None
+    periodo: int | None = None
+    fuente_url: str | None = None
+    actualizado: str
+
+
 class ResumenSubcategoria(BaseModel):
     subcategory: str
     abiertos: int

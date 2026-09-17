@@ -291,3 +291,549 @@ outcomes:
   - {key: pumas, label: "🐾 Pumas", pct: 5}
   - {key: leon, label: "🦁 León", pct: 4}
   - {key: otro, label: "⚽ Otro club", pct: 13}
+
+# ── Jornada del 17 al 21 de septiembre de 2026 (propuesta S1, 16-sep) ─────────
+# Fixtures, horarios, sedes y récords del scoreboard de ESPN (fuente mecánica del
+# resolvedor) al 16-sep-2026. Los pct son PRIORS ESTIMADOS por récord/tabla:
+# ajústalos antes de --apply. Liga MX J9 (9), NFL Semana 2 (16), Sevilla–Barcelona
+# y Brighton–Arsenal.
+---
+tipo: partido
+id: mx-puebla-atlante-j9-a26
+competencia: Liga MX
+local: Puebla
+visitante: Atlante
+kickoff: 2026-09-19T01:00:00Z
+pct: [48, 28, 24]
+ventana: la Jornada 9 del Apertura 2026 de la Liga MX (18 al 20 de septiembre de 2026)
+context: >-
+  Jornada 9 del Apertura 2026 de la Liga MX. Puebla llega 8.º con 13 puntos y Atlante 15.º con 7. Puebla (4-1-3) recibe a Atlante (1-4-3) en el Estadio Cuauhtémoc, Puebla, el viernes 18 de septiembre de 2026 a las 19:00 (CDMX). Récords de la temporada según ESPN al 16 de septiembre de 2026.
+---
+tipo: partido
+id: mx-juarez-tigres-j9-a26
+competencia: Liga MX
+local: Juárez
+visitante: Tigres
+kickoff: 2026-09-19T03:00:00Z
+pct: [35, 28, 37]
+ventana: la Jornada 9 del Apertura 2026 de la Liga MX (18 al 20 de septiembre de 2026)
+context: >-
+  Jornada 9 del Apertura 2026 de la Liga MX. Juárez llega 18.º con 0 puntos y Tigres 14.º con 7. Juárez (0-0-8) recibe a Tigres (1-4-3) en el Estadio Olímpico Benito Juárez, Ciudad Juárez, el viernes 18 de septiembre de 2026 a las 21:00 (CDMX). Récords de la temporada según ESPN al 16 de septiembre de 2026.
+---
+tipo: partido
+id: mx-atlas-pumas-j9-a26
+competencia: Liga MX
+local: Atlas
+visitante: Pumas
+kickoff: 2026-09-19T23:00:00Z
+pct: [44, 28, 28]
+ventana: la Jornada 9 del Apertura 2026 de la Liga MX (18 al 20 de septiembre de 2026)
+context: >-
+  Jornada 9 del Apertura 2026 de la Liga MX. Atlas llega 9.º con 13 puntos y Pumas 11.º con 11. Atlas (4-1-3) recibe a Pumas (3-2-3) en el Estadio Jalisco, Guadalajara, el sábado 19 de septiembre de 2026 a las 17:00 (CDMX). Récords de la temporada según ESPN al 16 de septiembre de 2026.
+---
+tipo: partido
+id: mx-atletico-de-san-luis-necaxa-j9-a26
+competencia: Liga MX
+local: Atlético de San Luis
+visitante: Necaxa
+kickoff: 2026-09-19T23:00:00Z
+pct: [40, 28, 32]
+ventana: la Jornada 9 del Apertura 2026 de la Liga MX (18 al 20 de septiembre de 2026)
+context: >-
+  Jornada 9 del Apertura 2026 de la Liga MX. Atlético de San Luis llega 16.º con 6 puntos y Necaxa 13.º con 8. Atlético de San Luis (1-3-4) recibe a Necaxa (2-2-4) en el Estadio Libertad Financiera, San Luis Potosi, el sábado 19 de septiembre de 2026 a las 17:00 (CDMX). Récords de la temporada según ESPN al 16 de septiembre de 2026.
+---
+tipo: partido
+id: mx-monterrey-cruz-azul-j9-a26
+competencia: Liga MX
+local: Monterrey
+visitante: Cruz Azul
+kickoff: 2026-09-20T01:10:00Z
+pct: [38, 28, 34]
+ventana: la Jornada 9 del Apertura 2026 de la Liga MX (18 al 20 de septiembre de 2026)
+context: >-
+  Jornada 9 del Apertura 2026 de la Liga MX. Monterrey llega 12.º con 10 puntos y Cruz Azul 4.º con 15. Monterrey (3-1-3) recibe a Cruz Azul (5-0-3) en el Estadio BBVA, Guadalupe, el sábado 19 de septiembre de 2026 a las 19:10 (CDMX). Récords de la temporada según ESPN al 16 de septiembre de 2026.
+---
+tipo: partido
+id: mx-america-guadalajara-j9-a26
+competencia: Liga MX
+local: América
+visitante: Guadalajara
+kickoff: 2026-09-20T03:15:00Z
+pct: [43, 28, 29]
+ventana: la Jornada 9 del Apertura 2026 de la Liga MX (18 al 20 de septiembre de 2026)
+trending: true
+context: >-
+  Jornada 9 del Apertura 2026 de la Liga MX. Clásico Nacional. América llega 3.º con 16 puntos y Guadalajara 2.º con 17. América (5-1-1) recibe a Guadalajara (5-2-1) en el Estadio Banorte, Mexico City, el sábado 19 de septiembre de 2026 a las 21:15 (CDMX). Récords de la temporada según ESPN al 16 de septiembre de 2026.
+---
+tipo: partido
+id: mx-pachuca-tijuana-j9-a26
+competencia: Liga MX
+local: Pachuca
+visitante: Tijuana
+kickoff: 2026-09-21T00:00:00Z
+pct: [38, 28, 34]
+ventana: la Jornada 9 del Apertura 2026 de la Liga MX (18 al 20 de septiembre de 2026)
+context: >-
+  Jornada 9 del Apertura 2026 de la Liga MX. Pachuca llega 10.º con 11 puntos y Tijuana 7.º con 13. Pachuca (3-2-3) recibe a Tijuana (4-1-2) en el Estadio Hidalgo, Pachuca, el domingo 20 de septiembre de 2026 a las 18:00 (CDMX). Récords de la temporada según ESPN al 16 de septiembre de 2026.
+---
+tipo: partido
+id: mx-toluca-santos-j9-a26
+competencia: Liga MX
+local: Toluca
+visitante: Santos
+kickoff: 2026-09-21T00:00:00Z
+pct: [54, 28, 18]
+ventana: la Jornada 9 del Apertura 2026 de la Liga MX (18 al 20 de septiembre de 2026)
+context: >-
+  Jornada 9 del Apertura 2026 de la Liga MX. Toluca llega 1.º con 19 puntos y Santos 17.º con 4. Toluca (6-1-1) recibe a Santos (1-1-6) en el Estadio Nemesio Díez Riega, Toluca, el domingo 20 de septiembre de 2026 a las 18:00 (CDMX). Récords de la temporada según ESPN al 16 de septiembre de 2026.
+---
+tipo: partido
+id: mx-queretaro-leon-j9-a26
+competencia: Liga MX
+local: Querétaro
+visitante: León
+kickoff: 2026-09-21T02:05:00Z
+pct: [44, 28, 28]
+ventana: la Jornada 9 del Apertura 2026 de la Liga MX (18 al 20 de septiembre de 2026)
+context: >-
+  Jornada 9 del Apertura 2026 de la Liga MX. Querétaro llega 5.º con 13 puntos y León 6.º con 13. Querétaro (4-1-2) recibe a León (4-1-3) en el Estadio Corregidora, Santiago de Querétaro, el domingo 20 de septiembre de 2026 a las 20:05 (CDMX). Récords de la temporada según ESPN al 16 de septiembre de 2026.
+---
+tipo: partido
+id: laliga-sevilla-barcelona-sep26
+competencia: LaLiga
+local: Sevilla
+visitante: Barcelona
+kickoff: 2026-09-19T19:00:00Z
+pct: [35, 28, 37]
+ventana: la jornada del 18 al 21 de septiembre de 2026 de LaLiga 2026-27
+trending: true
+context: >-
+  LaLiga 2026-27. Sevilla (4-1-1) recibe a Barcelona (6-0-0) en el Ramón Sánchez Pizjuán Stadium, Sevilla, el sábado 19 de septiembre de 2026 a las 13:00 (CDMX). Récords de la temporada según ESPN al 16 de septiembre de 2026.
+---
+tipo: partido
+id: premier-brighton-arsenal-sep26
+competencia: Premier League
+local: Brighton
+visitante: Arsenal
+kickoff: 2026-09-19T14:00:00Z
+pct: [32, 28, 40]
+ventana: la jornada del 19 al 21 de septiembre de 2026 de la Premier League 2026-27
+trending: true
+context: >-
+  Premier League 2026-27. Brighton (2-1-1) recibe a Arsenal (4-0-0) en el American Express Stadium, Falmer, el sábado 19 de septiembre de 2026 a las 08:00 (CDMX). Récords de la temporada según ESPN al 16 de septiembre de 2026.
+---
+tipo: multi
+id: nfl-bills-lions-s2-2026
+question: ¿Quién gana Bills vs Lions? (Semana 2)
+description: Ganador del partido Buffalo Bills contra Detroit Lions de la Semana 2 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Buffalo Bills vs. Detroit Lions de la Semana 2 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 2 de la temporada 2026 (17 al 21 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: jueves 17 de septiembre de 2026, 18:15 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 2 de la NFL 2026. Buffalo Bills (1-0) reciben a Detroit Lions (1-0) en Highmark Stadium, Orchard Park, el jueves 17 de septiembre de 2026 a las 18:15 (CDMX). Récords de la Semana 1 según ESPN al 16 de septiembre de 2026.
+ends_at: 2026-09-18T00:15:00Z
+kickoff_at: 2026-09-18T00:15:00Z
+outcomes:
+  - {key: bills, label: "Bills", pct: 55}
+  - {key: lions, label: "Lions", pct: 45}
+---
+tipo: multi
+id: nfl-falcons-panthers-s2-2026
+question: ¿Quién gana Falcons vs Panthers? (Semana 2)
+description: Ganador del partido Atlanta Falcons contra Carolina Panthers de la Semana 2 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Atlanta Falcons vs. Carolina Panthers de la Semana 2 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 2 de la temporada 2026 (17 al 21 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 20 de septiembre de 2026, 11:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 2 de la NFL 2026. Atlanta Falcons (0-1) reciben a Carolina Panthers (0-1) en Mercedes-Benz Stadium, Atlanta, el domingo 20 de septiembre de 2026 a las 11:00 (CDMX). Récords de la Semana 1 según ESPN al 16 de septiembre de 2026.
+ends_at: 2026-09-20T17:00:00Z
+kickoff_at: 2026-09-20T17:00:00Z
+outcomes:
+  - {key: falcons, label: "Falcons", pct: 55}
+  - {key: panthers, label: "Panthers", pct: 45}
+---
+tipo: multi
+id: nfl-bears-vikings-s2-2026
+question: ¿Quién gana Bears vs Vikings? (Semana 2)
+description: Ganador del partido Chicago Bears contra Minnesota Vikings de la Semana 2 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Chicago Bears vs. Minnesota Vikings de la Semana 2 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 2 de la temporada 2026 (17 al 21 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 20 de septiembre de 2026, 11:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 2 de la NFL 2026. Chicago Bears (1-0) reciben a Minnesota Vikings (1-0) en Soldier Field, Chicago, el domingo 20 de septiembre de 2026 a las 11:00 (CDMX). Récords de la Semana 1 según ESPN al 16 de septiembre de 2026.
+ends_at: 2026-09-20T17:00:00Z
+kickoff_at: 2026-09-20T17:00:00Z
+outcomes:
+  - {key: bears, label: "Bears", pct: 55}
+  - {key: vikings, label: "Vikings", pct: 45}
+---
+tipo: multi
+id: nfl-titans-eagles-s2-2026
+question: ¿Quién gana Titans vs Eagles? (Semana 2)
+description: Ganador del partido Tennessee Titans contra Philadelphia Eagles de la Semana 2 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Tennessee Titans vs. Philadelphia Eagles de la Semana 2 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 2 de la temporada 2026 (17 al 21 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 20 de septiembre de 2026, 11:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 2 de la NFL 2026. Tennessee Titans (0-1) reciben a Philadelphia Eagles (1-0) en Nissan Stadium, Nashville, el domingo 20 de septiembre de 2026 a las 11:00 (CDMX). Récords de la Semana 1 según ESPN al 16 de septiembre de 2026.
+ends_at: 2026-09-20T17:00:00Z
+kickoff_at: 2026-09-20T17:00:00Z
+outcomes:
+  - {key: titans, label: "Titans", pct: 47}
+  - {key: eagles, label: "Eagles", pct: 53}
+---
+tipo: multi
+id: nfl-patriots-steelers-s2-2026
+question: ¿Quién gana Patriots vs Steelers? (Semana 2)
+description: Ganador del partido New England Patriots contra Pittsburgh Steelers de la Semana 2 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido New England Patriots vs. Pittsburgh Steelers de la Semana 2 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 2 de la temporada 2026 (17 al 21 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 20 de septiembre de 2026, 11:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 2 de la NFL 2026. New England Patriots (0-1) reciben a Pittsburgh Steelers (1-0) en Gillette Stadium, Foxborough, el domingo 20 de septiembre de 2026 a las 11:00 (CDMX). Récords de la Semana 1 según ESPN al 16 de septiembre de 2026.
+ends_at: 2026-09-20T17:00:00Z
+kickoff_at: 2026-09-20T17:00:00Z
+outcomes:
+  - {key: patriots, label: "Patriots", pct: 47}
+  - {key: steelers, label: "Steelers", pct: 53}
+---
+tipo: multi
+id: nfl-jets-packers-s2-2026
+question: ¿Quién gana Jets vs Packers? (Semana 2)
+description: Ganador del partido New York Jets contra Green Bay Packers de la Semana 2 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido New York Jets vs. Green Bay Packers de la Semana 2 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 2 de la temporada 2026 (17 al 21 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 20 de septiembre de 2026, 11:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 2 de la NFL 2026. New York Jets (1-0) reciben a Green Bay Packers (0-1) en MetLife Stadium, East Rutherford, el domingo 20 de septiembre de 2026 a las 11:00 (CDMX). Récords de la Semana 1 según ESPN al 16 de septiembre de 2026.
+ends_at: 2026-09-20T17:00:00Z
+kickoff_at: 2026-09-20T17:00:00Z
+outcomes:
+  - {key: jets, label: "Jets", pct: 63}
+  - {key: packers, label: "Packers", pct: 37}
+---
+tipo: multi
+id: nfl-buccaneers-browns-s2-2026
+question: ¿Quién gana Buccaneers vs Browns? (Semana 2)
+description: Ganador del partido Tampa Bay Buccaneers contra Cleveland Browns de la Semana 2 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Tampa Bay Buccaneers vs. Cleveland Browns de la Semana 2 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 2 de la temporada 2026 (17 al 21 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 20 de septiembre de 2026, 11:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 2 de la NFL 2026. Tampa Bay Buccaneers (0-1) reciben a Cleveland Browns (0-1) en Raymond James Stadium, Tampa, el domingo 20 de septiembre de 2026 a las 11:00 (CDMX). Récords de la Semana 1 según ESPN al 16 de septiembre de 2026.
+ends_at: 2026-09-20T17:00:00Z
+kickoff_at: 2026-09-20T17:00:00Z
+outcomes:
+  - {key: buccaneers, label: "Buccaneers", pct: 55}
+  - {key: browns, label: "Browns", pct: 45}
+---
+tipo: multi
+id: nfl-ravens-saints-s2-2026
+question: ¿Quién gana Ravens vs Saints? (Semana 2)
+description: Ganador del partido Baltimore Ravens contra New Orleans Saints de la Semana 2 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Baltimore Ravens vs. New Orleans Saints de la Semana 2 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 2 de la temporada 2026 (17 al 21 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 20 de septiembre de 2026, 11:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 2 de la NFL 2026. Baltimore Ravens (1-0) reciben a New Orleans Saints (0-1) en M&T Bank Stadium, Baltimore, el domingo 20 de septiembre de 2026 a las 11:00 (CDMX). Récords de la Semana 1 según ESPN al 16 de septiembre de 2026.
+ends_at: 2026-09-20T17:00:00Z
+kickoff_at: 2026-09-20T17:00:00Z
+outcomes:
+  - {key: ravens, label: "Ravens", pct: 63}
+  - {key: saints, label: "Saints", pct: 37}
+---
+tipo: multi
+id: nfl-texans-bengals-s2-2026
+question: ¿Quién gana Texans vs Bengals? (Semana 2)
+description: Ganador del partido Houston Texans contra Cincinnati Bengals de la Semana 2 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Houston Texans vs. Cincinnati Bengals de la Semana 2 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 2 de la temporada 2026 (17 al 21 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 20 de septiembre de 2026, 11:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 2 de la NFL 2026. Houston Texans (0-1) reciben a Cincinnati Bengals (1-0) en Reliant Stadium, Houston, el domingo 20 de septiembre de 2026 a las 11:00 (CDMX). Récords de la Semana 1 según ESPN al 16 de septiembre de 2026.
+ends_at: 2026-09-20T17:00:00Z
+kickoff_at: 2026-09-20T17:00:00Z
+outcomes:
+  - {key: texans, label: "Texans", pct: 47}
+  - {key: bengals, label: "Bengals", pct: 53}
+---
+tipo: multi
+id: nfl-broncos-jaguars-s2-2026
+question: ¿Quién gana Broncos vs Jaguars? (Semana 2)
+description: Ganador del partido Denver Broncos contra Jacksonville Jaguars de la Semana 2 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Denver Broncos vs. Jacksonville Jaguars de la Semana 2 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 2 de la temporada 2026 (17 al 21 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 20 de septiembre de 2026, 14:05 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 2 de la NFL 2026. Denver Broncos (0-1) reciben a Jacksonville Jaguars (1-0) en Empower Field at Mile High, Denver, el domingo 20 de septiembre de 2026 a las 14:05 (CDMX). Récords de la Semana 1 según ESPN al 16 de septiembre de 2026.
+ends_at: 2026-09-20T20:05:00Z
+kickoff_at: 2026-09-20T20:05:00Z
+outcomes:
+  - {key: broncos, label: "Broncos", pct: 47}
+  - {key: jaguars, label: "Jaguars", pct: 53}
+---
+tipo: multi
+id: nfl-chargers-raiders-s2-2026
+question: ¿Quién gana Chargers vs Raiders? (Semana 2)
+description: Ganador del partido Los Angeles Chargers contra Las Vegas Raiders de la Semana 2 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Los Angeles Chargers vs. Las Vegas Raiders de la Semana 2 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 2 de la temporada 2026 (17 al 21 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 20 de septiembre de 2026, 14:05 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 2 de la NFL 2026. Los Angeles Chargers (0-1) reciben a Las Vegas Raiders (1-0) en SoFi Stadium, Inglewood, el domingo 20 de septiembre de 2026 a las 14:05 (CDMX). Récords de la Semana 1 según ESPN al 16 de septiembre de 2026.
+ends_at: 2026-09-20T20:05:00Z
+kickoff_at: 2026-09-20T20:05:00Z
+outcomes:
+  - {key: chargers, label: "Chargers", pct: 47}
+  - {key: raiders, label: "Raiders", pct: 53}
+---
+tipo: multi
+id: nfl-cowboys-commanders-s2-2026
+question: ¿Quién gana Cowboys vs Commanders? (Semana 2)
+description: Ganador del partido Dallas Cowboys contra Washington Commanders de la Semana 2 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Dallas Cowboys vs. Washington Commanders de la Semana 2 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 2 de la temporada 2026 (17 al 21 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 20 de septiembre de 2026, 14:25 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 2 de la NFL 2026. Dallas Cowboys (0-1) reciben a Washington Commanders (0-1) en AT&T Stadium, Arlington, el domingo 20 de septiembre de 2026 a las 14:25 (CDMX). Récords de la Semana 1 según ESPN al 16 de septiembre de 2026.
+ends_at: 2026-09-20T20:25:00Z
+kickoff_at: 2026-09-20T20:25:00Z
+outcomes:
+  - {key: cowboys, label: "Cowboys", pct: 55}
+  - {key: commanders, label: "Commanders", pct: 45}
+---
+tipo: multi
+id: nfl-cardinals-seahawks-s2-2026
+question: ¿Quién gana Cardinals vs Seahawks? (Semana 2)
+description: Ganador del partido Arizona Cardinals contra Seattle Seahawks de la Semana 2 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Arizona Cardinals vs. Seattle Seahawks de la Semana 2 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 2 de la temporada 2026 (17 al 21 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 20 de septiembre de 2026, 14:25 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 2 de la NFL 2026. Arizona Cardinals (1-0) reciben a Seattle Seahawks (1-0) en State Farm Stadium, Glendale, el domingo 20 de septiembre de 2026 a las 14:25 (CDMX). Récords de la Semana 1 según ESPN al 16 de septiembre de 2026.
+ends_at: 2026-09-20T20:25:00Z
+kickoff_at: 2026-09-20T20:25:00Z
+outcomes:
+  - {key: cardinals, label: "Cardinals", pct: 55}
+  - {key: seahawks, label: "Seahawks", pct: 45}
+---
+tipo: multi
+id: nfl-49ers-dolphins-s2-2026
+question: ¿Quién gana 49ers vs Dolphins? (Semana 2)
+description: Ganador del partido San Francisco 49ers contra Miami Dolphins de la Semana 2 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido San Francisco 49ers vs. Miami Dolphins de la Semana 2 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 2 de la temporada 2026 (17 al 21 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 20 de septiembre de 2026, 14:25 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 2 de la NFL 2026. San Francisco 49ers (1-0) reciben a Miami Dolphins (0-1) en Levi's Stadium, Santa Clara, el domingo 20 de septiembre de 2026 a las 14:25 (CDMX). Récords de la Semana 1 según ESPN al 16 de septiembre de 2026.
+ends_at: 2026-09-20T20:25:00Z
+kickoff_at: 2026-09-20T20:25:00Z
+outcomes:
+  - {key: 49ers, label: "49ers", pct: 63}
+  - {key: dolphins, label: "Dolphins", pct: 37}
+---
+tipo: multi
+id: nfl-chiefs-colts-s2-2026
+question: ¿Quién gana Chiefs vs Colts? (Semana 2)
+description: Ganador del partido Kansas City Chiefs contra Indianapolis Colts de la Semana 2 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Kansas City Chiefs vs. Indianapolis Colts de la Semana 2 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 2 de la temporada 2026 (17 al 21 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 20 de septiembre de 2026, 18:20 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 2 de la NFL 2026. Kansas City Chiefs (1-0) reciben a Indianapolis Colts (0-1) en Arrowhead Stadium, Kansas City, el domingo 20 de septiembre de 2026 a las 18:20 (CDMX). Récords de la Semana 1 según ESPN al 16 de septiembre de 2026.
+ends_at: 2026-09-21T00:20:00Z
+kickoff_at: 2026-09-21T00:20:00Z
+outcomes:
+  - {key: chiefs, label: "Chiefs", pct: 63}
+  - {key: colts, label: "Colts", pct: 37}
+---
+tipo: multi
+id: nfl-rams-giants-s2-2026
+question: ¿Quién gana Rams vs Giants? (Semana 2)
+description: Ganador del partido Los Angeles Rams contra New York Giants de la Semana 2 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Los Angeles Rams vs. New York Giants de la Semana 2 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 2 de la temporada 2026 (17 al 21 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: lunes 21 de septiembre de 2026, 18:15 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 2 de la NFL 2026. Los Angeles Rams (0-1) reciben a New York Giants (1-0) en SoFi Stadium, Inglewood, el lunes 21 de septiembre de 2026 a las 18:15 (CDMX). Récords de la Semana 1 según ESPN al 16 de septiembre de 2026.
+ends_at: 2026-09-22T00:15:00Z
+kickoff_at: 2026-09-22T00:15:00Z
+outcomes:
+  - {key: rams, label: "Rams", pct: 47}
+  - {key: giants, label: "Giants", pct: 53}
