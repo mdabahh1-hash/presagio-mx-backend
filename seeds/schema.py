@@ -64,6 +64,7 @@ class MarketSpec:
     origen: str = ""  # "partido" si vino del atajo (solo para el reporte)
     auto_resolucion: dict | None = None  # receta mecánica (app/services/resolucion/recetas.py)
     sujeto: dict | None = None  # identidad del jugador de un accesorio (app/services/resolucion/sujeto.py)
+    kickoff_at: datetime | None = None  # instante del evento; el atajo partido lo pone (= ends_at)
 
 
 class SchemaError(Exception):
@@ -113,18 +114,23 @@ def cargar_texto(texto: str) -> tuple[list[MarketSpec], list[str]]:
     return specs, avisos
 
 
-def _ends_at(valor, ctx: str, errores: list[str]) -> datetime | None:
+def _ends_at(valor, ctx: str, errores: list[str], campo: str = "ends_at",
+             requerido: bool = True) -> datetime | None:
+    """Fecha ISO 8601 con zona horaria → UTC. `campo` solo cambia los mensajes
+    (también sirve para kickoff_at, opcional)."""
+    if valor is None and not requerido:
+        return None
     if isinstance(valor, str):
         try:
             valor = datetime.fromisoformat(valor.replace("Z", "+00:00"))
         except ValueError:
-            errores.append(f"{ctx}: ends_at no es ISO 8601 ('2026-11-13T05:59:00Z')")
+            errores.append(f"{ctx}: {campo} no es ISO 8601 ('2026-11-13T05:59:00Z')")
             return None
     if not isinstance(valor, datetime):
-        errores.append(f"{ctx}: falta 'ends_at'")
+        errores.append(f"{ctx}: falta '{campo}'")
         return None
     if valor.tzinfo is None:
-        errores.append(f"{ctx}: ends_at debe llevar zona horaria (termina en Z)")
+        errores.append(f"{ctx}: {campo} debe llevar zona horaria (termina en Z)")
         return None
     return valor.astimezone(timezone.utc)
 
@@ -132,6 +138,7 @@ def _ends_at(valor, ctx: str, errores: list[str]) -> datetime | None:
 def _normalizar(doc: dict, ctx: str, errores: list[str]) -> MarketSpec | None:
     antes = len(errores)
     ends_at = _ends_at(doc.get("ends_at"), ctx, errores)
+    kickoff_at = _ends_at(doc.get("kickoff_at"), ctx, errores, campo="kickoff_at", requerido=False)
 
     for k in CAMPOS_TEXTO:
         if not doc.get(k):
@@ -187,7 +194,7 @@ def _normalizar(doc: dict, ctx: str, errores: list[str]) -> MarketSpec | None:
         resolution_source_url=doc.get("resolution_source_url"), b=b,
         trending=bool(doc.get("trending", False)), initial_yes_price=prior,
         outcomes=outcomes, origen=str(doc.get("_origen", "")),
-        auto_resolucion=doc.get("auto_resolucion"), sujeto=sujeto,
+        auto_resolucion=doc.get("auto_resolucion"), sujeto=sujeto, kickoff_at=kickoff_at,
     )
 
 
@@ -232,6 +239,16 @@ def _validar(specs: list[MarketSpec], avisos: list[str]) -> list[str]:
             e.append(f"{c}: DEPORTES requiere subcategory")
         if s.kind is not None and (s.category != "DEPORTES" or s.kind not in KINDS):
             e.append(f"{c}: kind solo puede ser 'partido'|'accesorio' y solo en DEPORTES")
+        # Hora del evento: la landing de Deportes agrupa la jornada con ella. En un
+        # partido es obligatoria (el atajo `tipo: partido` la deriva del kickoff).
+        if s.kickoff_at is not None and s.category != "DEPORTES":
+            e.append(f"{c}: kickoff_at solo va en DEPORTES")
+        if s.kind == "partido" and s.kickoff_at is None:
+            e.append(f"{c}: kind: partido requiere kickoff_at (hora del evento en UTC; el atajo `tipo: partido` lo pone solo)")
+        if s.kickoff_at is not None and s.kickoff_at > s.ends_at:
+            e.append(f"{c}: kickoff_at ({s.kickoff_at:%Y-%m-%dT%H:%M}Z) no puede ser posterior a ends_at")
+        if s.kind == "accesorio" and (s.sujeto or {}).get("alcance") == "partido" and s.kickoff_at is None:
+            avisos.append(f"{c}: accesorio de partido sin kickoff_at (la landing usará ends_at como hora del partido)")
         # Accesorio de jugador (touchdown / pases / fantasy / titular / gol en una
         # liga con fuente automática): sin sujeto con ids el job resolvería por
         # nombre y podría tomar a un homónimo (caso Josh Allen, Semana 1 de 2026).

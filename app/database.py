@@ -84,6 +84,13 @@ async def migrate_columns() -> None:
         "ALTER TABLE markets ADD COLUMN IF NOT EXISTS auto_resolucion JSON",
         # Identidad del jugador de un accesorio (ids por fuente) para resolver sin homónimos.
         "ALTER TABLE markets ADD COLUMN IF NOT EXISTS sujeto JSON",
+        # Instante del evento de un mercado deportivo (landing de Deportes, marcador en vivo).
+        "ALTER TABLE markets ADD COLUMN IF NOT EXISTS kickoff_at TIMESTAMPTZ",
+        "CREATE INDEX IF NOT EXISTS ix_markets_kickoff_at ON markets (kickoff_at)",
+        # Backfill idempotente: en un partido (1X2 / ganador NFL) y en un accesorio de
+        # alcance 'partido' el cierre ES el kickoff (seeds/expand.py, resolucion/plan.py).
+        "UPDATE markets SET kickoff_at = ends_at WHERE kickoff_at IS NULL AND (kind = 'partido' "
+        "OR (kind = 'accesorio' AND sujeto->>'alcance' = 'partido'))",
     ]
     async with engine.begin() as conn:
         for s in stmts:

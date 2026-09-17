@@ -21,7 +21,10 @@
 #                     rules (texto completo) O rules_cuerpo + rules_como
 #                     (obligatorio rules_como si no hay resolution_source_url),
 #                     context, ends_at (2026-11-13T05:59:00Z), initial_yes_price (1-99),
-#                     b? (1000), trending? (false),
+#                     b? (3000), trending? (false),
+#                     kickoff_at? — hora del evento en UTC (partido / accesorio de partido);
+#                     la landing de Deportes agrupa la jornada con ella. OBLIGATORIA con
+#                     kind: partido (ganador NFL); recomendada en accesorios de partido.
 #                     auto_resolucion? — receta para que el job lo resuelva solo
 #                     (solo binarios de DATO PUBLICADO; ver app/services/resolucion/recetas.py):
 #                       auto_resolucion: {fuente: cripto_cierre, params: {indice: BRR, symbol: BTCUSDT},
@@ -50,7 +53,7 @@
 #
 #   tipo: partido   — atajo 1X2 de fútbol: id, competencia (clave de
 #                     seeds/plantillas.py:COMPETENCIAS), local, visitante,
-#                     kickoff (= ends_at), pct: [local, empate, visitante],
+#                     kickoff (= ends_at = kickoff_at), pct: [local, empate, visitante],
 #                     ventana ("la Jornada 10 de LaLiga 2026-27 (23 al 26 de octubre)"),
 #                     context, trending?, copa?, image_url?, b?
 #                     El runner deriva pregunta, criterios, normas y opciones.
@@ -249,3 +252,42 @@ outcomes:
   - {key: r_30_39, label: "30 a 39", pct: 28}
   - {key: r_40_49, label: "40 a 49", pct: 17}
   - {key: r_50_mas, label: "50 o más", pct: 10}
+
+# ── Deportes · Liga MX · campeón del Apertura 2026 ─────────────────────────────
+# Alimenta la tabla "Probabilidad de título · Liga MX" de la landing de Deportes
+# (contenido_categorias/deportes.py:titulos). Fechas del calendario oficial de la
+# Liga MX (PDF de ligamx.net/cancha/calendarios, versión del 27-jul-2026); tabla y
+# campeón vigente del scoreboard/standings de ESPN al 16-sep-2026. Los pct son
+# PRIORS ESTIMADOS (tabla tras la J8 + peso histórico): ajústalos antes de --apply.
+---
+tipo: multi
+id: mx-campeon-apertura-2026
+question: ¿Quién será campeón del Apertura 2026 de la Liga MX?
+description: >-
+  Campeón del Torneo Apertura 2026 de la Liga MX, decidido en la final a ida y vuelta de diciembre de 2026, según el resultado oficial de la Liga MX.
+category: DEPORTES
+subcategory: Liga MX
+kind: accesorio
+trending: true
+resolution_criteria: >-
+  Gana la opción del club que sea campeón del Apertura 2026 de la Liga MX al término de la final de vuelta, según el resultado oficial publicado por la Liga MX. Si el campeón no es uno de los clubes nombrados, gana «Otro club». Fuente de resolución: https://ligamx.net. Respaldo: ESPN (espn.com.mx).
+resolution_source_url: https://ligamx.net
+rules: |
+  Gana la opción del club que sea campeón del Torneo Apertura 2026 de la Liga MX según el resultado oficial de la Liga MX (ligamx.net): el ganador de la final a ida y vuelta, aplicando si hace falta los criterios de desempate del reglamento de competencia (posición en la tabla general, tiempos extra o penales). Si el campeón no es uno de los ocho clubes nombrados, gana «Otro club».
+
+  Según el calendario oficial de la Liga MX, la final está programada para el 10 y 13 de diciembre de 2026 o, si un club mexicano participa en la Copa Intercontinental, para el 24 y 27 de diciembre. El mercado se resuelve al terminar la final de vuelta. Si la final se pospone, el cierre se recorre a la nueva fecha oficial; si el torneo se cancela sin campeón, el mercado se cancela y las posiciones se reembolsan. Los clubes eliminados en el Play-In o en la Liguilla no se resuelven por separado: todas las opciones se liquidan juntas al final. Si ligamx.net y otro medio reportan campeones distintos, prevalece la Liga MX.
+
+  El mercado cierra el 28 de diciembre de 2026 a las 00:00 h (CDMX) o antes, al silbatazo final de la final de vuelta. Gana exactamente un resultado: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  El Apertura 2026 es el primer torneo de la temporada 2026-27 de la Liga MX: 17 jornadas del 16 de julio al 22 de noviembre y después la fase final, con cuartos de final del 25 al 29 de noviembre, semifinales del 2 al 6 de diciembre y la final el 10 y 13 de diciembre (o el 24 y 27 si un club mexicano juega la Copa Intercontinental), según el calendario oficial de la Liga MX. Cruz Azul es el campeón vigente: ganó el Clausura 2026 al vencer 2-1 en el marcador global a Pumas en la final del 24 de mayo de 2026. Al cierre de la Jornada 8 (14 de septiembre), Toluca (19 puntos), Guadalajara (17), América (16) y Cruz Azul (15) encabezan la tabla general.
+ends_at: 2026-12-28T05:59:00Z
+outcomes:
+  - {key: america, label: "🦅 América", pct: 20}
+  - {key: toluca, label: "😈 Toluca", pct: 17}
+  - {key: cruz_azul, label: "🚂 Cruz Azul", pct: 14}
+  - {key: guadalajara, label: "🐐 Guadalajara", pct: 12}
+  - {key: monterrey, label: "⭐ Monterrey", pct: 8}
+  - {key: tigres, label: "🐯 Tigres", pct: 7}
+  - {key: pumas, label: "🐾 Pumas", pct: 5}
+  - {key: leon, label: "🦁 León", pct: 4}
+  - {key: otro, label: "⚽ Otro club", pct: 13}

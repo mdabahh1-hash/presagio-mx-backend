@@ -21,6 +21,13 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 _EDITABLES = (MarketStatus.OPEN, MarketStatus.PENDING_RESOLUTION, MarketStatus.CLOSED)
 
 
+def _cierra_al_kickoff(market: Market) -> bool:
+    """Partido (1X2 / ganador NFL) o accesorio de alcance 'partido': ends_at ES el kickoff."""
+    if market.kind == "partido":
+        return True
+    return market.kind == "accesorio" and (market.sujeto or {}).get("alcance") == "partido"
+
+
 @router.post("/markets/{market_id}/cancel")
 async def cancel_market(
     market_id: str,
@@ -60,6 +67,14 @@ async def patch_market(
         ends_at = payload.ends_at if payload.ends_at.tzinfo else payload.ends_at.replace(tzinfo=timezone.utc)
         market.ends_at = ends_at
         cambios.append("ends_at")
+    if payload.kickoff_at is not None:
+        market.kickoff_at = payload.kickoff_at if payload.kickoff_at.tzinfo else payload.kickoff_at.replace(tzinfo=timezone.utc)
+        cambios.append("kickoff_at")
+    elif payload.ends_at is not None and _cierra_al_kickoff(market):
+        # Un partido cierra al silbatazo: reprogramarlo (aplazado) mueve también la
+        # hora del evento, que es lo que leen la jornada y el marcador en vivo.
+        market.kickoff_at = market.ends_at
+        cambios.append("kickoff_at")
     if payload.status == "open":
         if market.ends_at <= datetime.now(timezone.utc):
             raise HTTPException(status_code=400, detail={"code": "ENDS_AT_IN_PAST", "message": "Para reabrir, ends_at debe estar en el futuro"})

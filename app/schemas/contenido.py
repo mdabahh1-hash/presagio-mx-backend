@@ -83,3 +83,7 @@ class ContenidoCategoria(BaseModel):
     partidos: list[Partido] = []
     fuentes: list[Fuente] = []
     notas: dict[str, str] = {}
+    # Deportes: subcategoría (liga) → id del multi de campeón de la temporada. La landing
+    # pinta "Probabilidad de título" con los precios vivos de ese mercado; sin entrada, no
+    # monta la tabla. Las claves se validan en tests/test_contenido_categorias.py.
+    titulos: dict[str, str] = {}

@@ -65,6 +65,8 @@ class MarketBase(BaseModel):
     status: MarketStatus
     trending: bool
     ends_at: datetime
+    # Instante del evento (partido / accesorio de partido); NULL en futuros, F1, boxeo. Ver Market.kickoff_at.
+    kickoff_at: datetime | None = None
     created_at: datetime
     market_type: str = "binary"
     outcomes: list[OutcomeOut] = []
@@ -117,6 +119,7 @@ class MarketPatch(BaseModel):
     etiquetas de los outcomes."""
     status: Literal["open"] | None = None   # solo se puede volver a abrir
     ends_at: datetime | None = None
+    kickoff_at: datetime | None = None  # hora del evento; en un partido, mover ends_at la mueve sola
     question: str | None = Field(default=None, min_length=1, max_length=500)
     description: str | None = Field(default=None, min_length=1, max_length=4000)
     resolution_criteria: str | None = Field(default=None, min_length=1, max_length=4000)
@@ -126,3 +129,20 @@ class MarketPatch(BaseModel):
     outcome_labels: dict[str, str] | None = None  # outcome_key → etiqueta nueva
     auto_resolucion: dict | None = None  # receta mecánica; {} la borra
     sujeto: dict | None = None  # identidad del jugador de un accesorio; {} la borra
+
+
+class ResumenSubcategoria(BaseModel):
+    subcategory: str
+    abiertos: int
+    volumen_total: float   # suma de markets.volume, todos los estatus (incluye resueltos)
+    volumen_7d: float      # suma de trades.cost de los últimos 7 días
+
+
+class ResumenCategoria(BaseModel):
+    """Agregados de una categoría para su landing (riel de ligas, volumen por liga).
+    Ver app/services/resumen.py."""
+    categoria: MarketCategory
+    abiertos: int
+    volumen_total: float
+    volumen_7d: float
+    subcategorias: list[ResumenSubcategoria]

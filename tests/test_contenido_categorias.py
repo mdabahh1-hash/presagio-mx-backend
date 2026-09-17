@@ -1,4 +1,4 @@
-"""GET /api/contenido/categorias/{categoria}: contenido curado por categoría (landing de Política)."""
+"""GET /api/contenido/categorias/{categoria}: contenido curado por categoría (landings de Política y Deportes)."""
 from pathlib import Path
 
 from app.models.market import MarketCategory
@@ -31,22 +31,39 @@ async def test_categoria_invalida_422(client):
     assert resp.status_code == 422
 
 
-def test_todas_las_entradas_validan():
-    """Forma (Pydantic) + coherencia editorial (check) + ids que existen en market_content."""
-    from market_content import ALL  # solo en tests: el paquete de normas carga 10 módulos
+async def test_deportes_devuelve_titulos(client):
+    resp = await client.get("/api/contenido/categorias/Deportes")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["categoria"] == "DEPORTES"
+    assert body["titulos"]["NFL"] == "nfl-campeon-super-bowl-lxi"
+    assert body["proyeccion"] is None and body["cronologia"] is None
+    assert any(f["host"] == "ligamx.net" for f in body["fuentes"])
 
+
+def test_todas_las_entradas_validan():
+    """Forma (Pydantic) + coherencia editorial (check) + ids que existen en market_content o en
+    mercados-pendientes.yaml + ligas de `titulos` conocidas por el frontend."""
+    from market_content import ALL  # solo en tests: el paquete de normas carga 10 módulos
+    from seeds.plantillas import SUBCATEGORIAS_CONOCIDAS
+    from seeds.schema import cargar
+
+    specs, _ = cargar(RAIZ / "mercados-pendientes.yaml")
+    conocidos = set(ALL) | {s.id for s in specs}
     assert CATEGORIAS, "sin categorías curadas"
     assert check() == []
     for clave, data in CATEGORIAS.items():
         assert clave in MarketCategory.__members__, f"{clave} no es un NOMBRE de MarketCategory"
         c = ContenidoCategoria.model_validate(data)
-        referidos = set(c.notas)
+        referidos = set(c.notas) | set(c.titulos.values())
         if c.hero.secundario_id:
             referidos.add(c.hero.secundario_id)
         if c.proyeccion and c.proyeccion.mercado_umbral_id:
             referidos.add(c.proyeccion.mercado_umbral_id)
-        faltan = referidos - set(ALL)
-        assert not faltan, f"{clave}: ids sin normas en market_content: {sorted(faltan)}"
+        faltan = referidos - conocidos
+        assert not faltan, f"{clave}: ids sin normas en market_content ni documento en el YAML: {sorted(faltan)}"
+        ligas_desconocidas = set(c.titulos) - SUBCATEGORIAS_CONOCIDAS
+        assert not ligas_desconocidas, f"{clave}: titulos con ligas fuera de SUBCATEGORIAS_CONOCIDAS: {sorted(ligas_desconocidas)}"
 
 
 def test_bloques_coinciden_con_el_yaml():

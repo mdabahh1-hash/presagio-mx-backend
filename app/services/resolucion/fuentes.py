@@ -263,12 +263,25 @@ def _espn_partido(e: dict, liga: str) -> Partido:
 
 def espn_scoreboard(http: Http, liga: str, desde: datetime, hasta: datetime) -> list[Partido]:
     """Todos los partidos de la liga entre dos fechas (UTC, inclusive, ±1 día de
-    margen porque ESPN agrupa por día de la costa este de EUA)."""
+    margen porque ESPN agrupa por día de la costa este de EUA).
+
+    Una petición por día: desde el 2026-09-16 ESPN responde 400 ("Failed to get
+    events endpoint") al rango `dates=D1-D2` en fútbol y NFL; el día suelto
+    `dates=D` sigue funcionando. Un evento que aparece en dos días se cuenta una vez."""
     code = LIGAS[liga][0]
-    d1 = (desde - timedelta(days=1)).strftime("%Y%m%d")
-    d2 = (hasta + timedelta(days=1)).strftime("%Y%m%d")
-    data = http.get(f"{ESPN_API}/{code}/scoreboard?dates={d1}-{d2}&limit=500")
-    return [_espn_partido(e, liga) for e in data.get("events", [])]
+    dia = (desde - timedelta(days=1)).date()
+    fin = (hasta + timedelta(days=1)).date()
+    vistos: set[str] = set()
+    out: list[Partido] = []
+    while dia <= fin:
+        data = http.get(f"{ESPN_API}/{code}/scoreboard?dates={dia:%Y%m%d}&limit=500")
+        for e in data.get("events", []):
+            if str(e["id"]) in vistos:
+                continue
+            vistos.add(str(e["id"]))
+            out.append(_espn_partido(e, liga))
+        dia += timedelta(days=1)
+    return out
 
 
 def _equipo_resumen(id_: str, nombre: str, alias: list[str], lado: str | None) -> dict:

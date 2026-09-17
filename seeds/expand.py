@@ -56,6 +56,7 @@ def expandir_partido(doc: dict) -> dict:
                                copa=bool(doc.get("copa", False))).strip(),
         "context": doc["context"],
         "ends_at": kickoff,
+        "kickoff_at": kickoff,
         "b": doc.get("b", B_DEFAULT),
         "trending": doc.get("trending", False),
         "outcomes": [

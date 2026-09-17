@@ -86,3 +86,30 @@ async def test_sin_linea_base_usa_primera_fila_de_la_ventana(client, db, make_bi
     resp = await client.get("/api/markets/movers", params={"hours": 24})
     [item] = [r for r in resp.json() if r["id"] == m.id]
     assert item["price_before"] == 50.0 and item["change"] == 12.0
+
+
+@pytest.mark.asyncio
+async def test_filtra_por_categoria_y_subcategoria(client, db):
+    from app.models.market import Market, MarketCategory
+
+    def _dep(mid: str, sub: str) -> Market:
+        return Market(
+            id=mid, question=f"¿Test {mid}?", description="d", category=MarketCategory.DEPORTES,
+            subcategory=sub, resolution_criteria="r",
+            ends_at=datetime.now(timezone.utc) + timedelta(days=3),
+            b=1000.0, q_yes=0.0, q_no=0.0, yes_price=50.0, status=MarketStatus.OPEN, market_type="binary",
+        )
+
+    db.add_all([_dep("mov-mx", "Liga MX"), _dep("mov-nfl", "NFL")])
+    await db.commit()
+    db.add_all([_fila("mov-mx", 30, 40.0), _fila("mov-mx", 2, 60.0), _fila("mov-nfl", 30, 50.0), _fila("mov-nfl", 2, 30.0)])
+    await db.commit()
+
+    todos = await client.get("/api/markets/movers", params={"hours": 24, "category": "Deportes"})
+    assert {r["id"] for r in todos.json()} == {"mov-mx", "mov-nfl"}
+
+    solo_nfl = await client.get("/api/markets/movers", params={"hours": 24, "subcategory": "NFL"})
+    assert [r["id"] for r in solo_nfl.json()] == ["mov-nfl"]
+
+    otra = await client.get("/api/markets/movers", params={"hours": 24, "category": "Tech"})
+    assert all(r["id"] not in ("mov-mx", "mov-nfl") for r in otra.json())

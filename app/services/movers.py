@@ -14,7 +14,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.market import Market, MarketStatus
+from app.models.market import Market, MarketCategory, MarketStatus
 from app.models.price_history import PriceHistory
 
 _ACTIVOS = (MarketStatus.OPEN, MarketStatus.PENDING_RESOLUTION)
@@ -31,16 +31,26 @@ def _submuestrear(filas: list[PriceHistory]) -> list[PriceHistory]:
     return [filas[i] for i in idx]
 
 
-async def calcular_movers(db: AsyncSession, horas: int, limite: int) -> list[dict]:
+async def calcular_movers(db: AsyncSession, horas: int, limite: int,
+                          categoria: MarketCategory | None = None,
+                          subcategoria: str | None = None) -> list[dict]:
+    """`categoria`/`subcategoria` acotan la ventana (landing de Deportes:
+    "Movimiento del día" de una liga)."""
     cutoff = datetime.now(timezone.utc) - timedelta(hours=horas)
 
     # 1) Filas dentro de la ventana, solo de mercados activos
-    res = await db.execute(
+    stmt = (
         select(PriceHistory)
         .join(Market, Market.id == PriceHistory.market_id)
         .where(Market.status.in_(_ACTIVOS))
         .where(PriceHistory.recorded_at >= cutoff)
-        .order_by(PriceHistory.market_id, PriceHistory.outcome_key, PriceHistory.recorded_at, PriceHistory.id)
+    )
+    if categoria is not None:
+        stmt = stmt.where(Market.category == categoria)
+    if subcategoria:
+        stmt = stmt.where(Market.subcategory == subcategoria)
+    res = await db.execute(
+        stmt.order_by(PriceHistory.market_id, PriceHistory.outcome_key, PriceHistory.recorded_at, PriceHistory.id)
     )
     ventana: dict[tuple[str, str | None], list[PriceHistory]] = defaultdict(list)
     for fila in res.scalars().all():

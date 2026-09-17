@@ -98,6 +98,13 @@ class Market(Base):
     resolved_outcome_key: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     ends_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    # Instante del evento (kickoff, salida, campanazo) en UTC. En un `partido`
+    # (1X2 / ganador NFL) y en un accesorio de alcance 'partido' coincide con
+    # ends_at: el mercado cierra al silbatazo inicial (seeds/expand.py) y el
+    # resolvedor sigue leyendo ends_at. NULL en futuros, premios, F1, boxeo y
+    # fuera de DEPORTES. La landing de Deportes agrupa la jornada y pone la hora
+    # con este campo; el marcador en vivo elige con él los partidos en ventana.
+    kickoff_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 

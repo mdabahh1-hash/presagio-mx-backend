@@ -6,11 +6,12 @@ from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.models.market import Market, MarketStatus, MarketCategory
 from app.models.price_history import PriceHistory
-from app.schemas.market import MarketList, MarketDetail, MarketCreate, MarketKind, PricePoint, MoverOut
+from app.schemas.market import MarketList, MarketDetail, MarketCreate, MarketKind, PricePoint, MoverOut, ResumenCategoria
 from app.core.auth import get_current_user, require_admin
 from app.core import lmsr
 from app.models.user import User
 from app.services.movers import calcular_movers
+from app.services.resumen import resumen_categoria
 
 router = APIRouter(prefix="/markets", tags=["markets"])
 
@@ -79,11 +80,24 @@ async def list_markets(
 async def list_movers(
     hours: int = Query(24, ge=1, le=720),
     limit: int = Query(50, ge=1, le=100),
+    category: MarketCategory | None = Query(None),
+    subcategory: str | None = Query(None, max_length=50),
     db: AsyncSession = Depends(get_db),
 ):
     """Página "Noticias": mercados que más se movieron en las últimas `hours`
-    horas, por |cambio| en puntos porcentuales (ver app/services/movers.py)."""
-    return await calcular_movers(db, hours, limit)
+    horas, por |cambio| en puntos porcentuales (ver app/services/movers.py).
+    `category`/`subcategory` acotan (landing de Deportes: movimiento de una liga)."""
+    return await calcular_movers(db, hours, limit, category, subcategory)
+
+
+@router.get("/resumen", response_model=ResumenCategoria)
+async def get_resumen(
+    category: MarketCategory = Query(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """Agregados de una categoría para su landing: mercados abiertos y volumen
+    (total y de 7 días) por subcategoría (ver app/services/resumen.py)."""
+    return await resumen_categoria(db, category)
 
 
 @router.get("/{market_id}", response_model=MarketDetail)
