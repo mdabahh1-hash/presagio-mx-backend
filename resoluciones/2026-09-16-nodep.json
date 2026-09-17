@@ -1,0 +1,50 @@
+{
+  "generado": "2026-09-17T02:45:00Z",
+  "modo": "agente",
+  "nota": "No deportivos sin receta (skill resolver-no-deportivos), a petición de Mark. Fuente 1 = la que citan las normas de cada mercado; fuente 2 = una de FUENTES_CONFIABLES. Escalados: el NO por ausencia del Grito (regla de Mark: nunca al botón) y Suecia, cuyo conteo definitivo aún no concluye.",
+  "resoluciones": [
+    {
+      "id": "fed-mantiene-tasa-sep26",
+      "veredicto": "NO",
+      "resultado": "El FOMC subió el rango objetivo de fed funds 1/4 de punto, a 3.75%-4.00%, en su anuncio del 16-sep-2026 (voto unánime 12-0): no lo mantuvo sin cambios. Comunicado: «raise the target range for the federal funds rate by 1/4 percentage point to 3-3/4 to 4 percent».",
+      "fuente_1": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260916a.htm",
+      "fuente_2": "https://www.elfinanciero.com.mx/economia/2026/09/16/fed-sube-su-tasa-de-interes-en-un-cuarto-de-punto-se-ubica-en-rango-de-375-a-4/",
+      "confianza": "alta"
+    },
+    {
+      "id": "sheinbaum-grito-2026-pueblos-indigenas",
+      "veredicto": "YES",
+      "resultado": "En la arenga del 15-sep-2026 desde el balcón de Palacio Nacional, Sheinbaum pronunció la viva «¡Vivan los pueblos indígenas y afromexicanos!», que contiene textualmente la frase «pueblos indígenas» exigida por las normas.",
+      "fuente_1": "https://www.gob.mx/presidencia/articulos/version-estenografica-216-aniversario-del-grito-de-independencia",
+      "fuente_2": "https://www.milenio.com/politica/grito-de-independencia-de-sheinbaum-hoy-15-de-septiembre-2026-en-vivo",
+      "confianza": "alta"
+    }
+  ],
+  "escalados": [
+    {
+      "id": "sheinbaum-grito-2026-menciona-amlo",
+      "veredicto_sugerido": "NO",
+      "razon": "NO por AUSENCIA: se leyó la arenga completa (versión estenográfica de Presidencia) y no aparece «López Obrador», «Andrés Manuel» ni «AMLO» en ninguna de las 21 vivas, del primer «Mexicanas, mexicanos» al último «¡Viva México!». Milenio transcribe la misma lista y tampoco la trae. Por regla de Mark, un NO por ausencia nunca entra al botón: lo decides tú desde el correo o /admin. ATENCION: es el unico de los cuatro con posiciones reales (300 PT, 3 operaciones); precio SI 38.35%.",
+      "evidencia": [
+        "https://www.gob.mx/presidencia/articulos/version-estenografica-216-aniversario-del-grito-de-independencia",
+        "https://www.milenio.com/politica/grito-de-independencia-de-sheinbaum-hoy-15-de-septiembre-2026-en-vivo"
+      ],
+      "citas": [
+        "Versión estenográfica (Presidencia), arenga completa: «Mexicanas, mexicanos: ¡Viva la Independencia! ¡Viva Miguel Hidalgo y Costilla! ¡Viva Josefa Ortiz Téllez-Girón! ¡Viva José María Morelos y Pavón! ¡Viva Leona Vicario! ¡Viva Vicente Guerrero! ¡Viva Gertrudis Bocanegra! ¡Viva Guadalupe Victoria! ¡Viva Antonia Nava! ¡Vivan las heroínas y los héroes que nos dieron patria! ¡Vivan los pueblos indígenas y afromexicanos! ¡Vivan nuestras hermanas y hermanos migrantes! ¡Viva la dignidad del pueblo de México! ¡Viva la libertad! ¡Viva la igualdad! ¡Viva la justicia! ¡Viva la democracia! ¡Viva México, libre, independiente y soberano! ¡Viva México! ¡Viva México! ¡Viva México!»",
+        "Milenio transcribe la misma secuencia de vivas y tampoco registra mención a López Obrador, Andrés Manuel ni AMLO dentro de la arenga."
+      ]
+    },
+    {
+      "id": "suecia-sap-mas-votos-2026",
+      "razon": "VENTANA NO CERRADA: las normas exigen el conteo DEFINITIVO («Se usa el conteo definitivo, no el preliminar de la noche electoral») y la sammanräkning slutlig de las länsstyrelser sigue en curso. val.se indica que el conteo final arrancó el 14-sep y que el miércoles 16 (o jueves 17) los municipios aún cuentan votos anticipados y del extranjero; en 2022 el resultado definitivo se fijó hasta el sexto día. No se propone veredicto: hay que releer val.se cuando Valmyndigheten publique el resultado definitivo. Sin posiciones (0 PT, 0 operaciones), así que no corre prisa.",
+      "evidencia": [
+        "https://www.val.se",
+        "https://www.val.se/english/election-results/elections-to-the-riksdag-and-regional-and-municipal-councils/election-results-2026"
+      ],
+      "citas": [
+        "val.se (English): «Final results of the 2026 elections to the Riksdag are expected to be finalised during the weekend after election day» — al 16-sep no hay resultado definitivo publicado en esa página.",
+        "val.se: la rösträkning slutlig de las länsstyrelser comenzó el 14-sep-2026; el 16-sep (o 17) los municipios cuentan los votos anticipados rezagados y del extranjero."
+      ]
+    }
+  ]
+}
