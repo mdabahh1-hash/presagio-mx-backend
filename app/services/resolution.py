@@ -64,7 +64,8 @@ async def resolve(
         winning_outcome_id, winning_binary_side = outcome_ids[outcome_key], None
 
         def payout_de(pos: Position) -> tuple[float, bool]:
-            gano = pos.outcome_key == outcome_key
+            side = pos.side.value if pos.side else None
+            gano = lmsr.posicion_gana(side, pos.outcome_key, outcome_key, multi=True)
             return (pos.shares if gano else 0.0), gano
 
         apply_transition(market, MarketStatus.RESOLVED)

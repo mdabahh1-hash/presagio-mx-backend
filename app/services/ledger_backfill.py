@@ -9,6 +9,7 @@ store their per-event timestamps); from now on every delta is recorded live, so
 recent period windows are exact. Older windows may understate bonus income.
 """
 from sqlalchemy import select, func
+from app.core import lmsr
 from app.database import AsyncSessionLocal
 from app.models.points_ledger import PointsLedger
 from app.models.trade import Trade
@@ -41,22 +42,24 @@ async def backfill_ledger() -> None:
             key = (user_id, market_id)
             m = per_um.setdefault(key, {
                 "status": status, "resolved_at": resolved_at,
-                "resolved_outcome_key": resolved_outcome_key, "shares_by_key": {},
+                "resolved_outcome_key": resolved_outcome_key, "compras": [],
             })
-            effective_key = outcome_key or (side.value if side else "")
-            m["shares_by_key"][effective_key] = m["shares_by_key"].get(effective_key, 0.0) + shares
+            m["compras"].append((side.value if side else None, outcome_key, shares))
 
         for (user_id, _market_id), m in per_um.items():
             if not m["resolved_at"]:
                 continue
-            sbk = m["shares_by_key"]
-            payout = 0.0
-            if m["status"] == MarketStatus.RESOLVED_YES:
-                payout = sbk.get("YES", 0.0)
-            elif m["status"] == MarketStatus.RESOLVED_NO:
-                payout = sbk.get("NO", 0.0)
-            elif m["status"] == MarketStatus.RESOLVED and m["resolved_outcome_key"]:
-                payout = sbk.get(m["resolved_outcome_key"], 0.0)
+            ganador = (
+                "YES" if m["status"] == MarketStatus.RESOLVED_YES
+                else "NO" if m["status"] == MarketStatus.RESOLVED_NO
+                else m["resolved_outcome_key"] if m["status"] == MarketStatus.RESOLVED
+                else None
+            )
+            multi = m["status"] == MarketStatus.RESOLVED
+            payout = sum(
+                sh for side, key, sh in m["compras"]
+                if ganador and lmsr.posicion_gana(side, key, ganador, multi)
+            )
             if payout:
                 db.add(PointsLedger(
                     user_id=user_id, delta=payout, reason="payout", created_at=m["resolved_at"],

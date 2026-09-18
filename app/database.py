@@ -91,6 +91,12 @@ async def migrate_columns() -> None:
         # alcance 'partido' el cierre ES el kickoff (seeds/expand.py, resolucion/plan.py).
         "UPDATE markets SET kickoff_at = ends_at WHERE kickoff_at IS NULL AND (kind = 'partido' "
         "OR (kind = 'accesorio' AND sujeto->>'alcance' = 'partido'))",
+        # "No" de una opción en multi: la unicidad de positions incluye el lado. El
+        # índice nuevo se crea antes de soltar el viejo (misma transacción); es más
+        # laxo que el anterior, así que ninguna fila existente puede violarlo.
+        "CREATE UNIQUE INDEX IF NOT EXISTS uq_position_user_market_outcome_side "
+        "ON positions (user_id, market_id, outcome_key, side) NULLS NOT DISTINCT",
+        "ALTER TABLE positions DROP CONSTRAINT IF EXISTS uq_position_user_market_outcome",
     ]
     async with engine.begin() as conn:
         for s in stmts:

@@ -96,17 +96,28 @@ async def execute_trade(
         if not target_outcome:
             raise HTTPException(status_code=400, detail={"code": "INVALID_OUTCOME_KEY", "message": f"Resultado desconocido: {payload.outcome_key}"})
 
+        # side=NO compra "No" de la opción: paga si gana cualquier otra
+        # (lmsr.trade_cost_multi_no). Sin side es el Sí de la opción, como siempre.
+        buy_no = payload.side == TradeSide.NO
         q_dict = {o.outcome_key: o.q for o in outcomes}
+        # price_before/price_after en escala Sí de la opción, igual que el
+        # binario guarda yes_price aunque se compre No.
         price_before = target_outcome.price
 
-        shares = lmsr.shares_for_cost_multi(q_dict, market.b, payload.outcome_key, payload.points)
-        actual_cost = lmsr.trade_cost_multi(q_dict, market.b, payload.outcome_key, shares)
+        if buy_no:
+            shares = lmsr.shares_for_cost_multi_no(q_dict, market.b, payload.outcome_key, payload.points)
+            actual_cost = lmsr.trade_cost_multi_no(q_dict, market.b, payload.outcome_key, shares)
+        else:
+            shares = lmsr.shares_for_cost_multi(q_dict, market.b, payload.outcome_key, payload.points)
+            actual_cost = lmsr.trade_cost_multi(q_dict, market.b, payload.outcome_key, shares)
 
         _check_price_moved(payload.quoted_avg_price, actual_cost, shares)
 
         # Update LMSR state
-        target_outcome.q += shares
-        q_dict[payload.outcome_key] = target_outcome.q
+        for o in outcomes:
+            if (o.outcome_key != payload.outcome_key) == buy_no:
+                o.q += shares
+                q_dict[o.outcome_key] = o.q
 
         # Recompute all outcome prices
         new_prices = lmsr.prices_multi(q_dict, market.b)
@@ -125,7 +136,7 @@ async def execute_trade(
         trade = Trade(
             user_id=current_user.id,
             market_id=market_id,
-            side=None,
+            side=payload.side,
             outcome_key=payload.outcome_key,
             shares=shares,
             cost=actual_cost,
@@ -139,6 +150,7 @@ async def execute_trade(
                 Position.user_id == current_user.id,
                 Position.market_id == market_id,
                 Position.outcome_key == payload.outcome_key,
+                Position.side == TradeSide.NO if buy_no else Position.side.is_(None),
             ).with_for_update()
         )
         position = pos_result.scalar_one_or_none()
@@ -150,7 +162,7 @@ async def execute_trade(
             position = Position(
                 user_id=current_user.id,
                 market_id=market_id,
-                side=None,
+                side=payload.side,
                 outcome_key=payload.outcome_key,
                 shares=shares,
                 avg_cost=actual_cost / shares,
@@ -176,6 +188,7 @@ async def execute_trade(
             "outcomes": [{"outcome_key": o.outcome_key, "price": o.price} for o in outcomes],
             "trade": {
                 "outcome_key": payload.outcome_key,
+                "side": payload.side.value if payload.side else None,
                 "label": target_outcome.label,
                 "shares": round(shares, 4),
                 "cost": round(actual_cost, 2),
@@ -186,6 +199,7 @@ async def execute_trade(
             "market_id": market_id,
             "question": market.question[:80],
             "outcome_key": payload.outcome_key,
+            "side": payload.side.value if payload.side else None,
             "yes_price": target_outcome.price,
             "user": current_user.display_name,
         }))
@@ -193,7 +207,7 @@ async def execute_trade(
         return TradeResponse(
             id=trade.id,
             market_id=market_id,
-            side=None,
+            side=payload.side,
             outcome_key=payload.outcome_key,
             shares=shares,
             cost=actual_cost,
@@ -208,6 +222,8 @@ async def execute_trade(
         # ── Binary LMSR path (unchanged) ─────────────────────────────────────
         if not payload.side:
             raise HTTPException(status_code=400, detail={"code": "SIDE_REQUIRED", "message": "Este es un mercado binario; debes especificar 'side'"})
+        if payload.outcome_key:
+            raise HTTPException(status_code=400, detail={"code": "OUTCOME_KEY_NOT_ALLOWED", "message": "Este es un mercado binario; no lleva 'outcome_key'"})
 
         buy_yes = payload.side.value == "YES"
         price_before = market.yes_price
@@ -408,15 +424,26 @@ async def get_quote(
         if outcome_key not in q_dict:
             raise HTTPException(status_code=400, detail={"code": "INVALID_OUTCOME_KEY", "message": "outcome_key inválido"})
 
-        spot = lmsr.outcome_price(q_dict, market.b, outcome_key)
-        shares = lmsr.shares_for_cost_multi(q_dict, market.b, outcome_key, amount)
-        cost = lmsr.trade_cost_multi(q_dict, market.b, outcome_key, shares)
-        q_after = {k: (v + shares if k == outcome_key else v) for k, v in q_dict.items()}
-        price_after = lmsr.outcome_price(q_after, market.b, outcome_key)
+        if side == TradeSide.YES:
+            raise HTTPException(status_code=400, detail={"code": "SIDE_NOT_ALLOWED", "message": "Con 'outcome_key' solo se admite side=NO"})
+        buy_no = side == TradeSide.NO
+        p_yes = lmsr.outcome_price(q_dict, market.b, outcome_key)
+        if buy_no:
+            shares = lmsr.shares_for_cost_multi_no(q_dict, market.b, outcome_key, amount)
+            cost = lmsr.trade_cost_multi_no(q_dict, market.b, outcome_key, shares)
+        else:
+            shares = lmsr.shares_for_cost_multi(q_dict, market.b, outcome_key, amount)
+            cost = lmsr.trade_cost_multi(q_dict, market.b, outcome_key, shares)
+        q_after = {k: (v + shares if (k != outcome_key) == buy_no else v) for k, v in q_dict.items()}
+        p_yes_after = lmsr.outcome_price(q_after, market.b, outcome_key)
+        # spot/price_after en la escala del lado comprado (como el binario);
+        # mid_yes_raw es el Sí de la opción.
+        spot = 1.0 - p_yes if buy_no else p_yes
+        price_after = 1.0 - p_yes_after if buy_no else p_yes_after
 
         return _build_quote(
-            market=market, side=None, outcome_key=outcome_key, amount=amount,
-            spot=spot, mid_yes_raw=spot, shares=shares, cost=cost, price_after=price_after,
+            market=market, side=side, outcome_key=outcome_key, amount=amount,
+            spot=spot, mid_yes_raw=p_yes, shares=shares, cost=cost, price_after=price_after,
         )
 
     # Binary

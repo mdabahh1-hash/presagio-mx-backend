@@ -102,6 +102,18 @@ def payout_if_no(position_side: str, shares: float) -> float:
     return shares if position_side == "NO" else 0.0
 
 
+def posicion_gana(side: str | None, outcome_key: str | None, ganador: str, multi: bool) -> bool:
+    """¿Una posición/compra gana con `ganador`? (1 PT por acción si sí).
+
+    Binario: la clave efectiva (outcome_key, o el lado en filas viejas) es YES/NO
+    y `ganador` es YES/NO. Multi: side None es el Sí de la opción (gana si es la
+    ganadora); side NO es el No de la opción (gana si ganó cualquier otra).
+    """
+    if multi and side == "NO":
+        return outcome_key != ganador
+    return (outcome_key or side or "") == ganador
+
+
 def init_q_for_price(target_price: float, b: float) -> tuple[float, float]:
     """
     Return (q_yes, q_no) such that the market starts at target_price probability.
@@ -183,6 +195,43 @@ def trade_cost_multi(
     return after - before
 
 
+def trade_cost_multi_no(
+    q: dict[str, float], b: float, outcome_key: str, delta: float
+) -> float:
+    """Cost (in points) to buy `delta` shares of NO on `outcome_key`.
+
+    NO_k pays 1 PT unless k wins, i.e. it is the basket "one share of every
+    other outcome": q_j += delta for all j != k. By translation invariance
+    (C(q + c·1) = C(q) + c) this equals delta + C(q - delta·e_k) - C(q), so the
+    marginal price is 1 - p_k and the cost lies in [delta·(1 - p_k), delta].
+    """
+    before = cost_multi(q, b)
+    q_after = {k: (v if k == outcome_key else v + delta) for k, v in q.items()}
+    after = cost_multi(q_after, b)
+    return after - before
+
+
+def _shares_for_cost(cost_fn, points: float, tolerance: float, max_iter: int) -> float:
+    """Binary search on a strictly increasing cost_fn(shares) for `points`."""
+    lo, hi = 0.0, max(points * 10, 1.0)
+    # Grow the upper bound until it overshoots the target cost (long-shot outcomes
+    # under ~10% otherwise cap the fill and undercharge — common in multi markets).
+    for _ in range(60):
+        if cost_fn(hi) >= points:
+            break
+        hi *= 2
+    for _ in range(max_iter):
+        mid = (lo + hi) / 2
+        c = cost_fn(mid)
+        if abs(c - points) < tolerance:
+            return mid
+        elif c < points:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2
+
+
 def shares_for_cost_multi(
     q: dict[str, float],
     b: float,
@@ -192,20 +241,20 @@ def shares_for_cost_multi(
     max_iter: int = 100,
 ) -> float:
     """Binary search: how many shares of `outcome_key` can you buy with `points`?"""
-    lo, hi = 0.0, max(points * 10, 1.0)
-    # Grow the upper bound until it overshoots the target cost (long-shot outcomes
-    # under ~10% otherwise cap the fill and undercharge — common in multi markets).
-    for _ in range(60):
-        if trade_cost_multi(q, b, outcome_key, hi) >= points:
-            break
-        hi *= 2
-    for _ in range(max_iter):
-        mid = (lo + hi) / 2
-        c = trade_cost_multi(q, b, outcome_key, mid)
-        if abs(c - points) < tolerance:
-            return mid
-        elif c < points:
-            lo = mid
-        else:
-            hi = mid
-    return (lo + hi) / 2
+    return _shares_for_cost(
+        lambda n: trade_cost_multi(q, b, outcome_key, n), points, tolerance, max_iter
+    )
+
+
+def shares_for_cost_multi_no(
+    q: dict[str, float],
+    b: float,
+    outcome_key: str,
+    points: float,
+    tolerance: float = 1e-9,
+    max_iter: int = 100,
+) -> float:
+    """Binary search: how many NO shares on `outcome_key` can you buy with `points`?"""
+    return _shares_for_cost(
+        lambda n: trade_cost_multi_no(q, b, outcome_key, n), points, tolerance, max_iter
+    )

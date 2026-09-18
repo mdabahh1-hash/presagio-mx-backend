@@ -147,7 +147,9 @@ async def _enrich_positions(
             if market.market_type == "multi":
                 q_dict = q_by_market.get(market.id)
                 if q_dict and pos.outcome_key in q_dict:
-                    price = lmsr.outcome_price(q_dict, market.b, pos.outcome_key)
+                    p = lmsr.outcome_price(q_dict, market.b, pos.outcome_key)
+                    # El No de una opción vale 1 − p (mismo patrón que el binario).
+                    price = 1.0 - p if pos.side == TradeSide.NO else p
             elif pos.side is not None:
                 p_yes = lmsr.yes_price(market.q_yes, market.q_no, market.b)
                 price = p_yes if pos.side == TradeSide.YES else 1.0 - p_yes
@@ -337,11 +339,13 @@ async def _build_history(
             Market.status.in_((MarketStatus.RESOLVED_YES, MarketStatus.RESOLVED_NO, MarketStatus.RESOLVED)),
         )
     )
-    groups: dict[tuple[str, str], dict] = {}
+    # El lado va en la clave: en multi el Sí y el No de una misma opción son
+    # posiciones distintas (uno gana y el otro pierde).
+    groups: dict[tuple[str, str, str | None], dict] = {}
     for (market_id, outcome_key, side, shares, cost, question,
          status, resolved_at, resolved_key, outcome_label) in res.all():
         effective_key = outcome_key or (side.value if side else "")
-        g = groups.setdefault((market_id, effective_key), {
+        g = groups.setdefault((market_id, effective_key, side.value if side else None), {
             "shares": 0.0, "cost": 0.0, "question": question, "status": status,
             "resolved_at": resolved_at, "resolved_key": resolved_key,
             "side": None, "outcome_key": None, "outcome_label": None,
@@ -351,13 +355,15 @@ async def _build_history(
         g["side"] = g["side"] or (side.value if side else None)
         g["outcome_key"] = g["outcome_key"] or outcome_key
         g["outcome_label"] = g["outcome_label"] or outcome_label
-    for (market_id, effective_key), g in groups.items():
+    for (market_id, effective_key, side), g in groups.items():
         winning_key = (
             "YES" if g["status"] == MarketStatus.RESOLVED_YES
             else "NO" if g["status"] == MarketStatus.RESOLVED_NO
             else g["resolved_key"]
         )
-        won = bool(winning_key) and effective_key == winning_key
+        won = bool(winning_key) and lmsr.posicion_gana(
+            side, effective_key, winning_key, multi=g["status"] == MarketStatus.RESOLVED,
+        )
         events.append(HistoryEventOut(
             type="win" if won else "loss",
             created_at=g["resolved_at"],
