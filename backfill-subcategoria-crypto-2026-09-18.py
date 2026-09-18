@@ -57,10 +57,11 @@ async def main() -> int:
     print(f"{'id':38} {'subcategoría':14} {'ends_at (UTC)':20} tipo    estado")
     for id_, sub, ends_at, mtype, status in rows:
         nueva = MAPEO.get(id_)
-        destino = sub or nueva
         ends_utc = ends_at if ends_at.tzinfo else ends_at.replace(tzinfo=timezone.utc)
         marca = ""
-        if destino and ends_utc == CIERRE_ESCALERA:
+        # Solo los que este script clasifica: los que ya traen subcategoría vienen del
+        # YAML y ahí los cubre tests/test_escaleras_crypto.py (las escaleras mismas).
+        if sub is None and nueva and ends_utc == CIERRE_ESCALERA:
             marca = "  CHOCA"
             choques += 1
         if sub is None and nueva:
