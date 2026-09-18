@@ -8,7 +8,7 @@ MIN_TRADE_POINTS = 10
 
 
 class TradeRequest(BaseModel):
-    side: TradeSide | None = None          # binary markets
+    side: TradeSide | None = None          # binary markets; NO + outcome_key in multi
     outcome_key: str | None = None         # multi-outcome markets
     points: float
     # Avg fill price (pct 0-100) the client was quoted. If present, execution
@@ -31,8 +31,10 @@ class TradeRequest(BaseModel):
         has_outcome = self.outcome_key is not None
         if not has_side and not has_outcome:
             raise ValueError("Debes especificar 'side' (binario) o 'outcome_key' (multi-resultado)")
-        if has_side and has_outcome:
-            raise ValueError("Especifica solo 'side' o 'outcome_key', no ambos")
+        # Multi: outcome_key solo compra Sí de esa opción; outcome_key + side=NO
+        # compra No de esa opción. YES + outcome_key es redundante y se rechaza.
+        if has_side and has_outcome and self.side != TradeSide.NO:
+            raise ValueError("Con 'outcome_key' solo se admite side=NO (o sin side para Sí)")
         return self
 
 
