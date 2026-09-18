@@ -38,7 +38,7 @@ MAPEO = {
     "sol-cierre-150-2026": "Solana",
     "stablecoins-350b-2026": "Stablecoins",
     "ley-estructura-mercado-cripto-2026": "Regulación",
-    "eeuu-compra-bitcoin-2026": "Regulación",
+    "eeuu-compra-bitcoin-2026": "Bitcoin",  # 18-sep: Mark lo movió de Regulación (UPDATE puntual en prod)
 }
 
 # Cierre de las escaleras sembradas en mercados-pendientes.yaml (sep-2026)
