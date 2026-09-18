@@ -182,3 +182,33 @@ async def test_backfill_ledger_paga_no_de_multi(client, db, make_user, make_mult
     await backfill_ledger()
     rows = (await db.execute(select(PointsLedger.reason, PointsLedger.delta).where(PointsLedger.user_id == user.id))).all()
     assert sorted(rows) == [("payout", 12.0), ("trade", -8.0), ("trade", -2.0)]
+
+
+async def test_binario_si_y_no_mismo_usuario_sin_cambio(client, db, make_user, make_binary_market):
+    """Comportamiento previo al índice por lado: en binario, Sí y No del mismo
+    usuario son dos filas (outcome_key = lado) y cada compra se acumula en la suya
+    con costo promedio ponderado; nunca se compensan entre sí."""
+    user = await make_user("binario", points=1_000.0)
+    m = await make_binary_market("mno-bin-2", b=100.0)
+    h = auth_headers(user)
+    compras = []
+    for side, pts in (("YES", 20), ("NO", 30), ("YES", 40)):
+        r = await client.post(f"/api/markets/{m.id}/trade", json={"side": side, "points": pts}, headers=h)
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["outcome_key"] == side and body["side"] == side
+        compras.append((side, body["shares"], body["cost"]))
+
+    rows = (await db.execute(
+        select(Position).where(Position.user_id == user.id).execution_options(populate_existing=True)
+    )).scalars().all()
+    by_key = {(p.outcome_key, p.side): p for p in rows}
+    assert set(by_key) == {("YES", TradeSide.YES), ("NO", TradeSide.NO)} and len(rows) == 2
+
+    yes = by_key[("YES", TradeSide.YES)]
+    si = [(s, c) for side, s, c in compras if side == "YES"]
+    assert math.isclose(yes.shares, sum(s for s, _ in si), rel_tol=1e-9)
+    assert math.isclose(yes.avg_cost, sum(c for _, c in si) / yes.shares, rel_tol=1e-9)
+    no = by_key[("NO", TradeSide.NO)]
+    assert math.isclose(no.shares, compras[1][1], rel_tol=1e-9)
+    assert math.isclose(no.avg_cost, compras[1][2] / compras[1][1], rel_tol=1e-9)
