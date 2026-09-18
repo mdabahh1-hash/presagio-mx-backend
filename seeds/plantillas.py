@@ -43,4 +43,6 @@ SUBCATEGORIAS_CONOCIDAS: set[str] = {
     "Liga Portugal", "MLS", "Champions League", "Saudi Pro League", "NFL", "F1", "Boxeo",
     # Política / sociedad
     "Elecciones", "Sheinbaum", "Influencers", "Migración",
+    # Crypto
+    "Bitcoin", "Ethereum", "Solana", "Stablecoins", "Regulación", "Adopción México",
 }

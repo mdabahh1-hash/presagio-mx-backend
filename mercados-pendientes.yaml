@@ -837,3 +837,521 @@ kickoff_at: 2026-09-22T00:15:00Z
 outcomes:
   - {key: rams, label: "Rams", pct: 47}
   - {key: giants, label: "Giants", pct: 53}
+
+# ── Crypto · escaleras y rangos de cierre de septiembre (2026-09-18) ─────────
+# Escalera = binarios del mismo activo con el mismo ends_at y la redacción «cerrará <mes> en US$N [millones] o más»:
+# la landing de Crypto la reconoce por esa redacción (tests/test_escaleras_crypto.py cruza el umbral
+# de la pregunta con auto_resolucion.valor). Priors del generador con datos de Binance y DefiLlama.
+
+---
+tipo: binario
+id: btc-cierre-sep26-76000
+question: "¿Bitcoin cerrará septiembre en US$76,000 o más?"
+description: >-
+  Escalera de septiembre de Bitcoin: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Bitcoin
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Bitcoin Reference Rate (BRR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$76,000. Respaldo: cierre diario UTC de BTCUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Bitcoin Reference Rate (BRR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$76,000. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de BTCUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Bitcoin cotizaba cerca de US$80,884 en Binance (BTCUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 2.2% en los últimos meses. La CME CF Bitcoin Reference Rate (BRR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=80,883.66, σ_d=0.0222, T=11.86 d → 79
+initial_yes_price: 79
+trending: false
+auto_resolucion: {fuente: cripto_cierre, params: {indice: BRR, symbol: BTCUSDT}, fecha: "2026-09-30", op: ">=", valor: 76000}
+---
+tipo: binario
+id: btc-cierre-sep26-78000
+question: "¿Bitcoin cerrará septiembre en US$78,000 o más?"
+description: >-
+  Escalera de septiembre de Bitcoin: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Bitcoin
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Bitcoin Reference Rate (BRR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$78,000. Respaldo: cierre diario UTC de BTCUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Bitcoin Reference Rate (BRR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$78,000. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de BTCUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Bitcoin cotizaba cerca de US$80,884 en Binance (BTCUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 2.2% en los últimos meses. La CME CF Bitcoin Reference Rate (BRR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=80,883.66, σ_d=0.0222, T=11.86 d → 68
+initial_yes_price: 68
+trending: false
+auto_resolucion: {fuente: cripto_cierre, params: {indice: BRR, symbol: BTCUSDT}, fecha: "2026-09-30", op: ">=", valor: 78000}
+---
+tipo: binario
+id: btc-cierre-sep26-80000
+question: "¿Bitcoin cerrará septiembre en US$80,000 o más?"
+description: >-
+  Escalera de septiembre de Bitcoin: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Bitcoin
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Bitcoin Reference Rate (BRR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$80,000. Respaldo: cierre diario UTC de BTCUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Bitcoin Reference Rate (BRR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$80,000. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de BTCUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Bitcoin cotizaba cerca de US$80,884 en Binance (BTCUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 2.2% en los últimos meses. La CME CF Bitcoin Reference Rate (BRR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=80,883.66, σ_d=0.0222, T=11.86 d → 56
+initial_yes_price: 56
+trending: true
+auto_resolucion: {fuente: cripto_cierre, params: {indice: BRR, symbol: BTCUSDT}, fecha: "2026-09-30", op: ">=", valor: 80000}
+---
+tipo: binario
+id: btc-cierre-sep26-82000
+question: "¿Bitcoin cerrará septiembre en US$82,000 o más?"
+description: >-
+  Escalera de septiembre de Bitcoin: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Bitcoin
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Bitcoin Reference Rate (BRR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$82,000. Respaldo: cierre diario UTC de BTCUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Bitcoin Reference Rate (BRR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$82,000. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de BTCUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Bitcoin cotizaba cerca de US$80,884 en Binance (BTCUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 2.2% en los últimos meses. La CME CF Bitcoin Reference Rate (BRR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=80,883.66, σ_d=0.0222, T=11.86 d → 43
+initial_yes_price: 43
+trending: false
+auto_resolucion: {fuente: cripto_cierre, params: {indice: BRR, symbol: BTCUSDT}, fecha: "2026-09-30", op: ">=", valor: 82000}
+---
+tipo: binario
+id: btc-cierre-sep26-84000
+question: "¿Bitcoin cerrará septiembre en US$84,000 o más?"
+description: >-
+  Escalera de septiembre de Bitcoin: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Bitcoin
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Bitcoin Reference Rate (BRR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$84,000. Respaldo: cierre diario UTC de BTCUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Bitcoin Reference Rate (BRR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$84,000. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de BTCUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Bitcoin cotizaba cerca de US$80,884 en Binance (BTCUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 2.2% en los últimos meses. La CME CF Bitcoin Reference Rate (BRR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=80,883.66, σ_d=0.0222, T=11.86 d → 31
+initial_yes_price: 31
+trending: false
+auto_resolucion: {fuente: cripto_cierre, params: {indice: BRR, symbol: BTCUSDT}, fecha: "2026-09-30", op: ">=", valor: 84000}
+---
+tipo: binario
+id: btc-cierre-sep26-86000
+question: "¿Bitcoin cerrará septiembre en US$86,000 o más?"
+description: >-
+  Escalera de septiembre de Bitcoin: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Bitcoin
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Bitcoin Reference Rate (BRR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$86,000. Respaldo: cierre diario UTC de BTCUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Bitcoin Reference Rate (BRR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$86,000. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de BTCUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Bitcoin cotizaba cerca de US$80,884 en Binance (BTCUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 2.2% en los últimos meses. La CME CF Bitcoin Reference Rate (BRR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=80,883.66, σ_d=0.0222, T=11.86 d → 21
+initial_yes_price: 21
+trending: false
+auto_resolucion: {fuente: cripto_cierre, params: {indice: BRR, symbol: BTCUSDT}, fecha: "2026-09-30", op: ">=", valor: 86000}
+---
+tipo: multi
+id: btc-rango-cierre-sep26
+question: "¿En qué rango cerrará Bitcoin septiembre de 2026?"
+description: >-
+  Rangos excluyentes para la referencia diaria de CF Benchmarks del 30 de septiembre de 2026. Solo una opción resuelve Sí.
+category: CRYPTO
+subcategory: Bitcoin
+resolution_criteria: >-
+  Gana el rango que contenga el valor de la CME CF Bitcoin Reference Rate (BRR) del 30 de septiembre de 2026 publicado por CF Benchmarks. Respaldo: cierre diario UTC de BTCUSDT en Binance del mismo día.
+resolution_source_url: https://www.cfbenchmarks.com
+rules: >-
+  Resuelve al rango que contenga el valor de la CME CF Bitcoin Reference Rate (BRR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks. Cada rango incluye su límite inferior y excluye el superior: un valor exactamente igual a un límite cae en el rango que empieza en ese número. Los rangos cubren todos los valores posibles, así que siempre gana uno. El cierre diario UTC de BTCUSDT en Binance sirve como fuente de respaldo. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver. El mercado cierra el 30 de septiembre de 2026. Gana exactamente un rango: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  Bitcoin cotizaba cerca de US$80,884 en Binance (BTCUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 2.2% en los últimos meses. La CME CF Bitcoin Reference Rate (BRR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC.
+ends_at: 2026-09-30T23:59:00Z
+# Aperturas: diferencias de la misma distribución que la escalera (S=80,883.66, σ_d=0.0222, T=11.86 d)
+outcomes:
+  - {key: r_menos_74000, label: "Menos de US$74,000", pct: 12}
+  - {key: r_74000_78000, label: "US$74,000 a US$78,000", pct: 20}
+  - {key: r_78000_82000, label: "US$78,000 a US$82,000", pct: 25}
+  - {key: r_82000_86000, label: "US$82,000 a US$86,000", pct: 22}
+  - {key: r_86000_90000, label: "US$86,000 a US$90,000", pct: 13}
+  - {key: r_90000_mas, label: "US$90,000 o más", pct: 8}
+---
+tipo: binario
+id: eth-cierre-sep26-2400
+question: "¿Ethereum cerrará septiembre en US$2,400 o más?"
+description: >-
+  Escalera de septiembre de Ethereum: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Ethereum
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Ether-Dollar Reference Rate (ETHUSD_RR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$2,400. Respaldo: cierre diario UTC de ETHUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Ether-Dollar Reference Rate (ETHUSD_RR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$2,400. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de ETHUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Ethereum cotizaba cerca de US$2,605 en Binance (ETHUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 2.8% en los últimos meses. La CME CF Ether-Dollar Reference Rate (ETHUSD_RR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=2,605.41, σ_d=0.0281, T=11.86 d → 80
+initial_yes_price: 80
+trending: false
+auto_resolucion: {fuente: cripto_cierre, params: {indice: ETHUSD_RR, symbol: ETHUSDT}, fecha: "2026-09-30", op: ">=", valor: 2400}
+---
+tipo: binario
+id: eth-cierre-sep26-2500
+question: "¿Ethereum cerrará septiembre en US$2,500 o más?"
+description: >-
+  Escalera de septiembre de Ethereum: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Ethereum
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Ether-Dollar Reference Rate (ETHUSD_RR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$2,500. Respaldo: cierre diario UTC de ETHUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Ether-Dollar Reference Rate (ETHUSD_RR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$2,500. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de ETHUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Ethereum cotizaba cerca de US$2,605 en Binance (ETHUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 2.8% en los últimos meses. La CME CF Ether-Dollar Reference Rate (ETHUSD_RR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=2,605.41, σ_d=0.0281, T=11.86 d → 67
+initial_yes_price: 67
+trending: false
+auto_resolucion: {fuente: cripto_cierre, params: {indice: ETHUSD_RR, symbol: ETHUSDT}, fecha: "2026-09-30", op: ">=", valor: 2500}
+---
+tipo: binario
+id: eth-cierre-sep26-2600
+question: "¿Ethereum cerrará septiembre en US$2,600 o más?"
+description: >-
+  Escalera de septiembre de Ethereum: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Ethereum
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Ether-Dollar Reference Rate (ETHUSD_RR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$2,600. Respaldo: cierre diario UTC de ETHUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Ether-Dollar Reference Rate (ETHUSD_RR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$2,600. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de ETHUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Ethereum cotizaba cerca de US$2,605 en Binance (ETHUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 2.8% en los últimos meses. La CME CF Ether-Dollar Reference Rate (ETHUSD_RR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=2,605.41, σ_d=0.0281, T=11.86 d → 51
+initial_yes_price: 51
+trending: false
+auto_resolucion: {fuente: cripto_cierre, params: {indice: ETHUSD_RR, symbol: ETHUSDT}, fecha: "2026-09-30", op: ">=", valor: 2600}
+---
+tipo: binario
+id: eth-cierre-sep26-2700
+question: "¿Ethereum cerrará septiembre en US$2,700 o más?"
+description: >-
+  Escalera de septiembre de Ethereum: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Ethereum
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Ether-Dollar Reference Rate (ETHUSD_RR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$2,700. Respaldo: cierre diario UTC de ETHUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Ether-Dollar Reference Rate (ETHUSD_RR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$2,700. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de ETHUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Ethereum cotizaba cerca de US$2,605 en Binance (ETHUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 2.8% en los últimos meses. La CME CF Ether-Dollar Reference Rate (ETHUSD_RR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=2,605.41, σ_d=0.0281, T=11.86 d → 36
+initial_yes_price: 36
+trending: false
+auto_resolucion: {fuente: cripto_cierre, params: {indice: ETHUSD_RR, symbol: ETHUSDT}, fecha: "2026-09-30", op: ">=", valor: 2700}
+---
+tipo: binario
+id: eth-cierre-sep26-2800
+question: "¿Ethereum cerrará septiembre en US$2,800 o más?"
+description: >-
+  Escalera de septiembre de Ethereum: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Ethereum
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Ether-Dollar Reference Rate (ETHUSD_RR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$2,800. Respaldo: cierre diario UTC de ETHUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Ether-Dollar Reference Rate (ETHUSD_RR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$2,800. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de ETHUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Ethereum cotizaba cerca de US$2,605 en Binance (ETHUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 2.8% en los últimos meses. La CME CF Ether-Dollar Reference Rate (ETHUSD_RR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=2,605.41, σ_d=0.0281, T=11.86 d → 23
+initial_yes_price: 23
+trending: false
+auto_resolucion: {fuente: cripto_cierre, params: {indice: ETHUSD_RR, symbol: ETHUSDT}, fecha: "2026-09-30", op: ">=", valor: 2800}
+---
+tipo: binario
+id: eth-cierre-sep26-2900
+question: "¿Ethereum cerrará septiembre en US$2,900 o más?"
+description: >-
+  Escalera de septiembre de Ethereum: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Ethereum
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Ether-Dollar Reference Rate (ETHUSD_RR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$2,900. Respaldo: cierre diario UTC de ETHUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Ether-Dollar Reference Rate (ETHUSD_RR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$2,900. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de ETHUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Ethereum cotizaba cerca de US$2,605 en Binance (ETHUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 2.8% en los últimos meses. La CME CF Ether-Dollar Reference Rate (ETHUSD_RR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=2,605.41, σ_d=0.0281, T=11.86 d → 13
+initial_yes_price: 13
+trending: false
+auto_resolucion: {fuente: cripto_cierre, params: {indice: ETHUSD_RR, symbol: ETHUSDT}, fecha: "2026-09-30", op: ">=", valor: 2900}
+---
+tipo: multi
+id: eth-rango-cierre-sep26
+question: "¿En qué rango cerrará Ethereum septiembre de 2026?"
+description: >-
+  Rangos excluyentes para la referencia diaria de CF Benchmarks del 30 de septiembre de 2026. Solo una opción resuelve Sí.
+category: CRYPTO
+subcategory: Ethereum
+resolution_criteria: >-
+  Gana el rango que contenga el valor de la CME CF Ether-Dollar Reference Rate (ETHUSD_RR) del 30 de septiembre de 2026 publicado por CF Benchmarks. Respaldo: cierre diario UTC de ETHUSDT en Binance del mismo día.
+resolution_source_url: https://www.cfbenchmarks.com
+rules: >-
+  Resuelve al rango que contenga el valor de la CME CF Ether-Dollar Reference Rate (ETHUSD_RR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks. Cada rango incluye su límite inferior y excluye el superior: un valor exactamente igual a un límite cae en el rango que empieza en ese número. Los rangos cubren todos los valores posibles, así que siempre gana uno. El cierre diario UTC de ETHUSDT en Binance sirve como fuente de respaldo. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver. El mercado cierra el 30 de septiembre de 2026. Gana exactamente un rango: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  Ethereum cotizaba cerca de US$2,605 en Binance (ETHUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 2.8% en los últimos meses. La CME CF Ether-Dollar Reference Rate (ETHUSD_RR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC.
+ends_at: 2026-09-30T23:59:00Z
+# Aperturas: diferencias de la misma distribución que la escalera (S=2,605.41, σ_d=0.0281, T=11.86 d)
+outcomes:
+  - {key: r_menos_2300, label: "Menos de US$2,300", pct: 10}
+  - {key: r_2300_2500, label: "US$2,300 a US$2,500", pct: 23}
+  - {key: r_2500_2700, label: "US$2,500 a US$2,700", pct: 31}
+  - {key: r_2700_2900, label: "US$2,700 a US$2,900", pct: 22}
+  - {key: r_2900_3100, label: "US$2,900 a US$3,100", pct: 10}
+  - {key: r_3100_mas, label: "US$3,100 o más", pct: 4}
+---
+tipo: binario
+id: sol-cierre-sep26-100
+question: "¿Solana cerrará septiembre en US$100 o más?"
+description: >-
+  Escalera de septiembre de Solana: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Solana
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Solana-Dollar Reference Rate (SOLUSD_RR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$100. Respaldo: cierre diario UTC de SOLUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Solana-Dollar Reference Rate (SOLUSD_RR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$100. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de SOLUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Solana cotizaba cerca de US$113 en Binance (SOLUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 3.3% en los últimos meses. La CME CF Solana-Dollar Reference Rate (SOLUSD_RR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=112.56, σ_d=0.0332, T=11.86 d → 85
+initial_yes_price: 85
+trending: false
+auto_resolucion: {fuente: cripto_cierre, params: {indice: SOLUSD_RR, symbol: SOLUSDT}, fecha: "2026-09-30", op: ">=", valor: 100}
+---
+tipo: binario
+id: sol-cierre-sep26-105
+question: "¿Solana cerrará septiembre en US$105 o más?"
+description: >-
+  Escalera de septiembre de Solana: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Solana
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Solana-Dollar Reference Rate (SOLUSD_RR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$105. Respaldo: cierre diario UTC de SOLUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Solana-Dollar Reference Rate (SOLUSD_RR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$105. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de SOLUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Solana cotizaba cerca de US$113 en Binance (SOLUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 3.3% en los últimos meses. La CME CF Solana-Dollar Reference Rate (SOLUSD_RR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=112.56, σ_d=0.0332, T=11.86 d → 73
+initial_yes_price: 73
+trending: false
+auto_resolucion: {fuente: cripto_cierre, params: {indice: SOLUSD_RR, symbol: SOLUSDT}, fecha: "2026-09-30", op: ">=", valor: 105}
+---
+tipo: binario
+id: sol-cierre-sep26-110
+question: "¿Solana cerrará septiembre en US$110 o más?"
+description: >-
+  Escalera de septiembre de Solana: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Solana
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Solana-Dollar Reference Rate (SOLUSD_RR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$110. Respaldo: cierre diario UTC de SOLUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Solana-Dollar Reference Rate (SOLUSD_RR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$110. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de SOLUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Solana cotizaba cerca de US$113 en Binance (SOLUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 3.3% en los últimos meses. La CME CF Solana-Dollar Reference Rate (SOLUSD_RR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=112.56, σ_d=0.0332, T=11.86 d → 58
+initial_yes_price: 58
+trending: false
+auto_resolucion: {fuente: cripto_cierre, params: {indice: SOLUSD_RR, symbol: SOLUSDT}, fecha: "2026-09-30", op: ">=", valor: 110}
+---
+tipo: binario
+id: sol-cierre-sep26-115
+question: "¿Solana cerrará septiembre en US$115 o más?"
+description: >-
+  Escalera de septiembre de Solana: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Solana
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Solana-Dollar Reference Rate (SOLUSD_RR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$115. Respaldo: cierre diario UTC de SOLUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Solana-Dollar Reference Rate (SOLUSD_RR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$115. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de SOLUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Solana cotizaba cerca de US$113 en Binance (SOLUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 3.3% en los últimos meses. La CME CF Solana-Dollar Reference Rate (SOLUSD_RR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=112.56, σ_d=0.0332, T=11.86 d → 43
+initial_yes_price: 43
+trending: false
+auto_resolucion: {fuente: cripto_cierre, params: {indice: SOLUSD_RR, symbol: SOLUSDT}, fecha: "2026-09-30", op: ">=", valor: 115}
+---
+tipo: binario
+id: sol-cierre-sep26-120
+question: "¿Solana cerrará septiembre en US$120 o más?"
+description: >-
+  Escalera de septiembre de Solana: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Solana
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Solana-Dollar Reference Rate (SOLUSD_RR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$120. Respaldo: cierre diario UTC de SOLUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Solana-Dollar Reference Rate (SOLUSD_RR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$120. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de SOLUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Solana cotizaba cerca de US$113 en Binance (SOLUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 3.3% en los últimos meses. La CME CF Solana-Dollar Reference Rate (SOLUSD_RR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=112.56, σ_d=0.0332, T=11.86 d → 29
+initial_yes_price: 29
+trending: false
+auto_resolucion: {fuente: cripto_cierre, params: {indice: SOLUSD_RR, symbol: SOLUSDT}, fecha: "2026-09-30", op: ">=", valor: 120}
+---
+tipo: binario
+id: sol-cierre-sep26-125
+question: "¿Solana cerrará septiembre en US$125 o más?"
+description: >-
+  Escalera de septiembre de Solana: resuelve con la referencia diaria de CF Benchmarks del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Solana
+resolution_criteria: >-
+  Resuelve SÍ si la CME CF Solana-Dollar Reference Rate (SOLUSD_RR) del 30 de septiembre de 2026, publicada por CF Benchmarks, es igual o mayor a US$125. Respaldo: cierre diario UTC de SOLUSDT en Binance del 30 de septiembre de 2026.
+resolution_source_url: https://www.cfbenchmarks.com
+rules_cuerpo: >-
+  Resuelve SÍ si el valor de la CME CF Solana-Dollar Reference Rate (SOLUSD_RR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks, es igual o mayor a US$125. Se usa esa referencia y no el precio de un exchange en particular; el cierre diario UTC de SOLUSDT en Binance sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  Solana cotizaba cerca de US$113 en Binance (SOLUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 3.3% en los últimos meses. La CME CF Solana-Dollar Reference Rate (SOLUSD_RR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC. Esta escalera abre varios niveles con el mismo cierre para que cada quien elija su umbral.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: P(ln(S_T/K) ≥ 0), S=112.56, σ_d=0.0332, T=11.86 d → 18
+initial_yes_price: 18
+trending: false
+auto_resolucion: {fuente: cripto_cierre, params: {indice: SOLUSD_RR, symbol: SOLUSDT}, fecha: "2026-09-30", op: ">=", valor: 125}
+---
+tipo: multi
+id: sol-rango-cierre-sep26
+question: "¿En qué rango cerrará Solana septiembre de 2026?"
+description: >-
+  Rangos excluyentes para la referencia diaria de CF Benchmarks del 30 de septiembre de 2026. Solo una opción resuelve Sí.
+category: CRYPTO
+subcategory: Solana
+resolution_criteria: >-
+  Gana el rango que contenga el valor de la CME CF Solana-Dollar Reference Rate (SOLUSD_RR) del 30 de septiembre de 2026 publicado por CF Benchmarks. Respaldo: cierre diario UTC de SOLUSDT en Binance del mismo día.
+resolution_source_url: https://www.cfbenchmarks.com
+rules: >-
+  Resuelve al rango que contenga el valor de la CME CF Solana-Dollar Reference Rate (SOLUSD_RR) del 30 de septiembre de 2026 (la referencia diaria de las 4:00 p.m. hora de Londres), publicado por CF Benchmarks. Cada rango incluye su límite inferior y excluye el superior: un valor exactamente igual a un límite cae en el rango que empieza en ese número. Los rangos cubren todos los valores posibles, así que siempre gana uno. El cierre diario UTC de SOLUSDT en Binance sirve como fuente de respaldo. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver. El mercado cierra el 30 de septiembre de 2026. Gana exactamente un rango: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  Solana cotizaba cerca de US$113 en Binance (SOLUSDT) el 18 de septiembre de 2026, con una volatilidad diaria realizada de alrededor de 3.3% en los últimos meses. La CME CF Solana-Dollar Reference Rate (SOLUSD_RR) de CF Benchmarks es la referencia diaria de las 4:00 p.m. hora de Londres con la que se liquidan los futuros del CME; Binance publica velas diarias en UTC.
+ends_at: 2026-09-30T23:59:00Z
+# Aperturas: diferencias de la misma distribución que la escalera (S=112.56, σ_d=0.0332, T=11.86 d)
+outcomes:
+  - {key: r_menos_95, label: "Menos de US$95", pct: 7}
+  - {key: r_95_105, label: "US$95 a US$105", pct: 20}
+  - {key: r_105_115, label: "US$105 a US$115", pct: 30}
+  - {key: r_115_125, label: "US$115 a US$125", pct: 25}
+  - {key: r_125_135, label: "US$125 a US$135", pct: 12}
+  - {key: r_135_mas, label: "US$135 o más", pct: 6}
+---
+tipo: binario
+id: stablecoins-cierre-sep26-309-5b
+question: "¿La capitalización de las stablecoins cerrará septiembre en US$309,500 millones o más?"
+description: >-
+  Escalera de septiembre de stablecoins: resuelve con el dato de DefiLlama del cierre del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Stablecoins
+resolution_criteria: >-
+  Resuelve SÍ si la capitalización total en circulación de stablecoins vinculadas al dólar que publica DefiLlama con fecha del 1 de octubre de 2026 (foto de las 00:00 UTC, es decir, el cierre del 30 de septiembre) es igual o mayor a US$309,500 millones. Respaldo: suma de la categoría stablecoins de CoinGecko.
+resolution_source_url: https://defillama.com/stablecoins
+rules_cuerpo: >-
+  Resuelve SÍ si el total en circulación de stablecoins vinculadas al dólar (serie totalCirculatingUSD.peggedUSD de DefiLlama) con fecha del 1 de octubre de 2026 es igual o mayor a US$309,500 millones. DefiLlama fecha cada dato a las 00:00 UTC, así que el dato del 1 de octubre refleja el cierre del 30 de septiembre. La suma de la categoría stablecoins de CoinGecko sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  DefiLlama registraba alrededor de US$309.5 mil millones en stablecoins vinculadas al dólar el 18 de septiembre de 2026, frente a US$306.2 mil millones un mes antes. La oferta de stablecoins crece cuando entra dinero nuevo al ecosistema cripto y se contrae cuando sale, por eso se sigue como termómetro de liquidez del mercado.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: log-normal con deriva y vol de 30 d (L=309.49 B, μ=0.00035, σ=0.00116, 13 d) → 86
+initial_yes_price: 86
+trending: false
+auto_resolucion: {fuente: stablecoins_cap, params: {agg: max}, desde: "2026-10-01", fecha: "2026-10-01", op: ">=", valor: 309500000000}
+---
+tipo: binario
+id: stablecoins-cierre-sep26-310-5b
+question: "¿La capitalización de las stablecoins cerrará septiembre en US$310,500 millones o más?"
+description: >-
+  Escalera de septiembre de stablecoins: resuelve con el dato de DefiLlama del cierre del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Stablecoins
+resolution_criteria: >-
+  Resuelve SÍ si la capitalización total en circulación de stablecoins vinculadas al dólar que publica DefiLlama con fecha del 1 de octubre de 2026 (foto de las 00:00 UTC, es decir, el cierre del 30 de septiembre) es igual o mayor a US$310,500 millones. Respaldo: suma de la categoría stablecoins de CoinGecko.
+resolution_source_url: https://defillama.com/stablecoins
+rules_cuerpo: >-
+  Resuelve SÍ si el total en circulación de stablecoins vinculadas al dólar (serie totalCirculatingUSD.peggedUSD de DefiLlama) con fecha del 1 de octubre de 2026 es igual o mayor a US$310,500 millones. DefiLlama fecha cada dato a las 00:00 UTC, así que el dato del 1 de octubre refleja el cierre del 30 de septiembre. La suma de la categoría stablecoins de CoinGecko sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  DefiLlama registraba alrededor de US$309.5 mil millones en stablecoins vinculadas al dólar el 18 de septiembre de 2026, frente a US$306.2 mil millones un mes antes. La oferta de stablecoins crece cuando entra dinero nuevo al ecosistema cripto y se contrae cuando sale, por eso se sigue como termómetro de liquidez del mercado.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: log-normal con deriva y vol de 30 d (L=309.49 B, μ=0.00035, σ=0.00116, 13 d) → 62
+initial_yes_price: 62
+trending: false
+auto_resolucion: {fuente: stablecoins_cap, params: {agg: max}, desde: "2026-10-01", fecha: "2026-10-01", op: ">=", valor: 310500000000}
+---
+tipo: binario
+id: stablecoins-cierre-sep26-311-5b
+question: "¿La capitalización de las stablecoins cerrará septiembre en US$311,500 millones o más?"
+description: >-
+  Escalera de septiembre de stablecoins: resuelve con el dato de DefiLlama del cierre del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Stablecoins
+resolution_criteria: >-
+  Resuelve SÍ si la capitalización total en circulación de stablecoins vinculadas al dólar que publica DefiLlama con fecha del 1 de octubre de 2026 (foto de las 00:00 UTC, es decir, el cierre del 30 de septiembre) es igual o mayor a US$311,500 millones. Respaldo: suma de la categoría stablecoins de CoinGecko.
+resolution_source_url: https://defillama.com/stablecoins
+rules_cuerpo: >-
+  Resuelve SÍ si el total en circulación de stablecoins vinculadas al dólar (serie totalCirculatingUSD.peggedUSD de DefiLlama) con fecha del 1 de octubre de 2026 es igual o mayor a US$311,500 millones. DefiLlama fecha cada dato a las 00:00 UTC, así que el dato del 1 de octubre refleja el cierre del 30 de septiembre. La suma de la categoría stablecoins de CoinGecko sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  DefiLlama registraba alrededor de US$309.5 mil millones en stablecoins vinculadas al dólar el 18 de septiembre de 2026, frente a US$306.2 mil millones un mes antes. La oferta de stablecoins crece cuando entra dinero nuevo al ecosistema cripto y se contrae cuando sale, por eso se sigue como termómetro de liquidez del mercado.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: log-normal con deriva y vol de 30 d (L=309.49 B, μ=0.00035, σ=0.00116, 13 d) → 32
+initial_yes_price: 32
+trending: false
+auto_resolucion: {fuente: stablecoins_cap, params: {agg: max}, desde: "2026-10-01", fecha: "2026-10-01", op: ">=", valor: 311500000000}
+---
+tipo: binario
+id: stablecoins-cierre-sep26-312-5b
+question: "¿La capitalización de las stablecoins cerrará septiembre en US$312,500 millones o más?"
+description: >-
+  Escalera de septiembre de stablecoins: resuelve con el dato de DefiLlama del cierre del 30 de septiembre de 2026.
+category: CRYPTO
+subcategory: Stablecoins
+resolution_criteria: >-
+  Resuelve SÍ si la capitalización total en circulación de stablecoins vinculadas al dólar que publica DefiLlama con fecha del 1 de octubre de 2026 (foto de las 00:00 UTC, es decir, el cierre del 30 de septiembre) es igual o mayor a US$312,500 millones. Respaldo: suma de la categoría stablecoins de CoinGecko.
+resolution_source_url: https://defillama.com/stablecoins
+rules_cuerpo: >-
+  Resuelve SÍ si el total en circulación de stablecoins vinculadas al dólar (serie totalCirculatingUSD.peggedUSD de DefiLlama) con fecha del 1 de octubre de 2026 es igual o mayor a US$312,500 millones. DefiLlama fecha cada dato a las 00:00 UTC, así que el dato del 1 de octubre refleja el cierre del 30 de septiembre. La suma de la categoría stablecoins de CoinGecko sirve como fuente de respaldo y de verificación. Si la fuente oficial deja de publicar el dato o cambia su metodología antes de la resolución, el equipo de VEREDIKT usará la fuente sustituta más cercana y lo anunciará en los comentarios del mercado antes de resolver.
+context: >-
+  DefiLlama registraba alrededor de US$309.5 mil millones en stablecoins vinculadas al dólar el 18 de septiembre de 2026, frente a US$306.2 mil millones un mes antes. La oferta de stablecoins crece cuando entra dinero nuevo al ecosistema cripto y se contrae cuando sale, por eso se sigue como termómetro de liquidez del mercado.
+ends_at: 2026-09-30T23:59:00Z
+# Prior: log-normal con deriva y vol de 30 d (L=309.49 B, μ=0.00035, σ=0.00116, 13 d) → 11
+initial_yes_price: 11
+trending: false
+auto_resolucion: {fuente: stablecoins_cap, params: {agg: max}, desde: "2026-10-01", fecha: "2026-10-01", op: ">=", valor: 312500000000}
