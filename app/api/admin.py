@@ -15,6 +15,7 @@ from app.models.user import User
 from app.schemas.market import MarketPatch, MarketResolve
 from app.core.auth import get_current_user, require_admin as _require_admin
 from app.services import resolution
+from app.services.market_status import apply_transition
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -78,7 +79,7 @@ async def patch_market(
     if payload.status == "open":
         if market.ends_at <= datetime.now(timezone.utc):
             raise HTTPException(status_code=400, detail={"code": "ENDS_AT_IN_PAST", "message": "Para reabrir, ends_at debe estar en el futuro"})
-        market.status = MarketStatus.OPEN
+        apply_transition(market, MarketStatus.OPEN)
         # que los avisos de cierre / recordatorio de resolución vuelvan a dispararse
         for attr in ("closing_notified_at", "resolution_reminded_at"):
             if hasattr(market, attr):

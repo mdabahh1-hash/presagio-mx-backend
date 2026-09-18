@@ -13,7 +13,7 @@ la variable en Railway (lo cual invalida las sesiones de los usuarios), el
 script se adapta solo.
 
 Uso (desde la raíz del repo):
-  ./venv/bin/python generate-agent-token.py
+  ./venv/bin/python scripts/generate-agent-token.py
 """
 import json
 import os
@@ -28,7 +28,7 @@ from jose import jwt
 ADMIN_EMAIL = "mdabahh@atid.edu.mx"
 ADMIN_USER_ID = "1"
 API_BASE = "https://presagio-mx-backend-production-a30e.up.railway.app"
-REPO_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ENV_FILE = os.path.join(REPO_DIR, ".env.agent")
 DIAS_VALIDEZ = 7  # igual que ACCESS_TOKEN_EXPIRE_MINUTES del backend (7 días)
 

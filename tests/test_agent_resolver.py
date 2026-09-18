@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "agent-resolver.py")
+_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts", "agent-resolver.py")
 _spec = importlib.util.spec_from_file_location("agent_resolver", _PATH)
 ar = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(ar)

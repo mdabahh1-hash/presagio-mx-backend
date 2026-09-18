@@ -23,8 +23,8 @@ resolver-no-deportivos" (el correo dice cuántos). Eso es lo que se trabaja aqu�
 ## Paso 1 — Inventario
 
 ```
-./venv/bin/python agent-resolver.py check-token
-./venv/bin/python agent-resolver.py list --sin-deportes --out <scratchpad>/nodep.json
+./venv/bin/python scripts/agent-resolver.py check-token
+./venv/bin/python scripts/agent-resolver.py list --sin-deportes --out <scratchpad>/nodep.json
 ```
 
 Solo `status == pending_resolution` (ya cerrados). Si Mark nombra ids, limítate a esos. Los que tienen
@@ -77,8 +77,8 @@ Regla de Mark: **un NO por ausencia nunca entra al botón**; él lo decide desde
 `evidencia: [urls]` y `citas: [texto]`, el correo y la página los muestran):
 
 ```
-./venv/bin/python agent-resolver.py check-plan resoluciones/AAAA-MM-DD-nodep.json
-./venv/bin/python agent-resolver.py proponer  resoluciones/AAAA-MM-DD-nodep.json
+./venv/bin/python scripts/agent-resolver.py check-plan resoluciones/AAAA-MM-DD-nodep.json
+./venv/bin/python scripts/agent-resolver.py proponer  resoluciones/AAAA-MM-DD-nodep.json
 ```
 
 Detente: Mark aprueba desde el correo. Commit del JSON
@@ -89,6 +89,6 @@ se leyeron y qué quedó escalado y por qué.
 
 Si al resolver a mano descubres que un mercado era de dato publicado con API libre, propón la receta
 (`auto_resolucion`) para los mercados futuros del mismo tipo en `mercados-pendientes.yaml`, o aplícala
-a los ya sembrados con `agent-resolver.py recetas <archivo.yaml> --apply`. Tokens gratuitos pendientes
+a los ya sembrados con `scripts/agent-resolver.py recetas <archivo.yaml> --apply`. Tokens gratuitos pendientes
 de registrar por Mark: `BANXICO_TOKEN` (SieAPIRest) e `INEGI_TOKEN`; sin ellos las recetas
 `banxico_tasa` / `inegi_inflacion` salen escaladas con "falta token".

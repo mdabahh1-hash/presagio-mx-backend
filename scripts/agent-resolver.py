@@ -7,21 +7,21 @@ sistema no tiene certificados SSL). El token se lee de .env.agent; si venció, s
 regenera solo con generate-agent-token.py.
 
 Comandos:
-  ./venv/bin/python agent-resolver.py check-token
+  ./venv/bin/python scripts/agent-resolver.py check-token
       Verifica el token de .env.agent (y lo renueva si hace falta).
 
-  ./venv/bin/python agent-resolver.py list [--compact] [--out archivo.json] [--sin-deportes] [--categoria X]
+  ./venv/bin/python scripts/agent-resolver.py list [--compact] [--out archivo.json] [--sin-deportes] [--categoria X]
       Lista TODOS los mercados en pending_resolution. Por default con detalle
       completo (criterio, fuente, normas, outcomes, auto_resolucion); --compact
       solo lo que necesita la investigación. --sin-deportes para la skill
       resolver-no-deportivos.
 
-  ./venv/bin/python agent-resolver.py recetas recetas-AAAA-MM-DD.yaml [--apply] [--only ID ...]
+  ./venv/bin/python scripts/agent-resolver.py recetas recetas-AAAA-MM-DD.yaml [--apply] [--only ID ...]
       Escribe recetas de resolución mecánica (auto_resolucion, ver
       app/services/resolucion/recetas.py) en mercados ya sembrados, vía PATCH.
       Sin --apply solo valida.
 
-  ./venv/bin/python agent-resolver.py sujetos-generar --out resoluciones/sujetos-AAAA-MM-DD.yaml [--only ID ...]
+  ./venv/bin/python scripts/agent-resolver.py sujetos-generar --out resoluciones/sujetos-AAAA-MM-DD.yaml [--only ID ...]
       Backfill de identidad (solo lectura: GET al API y a ESPN/CBS/UEFA). Para
       los accesorios de jugador activos (open + pending_resolution) arma
       `sujeto` desde market_content (nfl.py:PROPS, futbol_accesorios.py) o el
@@ -30,13 +30,13 @@ Comandos:
       nunca fuzzy). Escribe un YAML id → sujeto con los que pasaron; los que
       fallan van como comentario y el comando sale con código 1. Revisar a mano.
 
-  ./venv/bin/python agent-resolver.py sujetos resoluciones/sujetos-AAAA-MM-DD.yaml [--apply] [--only ID ...]
+  ./venv/bin/python scripts/agent-resolver.py sujetos resoluciones/sujetos-AAAA-MM-DD.yaml [--apply] [--only ID ...]
       Escribe `sujeto` (identidad del jugador: equipo, rival, posición,
       alcance, ids por fuente) en mercados ya sembrados, vía PATCH. Sin --apply
       solo valida (validar_sujeto contra la pregunta del mercado) e imprime.
       --apply escribe en PRODUCCIÓN: solo con OK de Mark.
 
-  ./venv/bin/python agent-resolver.py plan-auto --out resoluciones/AAAA-MM-DD.json [--liga "Serie A" ...]
+  ./venv/bin/python scripts/agent-resolver.py plan-auto --out resoluciones/AAAA-MM-DD.json [--liga "Serie A" ...]
       Arma el plan SIN LLM: cruza los 1X2 pendientes con ESPN y TheSportsDB
       (paquete resolucion/). Solo entran con confianza alta los partidos cuyo
       marcador coincide en ambas fuentes; el resto (aplazados, una sola fuente)
@@ -44,21 +44,21 @@ Comandos:
       partido sale de sujeto.equipo + rival y el jugador se ubica por id; sin
       sujeto o con cualquier duda de identidad, escalado sin sugerencia.
 
-  ./venv/bin/python agent-resolver.py check-plan resoluciones/AAAA-MM-DD.json
+  ./venv/bin/python scripts/agent-resolver.py check-plan resoluciones/AAAA-MM-DD.json
       Valida un plan contra el API (solo lectura): mercado sigue pendiente,
       veredicto válido para el tipo, dos fuentes de hosts distintos, confianza
       alta, evento ya cerrado y, en accesorios de jugador, sujeto en el mercado
       y `sujeto_confirmado` con los mismos ids por fuente (imprime la
       identidad). Sale con código 1 si hay errores.
 
-  ./venv/bin/python agent-resolver.py proponer resoluciones/AAAA-MM-DD.json [--only ID ...]
+  ./venv/bin/python scripts/agent-resolver.py proponer resoluciones/AAAA-MM-DD.json [--only ID ...]
       Flujo normal desde 2026-09-12: valida el plan (check-plan) y lo sube al
       servidor como ResolutionPlan pendiente (origen=agente). Mark recibe el
       mismo correo que el nocturno, con tabla, fuentes y botón "Revisar y
       aprobar"; nada se resuelve hasta que él confirma. El resultado queda en
       el plan del servidor (`planes`). No escribe log.jsonl.
 
-  ./venv/bin/python agent-resolver.py apply resoluciones/AAAA-MM-DD.json --yes [--only ID ...]
+  ./venv/bin/python scripts/agent-resolver.py apply resoluciones/AAAA-MM-DD.json --yes [--only ID ...]
       Respaldo, solo si Mark lo pide expresamente en el chat: ejecuta el plan
       directo (tras check-plan). IRREVERSIBLE: paga posiciones, escribe
       ledger, liquida ligas privadas y manda correos. Cada resultado se anexa a
@@ -66,23 +66,23 @@ Comandos:
       se puede re-ejecutar tras un fallo parcial. --yes solo con aprobación
       explícita de Mark.
 
-  ./venv/bin/python agent-resolver.py resolve <market_id> --resolution YES|NO
-  ./venv/bin/python agent-resolver.py resolve <market_id> --outcome <outcome_key>
+  ./venv/bin/python scripts/agent-resolver.py resolve <market_id> --resolution YES|NO
+  ./venv/bin/python scripts/agent-resolver.py resolve <market_id> --outcome <outcome_key>
       Resuelve UN mercado a mano (también irreversible, también con aprobación).
 
-  ./venv/bin/python agent-resolver.py cancel <market_id>
+  ./venv/bin/python scripts/agent-resolver.py cancel <market_id>
       Cancela UN mercado (reembolsa shares*avg_cost, anula picks de ligas).
       En un plan, el veredicto "CANCELAR" hace lo mismo (aplazado fuera de
       ventana, empate en NFL). Que un jugador no participó nunca se da por
       hecho: el job lo escala y Mark lo confirma a mano.
 
-  ./venv/bin/python agent-resolver.py patch <market_id> --json '{...}'
+  ./venv/bin/python scripts/agent-resolver.py patch <market_id> --json '{...}'
       Edita un mercado no resuelto: {"status":"open","ends_at":"…Z"} reabre un
       aplazado con su nueva fecha; también question, rules, context y
       outcome_labels {"local":"🏠 D.C. United"}.
 
-  ./venv/bin/python agent-resolver.py planes [--limit N]
-  ./venv/bin/python agent-resolver.py plan-nocturno
+  ./venv/bin/python scripts/agent-resolver.py planes [--limit N]
+  ./venv/bin/python scripts/agent-resolver.py plan-nocturno
       Planes del job nocturno del servidor (status, resumen) y disparo manual.
       El plan se aprueba desde el enlace del correo, no desde aquí.
 
@@ -111,7 +111,8 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
 API = "https://presagio-mx-backend-production-a30e.up.railway.app/api"
-REPO = os.path.dirname(os.path.abspath(__file__))
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(SCRIPT_DIR)
 ENV_FILE = os.path.join(REPO, ".env.agent")
 LOG_FILE = os.path.join(REPO, "resoluciones", "log.jsonl")
 
@@ -174,7 +175,7 @@ def _ensure_token() -> str:
         return token
     print("Token ausente o vencido; regenerando con generate-agent-token.py…", file=sys.stderr)
     r = subprocess.run(
-        [sys.executable, os.path.join(REPO, "generate-agent-token.py")],
+        [sys.executable, os.path.join(SCRIPT_DIR, "generate-agent-token.py")],
         cwd=REPO, capture_output=True, text=True,
     )
     if r.returncode != 0:

@@ -22,6 +22,7 @@ from app.models.user import User
 from app.services import ledger
 from app.services.email import send_market_cancelled_email, send_resolution_email
 from app.services.league_engine import process_market_resolution_for_leagues
+from app.services.market_status import apply_transition
 
 
 class ResolutionError(Exception):
@@ -66,7 +67,7 @@ async def resolve(
             gano = pos.outcome_key == outcome_key
             return (pos.shares if gano else 0.0), gano
 
-        market.status = MarketStatus.RESOLVED
+        apply_transition(market, MarketStatus.RESOLVED)
         market.resolved_outcome_key = outcome_key
     else:
         if not resolution:
@@ -87,7 +88,7 @@ async def resolve(
             gano = (resolution == "YES" and side_val == "YES") or (resolution == "NO" and side_val == "NO")
             return payout, gano
 
-        market.status = MarketStatus.RESOLVED_YES if resolution == "YES" else MarketStatus.RESOLVED_NO
+        apply_transition(market, MarketStatus.RESOLVED_YES if resolution == "YES" else MarketStatus.RESOLVED_NO)
 
     market.resolved_at = datetime.now(timezone.utc)
 
@@ -143,7 +144,7 @@ async def cancel(db: AsyncSession, market_id: str) -> dict:
     if market.status not in (MarketStatus.OPEN, MarketStatus.PENDING_RESOLUTION, MarketStatus.CLOSED):
         raise ResolutionError("MARKET_ALREADY_RESOLVED", "Mercado ya resuelto o cancelado")
 
-    market.status = MarketStatus.CANCELLED
+    apply_transition(market, MarketStatus.CANCELLED)
     market.resolved_at = datetime.now(timezone.utc)
 
     positions_result = await db.execute(

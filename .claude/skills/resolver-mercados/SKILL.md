@@ -14,9 +14,9 @@ ledger, liquida ligas privadas y manda correos. La regla de oro es:
 > jamás se adivina. Y NUNCA se ejecuta una resolución sin la aprobación explícita de Mark:
 > la vía normal es el botón del correo (`proponer`), no el chat.**
 
-Herramienta: `agent-resolver.py` en la raíz del repo backend
+Herramienta: `scripts/agent-resolver.py`, dentro del repo backend
 (`/Users/markdabah/Desktop/veredikt/veredikt-mx-backend`). Todos los comandos se corren desde
-ahí con `./venv/bin/python`. Los planes y la bitácora viven en `resoluciones/` (se commitean:
+la raíz del repo con `./venv/bin/python`. Los planes y la bitácora viven en `resoluciones/` (se commitean:
 son el rastro de auditoría de qué se resolvió, con qué evidencia).
 
 ## Modo nocturno (el default desde 2026-09-10)
@@ -35,8 +35,8 @@ La auto-aprobación de 1X2 (`RESOLUCION_AUTO_APROBAR_1X2`) está **apagada** des
 2026-09-12 por decisión de Mark: todo plan, nocturno o del agente, lleva botón y nada se paga
 sin su clic.
 
-Comandos útiles: `agent-resolver.py planes` (planes del servidor y estado del job) y
-`agent-resolver.py plan-nocturno` (dispara uno ahora, p. ej. cuando ya terminaron los partidos
+Comandos útiles: `scripts/agent-resolver.py planes` (planes del servidor y estado del job) y
+`scripts/agent-resolver.py plan-nocturno` (dispara uno ahora, p. ej. cuando ya terminaron los partidos
 "en vivo"). El flujo manual de abajo sigue vigente para escalados y para cuando Mark lo pida;
 termina en `proponer`, que manda el mismo correo con botón.
 
@@ -51,17 +51,17 @@ fuente confiable de la lista cerrada; NO por ausencia siempre escalado).
 ## Paso 0 — Token
 
 ```
-./venv/bin/python agent-resolver.py check-token
+./venv/bin/python scripts/agent-resolver.py check-token
 ```
 
-Si el token venció, el comando lo regenera solo (`generate-agent-token.py`, sin contraseña).
+Si el token venció, el comando lo regenera solo (`scripts/generate-agent-token.py`, sin contraseña).
 Si aun así falla, avisa a Mark y detente.
 
 ## Paso 1 — Inventario
 
 ```
-./venv/bin/python agent-resolver.py list --compact --out <scratchpad>/pendientes.json
-./venv/bin/python agent-resolver.py list --out <scratchpad>/pendientes-detalle.json
+./venv/bin/python scripts/agent-resolver.py list --compact --out <scratchpad>/pendientes.json
+./venv/bin/python scripts/agent-resolver.py list --out <scratchpad>/pendientes-detalle.json
 ```
 
 `--compact` trae id, pregunta, tipo, subcategoría, kind, cierre, volumen, operaciones y los
@@ -77,7 +77,7 @@ Agrupa por `subcategory` + `kind`:
 ## Paso 2 — Resolución mecánica (sin tokens): `plan-auto`
 
 ```
-./venv/bin/python agent-resolver.py plan-auto --out resoluciones/AAAA-MM-DD.json
+./venv/bin/python scripts/agent-resolver.py plan-auto --out resoluciones/AAAA-MM-DD.json
 ```
 
 Cruza los 1X2 pendientes con **ESPN** (jornada completa) y **TheSportsDB** (partido por
@@ -121,7 +121,7 @@ en `list --out`):
   partidos del día. El jugador se ubica **por id** en cada fuente; el nombre solo es un
   chequeo al lado del id.
 - Sin `sujeto` (mercado viejo) o con `alcance` ≠ `partido` → escalado **sin sugerencia**.
-  Se carga con `agent-resolver.py sujetos-generar` → revisar → `sujetos <yaml> --apply`
+  Se carga con `scripts/agent-resolver.py sujetos-generar` → revisar → `sujetos <yaml> --apply`
   (PATCH en prod, solo con OK de Mark).
 - Cualquier duda (una sola fuente, `otro_equipo`, id que no cuadra, homónimos, fuente caída)
   → escalado **sin sugerencia**. No la resuelvas con una página que solo nombra al jugador:
@@ -148,7 +148,7 @@ evidencia de que el jugador (ese, por id y equipo) no jugó.
 
 ### Aplazado con nueva fecha (Mark decide)
 
-Si Mark quiere mantener el mercado vivo, se reabre con `agent-resolver.py patch <id> --json
+Si Mark quiere mantener el mercado vivo, se reabre con `scripts/agent-resolver.py patch <id> --json
 '{"status":"open","ends_at":"<nuevo kickoff UTC>","outcome_labels":{…}}'` (también `question`,
 `rules`, `context`). Verifica la nueva fecha en el scoreboard de ESPN de la liga y, si cambió la
 sede, corrige pregunta y etiquetas local/visitante.
@@ -215,7 +215,7 @@ En accesorios de jugador `sujeto_confirmado` es obligatorio (ver "Identidad del 
 deben ser los de `sujeto.ids` del mercado, nunca los que encuentres buscando el nombre.
 
 ```
-./venv/bin/python agent-resolver.py check-plan resoluciones/AAAA-MM-DD.json
+./venv/bin/python scripts/agent-resolver.py check-plan resoluciones/AAAA-MM-DD.json
 ```
 
 Valida contra el API (solo lectura): el mercado sigue pendiente, el veredicto es válido para
@@ -236,8 +236,8 @@ Presenta a Mark, legible en el chat:
 ## Paso 4 — Proponer (aprobación por correo)
 
 ```
-./venv/bin/python agent-resolver.py proponer resoluciones/AAAA-MM-DD.json
-./venv/bin/python agent-resolver.py proponer resoluciones/AAAA-MM-DD.json --only id1 id2
+./venv/bin/python scripts/agent-resolver.py proponer resoluciones/AAAA-MM-DD.json
+./venv/bin/python scripts/agent-resolver.py proponer resoluciones/AAAA-MM-DD.json --only id1 id2
 ```
 
 `proponer` vuelve a correr `check-plan`, sube el plan al servidor
@@ -256,10 +256,10 @@ con dos fuentes antes de aceptar el cambio. **Nunca pases `--yes` sin su aprobac
 ## Paso 5 — Reporte final y commit
 
 Resumen: propuestos (y PT involucrados), escalados y qué decide Mark. Cuando Mark aprueba,
-`agent-resolver.py planes` muestra `#N applied → resueltos X, fallidos Y`. Después:
+`scripts/agent-resolver.py planes` muestra `#N applied → resueltos X, fallidos Y`. Después:
 - `git add resoluciones/AAAA-MM-DD.json` (y `resoluciones/log.jsonl` si se usó `apply`) y
   commit (`Resoluciones AAAA-MM-DD: N mercados propuestos (plan #N)`). Nunca `git add -A`.
-- Sugerir `sembrar-mercados.py prune` si hay documentos en `mercados-pendientes.yaml`, y el
+- Sugerir `scripts/sembrar-mercados.py prune` si hay documentos en `mercados-pendientes.yaml`, y el
   script de limpieza (dry-run primero) si hay vencidos sin actividad escalados.
 
 ## Prohibiciones permanentes
@@ -270,4 +270,4 @@ Resumen: propuestos (y PT involucrados), escalados y qué decide Mark. Cuando Ma
 - Nunca resolver un mercado cuyo evento no haya terminado (cierre ≠ evento terminado:
   los futuros de temporada cierran meses después).
 - Nunca tocar la BD directamente para resolver: siempre el endpoint del API vía
-  `agent-resolver.py`, que liquida todo en una transacción y deja bitácora.
+  `scripts/agent-resolver.py`, que liquida todo en una transacción y deja bitácora.

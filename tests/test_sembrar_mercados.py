@@ -421,7 +421,7 @@ def test_identificar_llena_ids_y_solo_escribe_sin_errores(tmp_path, monkeypatch,
 
     from app.services.resolucion import identidad
 
-    ruta = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sembrar-mercados.py")
+    ruta = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts", "sembrar-mercados.py")
     spec = importlib.util.spec_from_file_location("sembrar_mercados", ruta)
     cli = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(cli)

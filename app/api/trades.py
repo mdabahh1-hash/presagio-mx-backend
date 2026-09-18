@@ -18,6 +18,7 @@ from app.schemas.market import OutcomeOut
 from app.core.auth import get_current_user
 from app.core import lmsr
 from app.core.websocket_manager import ws_manager
+from app.services.market_status import apply_transition
 from app.services import ledger, referral
 
 router = APIRouter(prefix="/markets", tags=["trades"])
@@ -60,7 +61,7 @@ async def execute_trade(
     if market.status != MarketStatus.OPEN:
         raise HTTPException(status_code=400, detail={"code": "MARKET_CLOSED", "message": "Este mercado ya no acepta operaciones"})
     if market.ends_at < datetime.now(timezone.utc):
-        market.status = MarketStatus.PENDING_RESOLUTION
+        apply_transition(market, MarketStatus.PENDING_RESOLUTION)
         await db.commit()
         raise HTTPException(status_code=400, detail={"code": "MARKET_PENDING_RESOLUTION", "message": "Este mercado cerró y está pendiente de resolución"})
 

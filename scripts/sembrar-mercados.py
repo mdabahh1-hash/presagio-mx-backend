@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 """Sembrador declarativo de VEREDIKT: lee mercados-pendientes.yaml y siembra en la BD.
 
-  ./venv/bin/python sembrar-mercados.py validar                  # solo esquema, sin BD
-  ./venv/bin/python sembrar-mercados.py [sembrar] [--only ID …]  # dry-run contra la BD (default)
-  ./venv/bin/python sembrar-mercados.py sembrar --apply          # escribe en UNA transacción
-  ./venv/bin/python sembrar-mercados.py prune [--apply]          # lista / quita del YAML los terminados
-  ./venv/bin/python sembrar-mercados.py identificar [--only ID …] [--apply]
+  ./venv/bin/python scripts/sembrar-mercados.py validar                  # solo esquema, sin BD
+  ./venv/bin/python scripts/sembrar-mercados.py [sembrar] [--only ID …]  # dry-run contra la BD (default)
+  ./venv/bin/python scripts/sembrar-mercados.py sembrar --apply          # escribe en UNA transacción
+  ./venv/bin/python scripts/sembrar-mercados.py prune [--apply]          # lista / quita del YAML los terminados
+  ./venv/bin/python scripts/sembrar-mercados.py identificar [--only ID …] [--apply]
       # accesorios de jugador: busca con red (ESPN, CBS, UEFA) los ids de `sujeto`
       # (jugador, equipo, rival y alcance escritos a mano) y los escribe en el YAML.
       # Cualquier error (0 o >1 candidatos, dorsal distinto) → código 1 y no escribe nada.
@@ -14,7 +14,7 @@ Todos aceptan --archivo <ruta> (default: mercados-pendientes.yaml).
 
 Contra prod:
   railway run --service Postgres -- bash -c 'DATABASE_URL="$DATABASE_PUBLIC_URL" \\
-      ./venv/bin/python sembrar-mercados.py sembrar --apply'
+      ./venv/bin/python scripts/sembrar-mercados.py sembrar --apply'
 
 Reglas que aplica el runner (no se desactivan): SKIP si el id ya existe; SKIP si
 ends_at ya pasó (un mercado borrado por el cleanup de vencidos no debe resucitar).
@@ -25,7 +25,7 @@ import os
 import sys
 from datetime import datetime, timezone
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 ARCHIVO = "mercados-pendientes.yaml"
 SUBCOMANDOS = ("validar", "sembrar", "prune", "identificar")
