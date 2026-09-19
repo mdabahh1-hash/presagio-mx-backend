@@ -15,7 +15,7 @@
 #
 #   tipo: binario   — id, question, description, category (NOMBRE del enum:
 #                     POLITICA_MX, ECONOMIA, DEPORTES, GLOBAL, TECH, ENTRETENIMIENTO,
-#                     CRYPTO, MERCADOS_GLOBALES, MEXICO, CLIMA), subcategory?,
+#                     CRYPTO, MEXICO, CLIMA), subcategory?,
 #                     kind? (solo DEPORTES: partido|accesorio), image_url?,
 #                     resolution_criteria, resolution_source_url?,
 #                     rules (texto completo) O rules_cuerpo + rules_como

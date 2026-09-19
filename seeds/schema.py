@@ -23,10 +23,11 @@ from seeds.plantillas import B_DEFAULT, SUBCATEGORIAS_CONOCIDAS
 # Nombres del enum MarketCategory permitidos en mercados nuevos.
 CATEGORIAS = {
     "POLITICA_MX", "ECONOMIA", "DEPORTES", "GLOBAL", "TECH", "ENTRETENIMIENTO",
-    "CRYPTO", "MERCADOS_GLOBALES", "MEXICO", "CLIMA",
+    "CRYPTO", "MEXICO", "CLIMA",
 }
-# Existen en el enum pero no se siembran más (fusionadas en DEPORTES / retiradas).
-CATEGORIAS_PROHIBIDAS = {"MUNDIAL_2026", "BOXEO", "MOTOR"}
+# Existen en el enum pero no se siembran más (fusionadas en DEPORTES / retiradas;
+# MERCADOS_GLOBALES fusionada en ECONOMIA el 2026-09-19, el frontend ya no la lista).
+CATEGORIAS_PROHIBIDAS = {"MUNDIAL_2026", "BOXEO", "MOTOR", "MERCADOS_GLOBALES"}
 TIPOS = {"binario", "multi", "partido"}
 KINDS = {"partido", "accesorio"}
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{2,99}$")
@@ -209,7 +210,8 @@ def _validar(specs: list[MarketSpec], avisos: list[str]) -> list[str]:
         if not ID_RE.match(s.id):
             e.append(f"{c}: id inválido (kebab-case ascii, 3-100 chars: ^[a-z0-9][a-z0-9-]{{2,99}}$)")
         if s.category in CATEGORIAS_PROHIBIDAS:
-            e.append(f"{c}: categoría {s.category} prohibida para mercados nuevos (usa DEPORTES + subcategory)")
+            sugerencia = "ECONOMIA" if s.category == "MERCADOS_GLOBALES" else "DEPORTES + subcategory"
+            e.append(f"{c}: categoría {s.category} prohibida para mercados nuevos (usa {sugerencia})")
         elif s.category not in CATEGORIAS:
             e.append(f"{c}: categoría desconocida '{s.category}' (nombres del enum: {', '.join(sorted(CATEGORIAS))})")
         if len(s.question) > 500:
