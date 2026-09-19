@@ -152,6 +152,14 @@ class ResumenSubcategoria(BaseModel):
     volumen_7d: float      # suma de trades.cost de los últimos 7 días
 
 
+class CategoriaActivos(BaseModel):
+    """Mercados activos (OPEN + PENDING_RESOLUTION, el `status=active` de la lista) por
+    categoría. El frontend oculta de la barra las categorías sin landing propia que no
+    aparezcan aquí."""
+    categoria: MarketCategory
+    activos: int
+
+
 class ResumenCategoria(BaseModel):
     """Agregados de una categoría para su landing (riel de ligas, volumen por liga).
     Ver app/services/resumen.py."""
