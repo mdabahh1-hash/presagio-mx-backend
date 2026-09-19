@@ -25,7 +25,6 @@ class MarketCategory(str, enum.Enum):
     ENTRETENIMIENTO = "Entretenimiento"
     MUNDIAL_2026 = "Mundial 2026"
     CRYPTO = "Crypto"
-    MERCADOS_GLOBALES = "Mercados Globales"
     MEXICO = "México"
     CLIMA = "Clima"
     BOXEO = "Boxeo"

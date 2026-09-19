@@ -1,4 +1,4 @@
-"""Normas / Contexto / fuente: Economía, Mercados Globales y México. 8 activos al 2026-09-04."""
+"""Normas / Contexto / fuente: Economía (incluye la antigua Mercados Globales, fusionada el 2026-09-19) y México. 8 activos al 2026-09-04."""
 from market_content._common import FUENTE_CAIDA, binario_rules, entry
 
 BANXICO = "https://www.banxico.org.mx"
@@ -39,7 +39,7 @@ Resuelve SÍ si la inflación general anual de México, medida por el Índice Na
     "El objetivo de inflación de Banxico es 3% con un rango de tolerancia de 1 punto, es decir, hasta 4%. Tras el pico de 2022, la inflación bajó gradualmente y a mediados de 2026 rondaba el 3.1%. El mercado apuesta a que la inflación anual de diciembre de 2026, el dato que cierra el año, quede por debajo de 4%.",
     INEGI_INPC)
 
-# ── Mercados Globales ─────────────────────────────────────────────────────
+# ── Fed y mercados globales (antes categoría Mercados Globales, hoy Economía) ─────────────────────────────────────────────────────
 CONTENT["fed-mantiene-tasa-sep26"] = entry(
     binario_rules("""
 Resuelve SÍ si el Comité Federal de Mercado Abierto (FOMC) deja el rango objetivo de la tasa de fondos federales sin cambios en su anuncio del 16 de septiembre de 2026. Cualquier cambio en el rango, al alza o a la baja, resuelve NO. La fuente es el comunicado oficial de la Reserva Federal publicado en federalreserve.gov a las 2:00 p.m. hora del Este.

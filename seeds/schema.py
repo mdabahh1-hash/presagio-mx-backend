@@ -23,9 +23,10 @@ from seeds.plantillas import B_DEFAULT, SUBCATEGORIAS_CONOCIDAS
 # Nombres del enum MarketCategory permitidos en mercados nuevos.
 CATEGORIAS = {
     "POLITICA_MX", "ECONOMIA", "DEPORTES", "GLOBAL", "TECH", "ENTRETENIMIENTO",
-    "CRYPTO", "MERCADOS_GLOBALES", "MEXICO", "CLIMA",
+    "CRYPTO", "MEXICO", "CLIMA",
 }
 # Existen en el enum pero no se siembran más (fusionadas en DEPORTES / retiradas).
+# MERCADOS_GLOBALES ya no existe en el enum: se fusionó en ECONOMIA el 2026-09-19.
 CATEGORIAS_PROHIBIDAS = {"MUNDIAL_2026", "BOXEO", "MOTOR"}
 TIPOS = {"binario", "multi", "partido"}
 KINDS = {"partido", "accesorio"}

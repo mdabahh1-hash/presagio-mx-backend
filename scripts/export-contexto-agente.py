@@ -16,7 +16,7 @@ from datetime import datetime, timedelta, timezone
 
 API = "https://presagio-mx-backend-production-a30e.up.railway.app/api/markets"
 CDMX = timezone(timedelta(hours=-6))
-CAT_ORDER = ["Deportes", "Política", "Global", "México", "Economía", "Mercados Globales",
+CAT_ORDER = ["Deportes", "Política", "Global", "México", "Economía",
              "Crypto", "Tech", "Entretenimiento", "Clima"]
 
 

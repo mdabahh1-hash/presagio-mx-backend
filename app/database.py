@@ -39,12 +39,19 @@ async def migrate_enums() -> None:
     """
     from sqlalchemy import text
     new_status_names = ["PENDING_RESOLUTION", "RESOLVED"]
-    new_category_names = ["MUNDIAL_2026", "CRYPTO", "MERCADOS_GLOBALES", "MEXICO", "CLIMA", "BOXEO", "MOTOR"]
+    new_category_names = ["MUNDIAL_2026", "CRYPTO", "MEXICO", "CLIMA", "BOXEO", "MOTOR"]
     async with engine.begin() as conn:
         for v in new_status_names:
             await conn.execute(text(f"ALTER TYPE marketstatus ADD VALUE IF NOT EXISTS '{v}'"))
         for v in new_category_names:
             await conn.execute(text(f"ALTER TYPE marketcategory ADD VALUE IF NOT EXISTS '{v}'"))
+        # 2026-09-19: Mercados Globales se fusionó en Economía. El nombre ya no existe en
+        # MarketCategory, así que las filas viejas (7 resueltas en prod) se mueven al boot,
+        # antes de que la app las cargue. La etiqueta queda en el tipo de Postgres (no se
+        # pueden borrar etiquetas de un ENUM), igual que 'Mundial 2026' o 'BOXEO'.
+        await conn.execute(text(
+            "UPDATE markets SET category = 'ECONOMIA' WHERE category::text = 'MERCADOS_GLOBALES'"
+        ))
 
 
 async def migrate_columns() -> None:
