@@ -1,12 +1,12 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc, case
+from sqlalchemy import select, desc, case, func
 from sqlalchemy.orm import selectinload
 from app.database import get_db
 from app.models.market import Market, MarketStatus, MarketCategory
 from app.models.price_history import PriceHistory
-from app.schemas.market import MarketList, MarketDetail, MarketCreate, MarketKind, PricePoint, MoverOut, ResumenCategoria, EnVivoOut
+from app.schemas.market import MarketList, MarketDetail, MarketCreate, MarketKind, PricePoint, MoverOut, ResumenCategoria, CategoriaActivos, EnVivoOut
 from app.core.auth import get_current_user, require_admin
 from app.core import lmsr
 from app.models.user import User
@@ -100,6 +100,19 @@ async def get_resumen(
     """Agregados de una categoría para su landing: mercados abiertos y volumen
     (total y de 7 días) por subcategoría (ver app/services/resumen.py)."""
     return await resumen_categoria(db, category)
+
+
+@router.get("/categorias", response_model=list[CategoriaActivos])
+async def list_categorias(db: AsyncSession = Depends(get_db)):
+    """Categorías con mercados activos (OPEN + PENDING_RESOLUTION, como el default de
+    GET /markets) y cuántos. Las categorías sin ninguno no aparecen: la barra del
+    frontend las oculta (salvo las de landing propia)."""
+    res = await db.execute(
+        select(Market.category, func.count(Market.id))
+        .where(Market.status.in_([MarketStatus.OPEN, MarketStatus.PENDING_RESOLUTION]))
+        .group_by(Market.category)
+    )
+    return [{"categoria": cat, "activos": n} for cat, n in res.all()]
 
 
 @router.get("/en-vivo", response_model=list[EnVivoOut])
