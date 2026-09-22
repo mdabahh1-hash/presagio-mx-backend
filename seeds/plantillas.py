@@ -43,6 +43,15 @@ SUBCATEGORIAS_CONOCIDAS: set[str] = {
     "Liga Portugal", "MLS", "Champions League", "Saudi Pro League", "NFL", "F1", "Boxeo",
     # Política / sociedad
     "Elecciones", "Sheinbaum", "Influencers", "Migración",
+    "Visas de EEUU", "Congreso", "Regulación digital",
     # Crypto
-    "Bitcoin", "Ethereum", "Solana", "Stablecoins", "Regulación", "Adopción México",
+    "Bitcoin", "Ethereum", "Solana", "Stablecoins", "Regulación", "Adopción México", "Mercado cripto",
+    # Economía
+    "Tasas Banxico", "Inflación (INPC)", "Tipo de cambio", "PIB México", "Empleo / IMSS",
+    "Aranceles / T-MEC", "Fed / tasas EE.UU.", "Bolsa (BMV)", "Mercados EEUU", "Remesas",
+    # Global
+    "Europa", "Elecciones EEUU", "Trump", "Medio Oriente", "Asia-Pacífico", "Rusia-Ucrania",
+    "Américas", "África", "ONU y OTAN",
+    # Clima, Tech, México, Entretenimiento
+    "Huracanes", "Sequía y calor", "IA", "Batallas de aura", "Seguridad", "Reality shows",
 }
