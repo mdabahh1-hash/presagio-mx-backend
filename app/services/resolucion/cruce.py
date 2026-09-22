@@ -86,8 +86,10 @@ def similitud(a: str, b: str) -> float:
 
 _RE_QUIEN_GANA = re.compile(r"¿\s*qui[eé]n gana(?:r[aá])?\s+(.+?)\s+vs\.?\s+(.+?)\s*\?", re.I)
 _RE_X_VS_Y_QUIEN = re.compile(r"^\s*(.+?)\s+vs\.?\s+(.+?)\s+[—-]+\s*¿qui[eé]n gana", re.I)
+# "…titular en A vs B?", "…titular con A ante B…?" o la corta "…titular ante B?"
+# (solo el rival; sujeto.spec_de_pregunta lo toma como rival).
 _RE_TITULAR = re.compile(
-    r"¿\s*(?P<jugador>.+?)\s+ser[aá] titular\s+(?:en|con)\s+(?P<resto>.+?)\s*\?", re.I
+    r"¿\s*(?P<jugador>.+?)\s+ser[aá] titular\s+(?:en|con|ante|contra|frente a)\s+(?P<resto>.+?)\s*\?", re.I
 )
 _RE_GOL = re.compile(r"¿\s*(?P<jugador>.+?)\s+(?:anota|marca|mete)\b.*?\b(?:en|ante|contra|vs\.?)\s+(?P<resto>.+?)\s*\?", re.I)
 
@@ -342,9 +344,17 @@ def resolver_ganador(mercado: dict, outs: list[tuple[str, str]], espn: Partido |
 # fuente: ok | ausente | otro_equipo | discrepa | sin_id | caida. Reglas de
 # sugerencia en resolver_prop_nfl.
 
-_RE_PROP_TD = re.compile(r"¿\s*(?P<jugador>.+?)\s+anotar[aá] al menos (?P<n>\d+) touchdown", re.I)
-_RE_PROP_PASES = re.compile(r"¿\s*(?P<jugador>.+?)\s+lanzar[aá] (?P<n>\d+) o m[aá]s pases de touchdown", re.I)
-_RE_PROP_FANTASY = re.compile(r"¿\s*(?P<jugador>.+?)\s+conseguir[aá] (?P<n>\d+(?:[.,]\d+)?) o m[aá]s puntos de fantasy", re.I)
+# Dos redacciones, las dos válidas (los props ya sembrados usan la larga):
+#   larga: "¿Josh Allen lanzará 2 o más pases de touchdown contra los Texans…?"
+#   corta: "¿Allen (BUF) lanzará 2+ pases de TD en la Semana 1?"
+# El "(BUF)" final del nombre es el equipo para desambiguar apellidos; no es
+# parte del jugador (la identidad sale de sujeto.ids, no del texto).
+_JUGADOR = r"¿\s*(?P<jugador>.+?)(?:\s*\([A-Z]{2,4}\))?"
+_MAS = r"(?:\s+o\s+m[aá]s|\+)"
+_RE_PROP_TD = re.compile(
+    _JUGADOR + r"\s+anotar[aá]\s+(?:al\s+menos\s+(?P<n>\d+)|(?P<n2>\d+)\+)\s+(?:touchdowns?|TDs?)\b", re.I)
+_RE_PROP_PASES = re.compile(_JUGADOR + r"\s+lanzar[aá]\s+(?P<n>\d+)" + _MAS + r"\s+pases\s+de\s+(?:touchdown|TD)\b", re.I)
+_RE_PROP_FANTASY = re.compile(_JUGADOR + r"\s+conseguir[aá]\s+(?P<n>\d+(?:[.,]\d+)?)" + _MAS + r"\s+puntos\s+de\s+fantasy", re.I)
 
 
 def parse_prop_nfl(mercado: dict) -> dict | None:
@@ -353,7 +363,8 @@ def parse_prop_nfl(mercado: dict) -> dict | None:
     for tipo, rx in (("td", _RE_PROP_TD), ("pases_td", _RE_PROP_PASES), ("fantasy", _RE_PROP_FANTASY)):
         m = rx.search(q)
         if m:
-            return {"jugador": m.group("jugador").strip(), "tipo": tipo, "umbral": float(m.group("n").replace(",", "."))}
+            n = m.group("n") or m.groupdict().get("n2")
+            return {"jugador": m.group("jugador").strip(), "tipo": tipo, "umbral": float(n.replace(",", "."))}
     return None
 
 

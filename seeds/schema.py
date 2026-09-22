@@ -33,6 +33,10 @@ KINDS = {"partido", "accesorio"}
 ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{2,99}$")
 KEY_RE = re.compile(r"^[a-z0-9_]+$")
 RULES_MIN, CONTEXT_MIN, TEXT_MAX = 200, 120, 6000  # mismos umbrales que market_content.check()
+# Largo máximo de la pregunta de un mercado nuevo (Mark, 2026-09-22): 70
+# obligatorio, meta 65. El conteo es necesario pero no suficiente; la revisión
+# final es `npm run titulos` en el repo raíz (veredikt.md §5).
+QUESTION_MAX = 70
 CAMPOS_TEXTO = ("id", "question", "description", "category", "resolution_criteria", "context")
 
 
@@ -214,8 +218,12 @@ def _validar(specs: list[MarketSpec], avisos: list[str]) -> list[str]:
             e.append(f"{c}: categoría {s.category} prohibida para mercados nuevos (usa {sugerencia})")
         elif s.category not in CATEGORIAS:
             e.append(f"{c}: categoría desconocida '{s.category}' (nombres del enum: {', '.join(sorted(CATEGORIAS))})")
-        if len(s.question) > 500:
-            e.append(f"{c}: question > 500 chars")
+        # Aviso y no error: el límite es para mercados NUEVOS y aquí no se sabe si
+        # ya existe (el YAML conserva los sembrados hasta el prune). Lo rechaza el
+        # runner al insertar (seeds/runner.py).
+        if len(s.question) > QUESTION_MAX:
+            avisos.append(f"{c}: question > {QUESTION_MAX} chars ({len(s.question)}) — si es nuevo, `sembrar` lo "
+                          f"rechaza; mueve la fecha y el umbral fino a description/rules")
         if len(s.rules) < RULES_MIN:
             e.append(f"{c}: rules < {RULES_MIN} chars ({len(s.rules)})")
         if len(s.context) < CONTEXT_MIN:

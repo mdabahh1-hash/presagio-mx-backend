@@ -84,6 +84,8 @@ def spec_de_pregunta(question: str | None, liga: str | None) -> dict | None:
         spec = {"tipo": "titular", **tit}
         if re.search(r"ser[aá] titular\s+con\s+", q, re.I) and len(tit["equipos"]) == 2:
             spec["club"], spec["rival"] = tit["equipos"]
+        elif re.search(r"ser[aá] titular\s+(?:ante|contra|frente a)\s+", q, re.I) and len(tit["equipos"]) == 1:
+            spec["rival"] = tit["equipos"][0]
         return spec
     gol = cruce.parse_gol(m)
     if gol and not _no_es_jugador(gol["jugador"], gol["equipos"]):

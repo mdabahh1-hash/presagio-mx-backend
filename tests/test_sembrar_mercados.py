@@ -334,7 +334,7 @@ def _prop_yaml(**cambios) -> str:
     import yaml
 
     doc = {"tipo": "binario", "id": "nfl-allen-2tdpass-prueba",
-           "question": "¿Josh Allen lanzará 2 o más pases de touchdown contra los Texans en la Semana 1?",
+           "question": "¿Josh Allen lanzará 2+ pases de TD en la Semana 1?",
            "description": "Prop de prueba.", "category": "DEPORTES", "subcategory": "NFL", "kind": "accesorio",
            "resolution_criteria": "Resuelve SÍ con 2 o más pases de TD del jugador.",
            "resolution_source_url": "https://www.espn.com/nfl/", "rules": RULES_PROP, "context": CONTEXTO,
@@ -386,7 +386,7 @@ def test_titular_de_champions_exige_ids_uefa():
     sujeto = {"jugador": "Rayan Cherki", "equipo": "Manchester City", "rival": "FC Porto", "posicion": "M",
               "alcance": "partido", "ids": {"espn": "5001"}}
     texto = _prop_yaml(id="ucl-cherki-titular-prueba", subcategory="Champions League", sujeto=sujeto,
-                       question="¿Rayan Cherki será titular con Manchester City ante Porto en la Jornada 1 de la Champions?")
+                       question="¿Rayan Cherki será titular ante Porto?")
     assert "sujeto: falta ids.uefa" in _errores(texto)
     cargar_texto(texto.replace("espn: '5001'", "espn: '5001'\n    uefa: '250500'"))
 
@@ -457,3 +457,22 @@ def test_identificar_llena_ids_y_solo_escribe_sin_errores(tmp_path, monkeypatch,
         cli.cmd_identificar(argparse.Namespace(archivo=str(archivo), only=None, apply=True))
     assert ex.value.code == 1 and archivo.read_text(encoding="utf-8") == YAML_OK + escrito
     assert "no se escribió nada" in capsys.readouterr().out
+
+
+@pytest.mark.asyncio
+async def test_limite_de_pregunta_solo_para_mercados_nuevos(db):
+    """70 caracteres (veredikt.md §7): el YAML conserva los ya sembrados hasta el
+    prune, así que `validar` solo avisa y el runner rechaza al INSERTAR."""
+    larga = "¿Pasa la cosa binaria de prueba con una pregunta que se pasa de setenta caracteres?"
+    assert len(larga) > 70
+    specs, avisos = cargar_texto(YAML_OK.replace("¿Pasa la cosa binaria de prueba antes de 2030?", larga))
+    assert any("question > 70" in a for a in avisos)
+
+    with pytest.raises(SchemaError, match="prueba-binario-ok: question > 70"):
+        await sembrar(specs, db, apply=True, log=lambda *_: None)
+    assert (await db.execute(select(Market.id))).scalars().all() == []  # nada escrito, ni los cortos
+
+    corta, _ = cargar_texto(YAML_OK)
+    await sembrar([s for s in corta if s.id == "prueba-binario-ok"], db, apply=True, log=lambda *_: None)
+    r = await sembrar([s for s in specs if s.id == "prueba-binario-ok"], db, apply=False, log=lambda *_: None)
+    assert r.existentes == ["prueba-binario-ok"]  # ya sembrado: SKIP, sin error

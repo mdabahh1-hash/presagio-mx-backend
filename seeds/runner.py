@@ -16,7 +16,7 @@ from app.core import lmsr
 from app.models.market import Market, MarketCategory, MarketStatus
 from app.models.outcome import Outcome
 from app.models.price_history import PriceHistory
-from seeds.schema import MarketSpec
+from seeds.schema import QUESTION_MAX, MarketSpec, SchemaError
 
 
 @dataclass
@@ -30,6 +30,7 @@ async def sembrar(specs: list[MarketSpec], db: AsyncSession, apply: bool,
                   now: datetime | None = None, log=print) -> Resumen:
     now = now or datetime.now(timezone.utc)
     r = Resumen()
+    largos: list[str] = []
     for s in specs:
         existe = (await db.execute(select(Market.id).where(Market.id == s.id))).scalar_one_or_none()
         if existe is not None:
@@ -41,6 +42,12 @@ async def sembrar(specs: list[MarketSpec], db: AsyncSession, apply: bool,
         if s.ends_at < now:
             log(f"  SKIP   {s.id} (ya vencido: ends_at={s.ends_at:%Y-%m-%dT%H:%M}Z; no se siembran mercados cerrados)")
             r.vencidos.append(s.id)
+            continue
+        # Límite de pregunta para mercados nuevos (veredikt.md §7): nada se escribe.
+        if len(s.question) > QUESTION_MAX:
+            log(f"  ERROR  {s.id}: question > {QUESTION_MAX} chars ({len(s.question)})")
+            largos.append(f"{s.id}: question > {QUESTION_MAX} chars ({len(s.question)}) — no cabe en la fila de "
+                          f"Deportes/Política; mueve la fecha y el umbral fino a description/rules")
             continue
 
         comunes = dict(
@@ -76,6 +83,9 @@ async def sembrar(specs: list[MarketSpec], db: AsyncSession, apply: bool,
                 db.add(PriceHistory(market_id=s.id, yes_price=0.0, volume_snapshot=0.0))
         r.insertados.append(s.id)
 
+    if largos:
+        await db.rollback()
+        raise SchemaError(largos)
     if apply:
         await db.commit()
     else:
