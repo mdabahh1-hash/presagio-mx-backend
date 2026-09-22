@@ -1364,6 +1364,7 @@ tipo: binario
 question: ¿Banxico dejará la tasa de referencia sin cambio en su decisión del 5 de noviembre de 2026?
 description: Resuelve SÍ si el anuncio de política monetaria del 5 de noviembre de 2026 deja el objetivo para la Tasa de Interés Interbancaria a un día en el mismo nivel vigente el día anterior al anuncio; NO si lo sube o lo baja.
 category: ECONOMIA
+subcategory: Tasas Banxico
 resolution_criteria: Compara la tasa objetivo vigente el 4 de noviembre de 2026 con la anunciada el 5 de noviembre por la Junta de Gobierno. Sin cambio = SÍ; cualquier movimiento, al alza o a la baja = NO.
 resolution_source_url: https://www.banxico.org.mx/publicaciones-y-prensa/anuncios-de-las-decisiones-de-politica-monetaria/anuncios-politica-monetaria-t.html
 rules_cuerpo: >-
@@ -1393,6 +1394,7 @@ tipo: binario
 question: ¿La inflación anual de septiembre de 2026 será menor a 3.40 %?
 description: Resuelve SÍ si la inflación general anual de septiembre de 2026 que publique el INEGI el 8 de octubre de 2026 es menor a 3.40 %; NO si es 3.40 % o mayor.
 category: ECONOMIA
+subcategory: Inflación (INPC)
 resolution_criteria: Cifra de "inflación general anual" del boletín del INPC de septiembre de 2026 (INEGI, 8 de octubre de 2026), con dos decimales. Menor a 3.40 = SÍ; 3.40 o mayor = NO.
 resolution_source_url: https://www.inegi.org.mx/temas/inpc/
 rules_cuerpo: >-
@@ -1427,6 +1429,7 @@ tipo: binario
 question: ¿El empleo formal sin plataformas digitales (IMSS) crecerá en más de 135,000 puestos en septiembre de 2026?
 description: Atención, este mercado NO usa la cifra del titular. Resuelve SÍ si el aumento mensual de puestos de trabajo de septiembre de 2026 que reporte el IMSS, DESCONTANDO la variación de los puestos de plataformas digitales (repartidores y conductores que superan el umbral de ingreso), es mayor a 135,000; NO si es 135,000 o menos.
 category: ECONOMIA
+subcategory: Empleo / IMSS
 resolution_criteria: Del comunicado mensual del IMSS de septiembre de 2026 se toma el "aumento mensual" de puestos de trabajo y se le resta la variación mensual de los puestos de plataformas digitales (nivel al 30 de septiembre menos nivel al 31 de agosto, 199,454). Resultado mayor a 135,000 = SÍ; 135,000 o menos = NO.
 resolution_source_url: https://www.imss.gob.mx/prensa
 rules_cuerpo: >-
@@ -1469,6 +1472,7 @@ tipo: binario
 question: ¿Las remesas de septiembre de 2026 superarán los 5,350 millones de dólares?
 description: Resuelve SÍ si los ingresos por remesas de septiembre de 2026 que publique el Banco de México son mayores a 5,350 millones de dólares; NO si son 5,350 millones o menos.
 category: ECONOMIA
+subcategory: Remesas
 resolution_criteria: Cifra de "ingresos por remesas" de septiembre de 2026 del comunicado mensual de Banxico (Ingresos y Egresos por Remesas), en millones de dólares. Mayor a 5,350 = SÍ; 5,350 o menos = NO.
 resolution_source_url: https://www.banxico.org.mx/publicaciones-y-prensa/remesas/remesas-balanza-pagos-banco.html
 rules_cuerpo: >-
@@ -1503,6 +1507,7 @@ tipo: binario
 question: ¿El PIB de México crecerá en el tercer trimestre de 2026 respecto al segundo (estimación oportuna del INEGI)?
 description: Resuelve SÍ si la Estimación Oportuna del PIB del tercer trimestre de 2026 (INEGI, 30 de octubre de 2026) reporta una variación trimestral real, con cifras desestacionalizadas, mayor a 0.0 %; NO si es 0.0 % o negativa.
 category: ECONOMIA
+subcategory: PIB México
 resolution_criteria: Variación porcentual real trimestral (cifras ajustadas por estacionalidad) del PIB total en la Estimación Oportuna del PIB Trimestral del INEGI para el tercer trimestre de 2026, con un decimal. Mayor a 0.0 = SÍ; 0.0 o negativa = NO.
 resolution_source_url: https://www.inegi.org.mx/temas/pibo/
 rules_cuerpo: >-
@@ -1542,6 +1547,7 @@ tipo: binario
 question: ¿El salario mínimo general subirá 13 % o más para 2027?
 description: Resuelve SÍ si el salario mínimo general diario para 2027 que fije la Conasami (y publique el Diario Oficial de la Federación) es al menos 13.0 % mayor que el de 2026 (315.04 pesos), es decir 355.99 pesos o más; NO si el aumento es menor.
 category: ECONOMIA
+subcategory: Empleo / IMSS
 resolution_criteria: Porcentaje de aumento del salario mínimo general (zona general del país, no la Zona Libre de la Frontera Norte) para 2027 respecto a 315.04 pesos diarios, según la resolución de la Conasami publicada en el DOF, redondeado a un decimal. 13.0 % o más = SÍ; menos = NO.
 resolution_source_url: https://www.gob.mx/conasami
 rules_cuerpo: >-
@@ -1581,6 +1587,7 @@ tipo: binario
 question: ¿El S&P 500 cerrará octubre de 2026 por encima de su máximo histórico de 7,798.99 puntos?
 description: Resuelve SÍ si el cierre del S&P 500 del último día hábil de octubre de 2026 (30 de octubre) es mayor a 7,798.99 puntos, el máximo histórico de cierre registrado el 13 de agosto de 2026; NO si es 7,798.99 o menor.
 category: ECONOMIA
+subcategory: Mercados EEUU
 resolution_criteria: Valor de cierre del índice S&P 500 del 30 de octubre de 2026 según S&P Dow Jones Indices (serie SP500 de FRED), con dos decimales. Mayor a 7,798.99 = SÍ; 7,798.99 o menor = NO.
 resolution_source_url: https://fred.stlouisfed.org/series/SP500
 rules_cuerpo: >-
@@ -1610,6 +1617,7 @@ tipo: binario
 question: ¿El bono del Tesoro de EE.UU. a 10 años cerrará octubre de 2026 con un rendimiento de 5.00 % o más?
 description: Resuelve SÍ si el rendimiento del bono del Tesoro de Estados Unidos a 10 años del último día hábil de octubre de 2026 (30 de octubre), según la curva de rendimientos del Tesoro (serie DGS10 de FRED), es de 5.00 % o más; NO si es menor.
 category: ECONOMIA
+subcategory: Mercados EEUU
 resolution_criteria: Rendimiento a 10 años de la curva "par yield" del Departamento del Tesoro de EE.UU. para el 30 de octubre de 2026 (serie DGS10 de FRED), con dos decimales. 5.00 o más = SÍ; menor a 5.00 = NO.
 resolution_source_url: https://fred.stlouisfed.org/series/DGS10
 rules_cuerpo: >-
