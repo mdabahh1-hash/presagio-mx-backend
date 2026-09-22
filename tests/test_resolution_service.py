@@ -195,7 +195,7 @@ async def test_endpoint_patch_reabre_aplazado(client, db, make_user, make_multi_
 
 # ── sujeto de accesorios de jugador (caso Josh Allen) ────────────────────────
 
-PREGUNTA_ALLEN = "¿Josh Allen lanzará 2 o más pases de touchdown contra los Texans en la Semana 1?"
+PREGUNTA_ALLEN = "¿Josh Allen lanzará 2+ pases de TD en la Semana 1?"
 SUJETO_ALLEN = {"jugador": "Josh Allen", "equipo": "Bills", "rival": "Texans", "posicion": "QB", "alcance": "partido",
                 "ids": {"espn": "3918298", "cbs": "2181054"}}
 

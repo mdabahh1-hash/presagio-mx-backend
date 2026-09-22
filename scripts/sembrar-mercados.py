@@ -71,9 +71,18 @@ async def cmd_sembrar(args) -> None:
     from seeds.runner import sembrar
 
     print(f"MODO: {'APPLY' if args.apply else 'DRY-RUN (agrega --apply para escribir)'}\n")
-    async with AsyncSessionLocal() as db:
-        r = await sembrar(specs, db, apply=args.apply)
-    await engine.dispose()
+    from seeds.schema import SchemaError
+
+    try:
+        async with AsyncSessionLocal() as db:
+            r = await sembrar(specs, db, apply=args.apply)
+    except SchemaError as e:
+        print(f"\nERRORES ({len(e.errores)}), no se escribió nada:")
+        for x in e.errores:
+            print("  -", x)
+        sys.exit(1)
+    finally:
+        await engine.dispose()
     saltados = len(r.existentes) + len(r.vencidos)
     print(f"\nListo: {len(r.insertados)} insertados, {saltados} saltados "
           f"({len(r.existentes)} existentes, {len(r.vencidos)} vencidos), {len(specs)} en total.")

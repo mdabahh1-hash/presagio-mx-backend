@@ -48,6 +48,8 @@ def test_spec_de_pregunta_fija_orientacion_solo_si_la_pregunta_la_da():
     assert en["tipo"] == "titular" and "club" not in en and "rival" not in en
     gol = spec_de_pregunta("¿Erling Haaland anota gol ante Porto en la Jornada 1 de la Champions?", "Champions League")
     assert (gol["tipo"], gol["jugador"], gol["rival"]) == ("gol", "Erling Haaland", "Porto")
+    corta = spec_de_pregunta("¿Rayan Cherki será titular ante Porto?", "Champions League")
+    assert corta == {"tipo": "titular", "jugador": "Rayan Cherki", "equipos": ["Porto"], "rival": "Porto"}
 
 
 def test_ids_requeridos_por_liga():

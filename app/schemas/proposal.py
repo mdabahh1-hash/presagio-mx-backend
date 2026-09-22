@@ -13,8 +13,9 @@ class ProposalCreate(BaseModel):
         v = v.strip()
         if not v:
             raise ValueError("La pregunta no puede estar vacía")
-        if len(v) > 200:
-            raise ValueError("Máximo 200 caracteres")
+        # Mismo límite que el sembrador (veredikt.md §5: 70, meta 65)
+        if len(v) > 70:
+            raise ValueError("Máximo 70 caracteres")
         return v
 
     @field_validator("category")

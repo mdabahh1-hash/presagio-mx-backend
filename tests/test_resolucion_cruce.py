@@ -80,6 +80,9 @@ def test_parse_titular():
         {"jugador": "Mateo Kovačić", "equipos": ["Crystal Palace", "Manchester City"]}
     assert cruce.parse_titular({"question": "¿Rayan Cherki será titular con Manchester City ante Porto en la Jornada 1 de la Champions?"}) == \
         {"jugador": "Rayan Cherki", "equipos": ["Manchester City", "Porto"]}
+    # redacción corta: solo el rival
+    assert cruce.parse_titular({"question": "¿Rayan Cherki será titular ante Porto?"}) == \
+        {"jugador": "Rayan Cherki", "equipos": ["Porto"]}
 
 
 def test_parse_gol():
@@ -223,6 +226,25 @@ def test_parse_prop_nfl():
     assert cruce.parse_prop_nfl({"question": "¿Christian McCaffrey conseguirá 15 o más puntos de Fantasy NFL (scoring estándar) en la Semana 1?"}) == \
         {"jugador": "Christian McCaffrey", "tipo": "fantasy", "umbral": 15.0}
     assert cruce.parse_prop_nfl({"question": "¿Quién gana 49ers vs Rams?"}) is None
+
+
+@pytest.mark.parametrize("q,esperado", [
+    # redacción corta (plantilla desde 2026-09-22): nombre completo, N+ y TD
+    ("¿Jaxon Smith-Njigba anotará 1+ TD en la Semana 3?", {"jugador": "Jaxon Smith-Njigba", "tipo": "td", "umbral": 1.0}),
+    ("¿Drake Maye lanzará 2+ pases de TD en la Semana 3?", {"jugador": "Drake Maye", "tipo": "pases_td", "umbral": 2.0}),
+    ("¿Christian McCaffrey conseguirá 15.5+ puntos de fantasy en la Semana 3?",
+     {"jugador": "Christian McCaffrey", "tipo": "fantasy", "umbral": 15.5}),
+    # un «(ABC)» final no es parte del nombre (la plantilla ya no lo lleva, pero se tolera)
+    ("¿Josh Allen (BUF) anotará 1+ TD en la Semana 1?", {"jugador": "Josh Allen", "tipo": "td", "umbral": 1.0}),
+    # mezclas de las dos redacciones
+    ("¿Drake Maye lanzará 2 o más pases de TD en la Semana 3?", {"jugador": "Drake Maye", "tipo": "pases_td", "umbral": 2.0}),
+    ("¿Travis Kelce anotará 1+ touchdown en la Semana 3?", {"jugador": "Travis Kelce", "tipo": "td", "umbral": 1.0}),
+    # un número suelto no dice si es "al menos": no se adivina, se escala
+    ("¿Travis Kelce anotará 1 TD en la Semana 3?", None),
+    ("¿Drake Maye lanzará 2 pases de TD en la Semana 3?", None),
+])
+def test_parse_prop_nfl_redaccion_corta(q, esperado):
+    assert cruce.parse_prop_nfl({"question": q}) == esperado
 
 
 def test_fantasy_y_sugerencias_nfl():

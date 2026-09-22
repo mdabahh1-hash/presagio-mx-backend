@@ -7,6 +7,12 @@ from app.models.market import MarketStatus, MarketCategory
 MarketKind = Literal["partido", "accesorio"]
 
 
+# Largo máximo de la pregunta (Mark, 2026-09-22): 70 obligatorio, meta 65. El
+# conteo es necesario pero no suficiente; la revisión final es `npm run titulos`
+# en el repo raíz (veredikt.md §5).
+QUESTION_MAX = 70
+
+
 class PricePoint(BaseModel):
     recorded_at: datetime
     yes_price: float
@@ -93,7 +99,7 @@ class MarketDetail(MarketBase):
 
 class MarketCreate(BaseModel):
     id: str = Field(min_length=1, max_length=100)
-    question: str = Field(min_length=1, max_length=500)
+    question: str = Field(min_length=1, max_length=QUESTION_MAX)
     description: str = Field(min_length=1, max_length=4000)
     category: MarketCategory
     subcategory: str | None = Field(default=None, max_length=50)
@@ -120,7 +126,7 @@ class MarketPatch(BaseModel):
     status: Literal["open"] | None = None   # solo se puede volver a abrir
     ends_at: datetime | None = None
     kickoff_at: datetime | None = None  # hora del evento; en un partido, mover ends_at la mueve sola
-    question: str | None = Field(default=None, min_length=1, max_length=500)
+    question: str | None = Field(default=None, min_length=1, max_length=QUESTION_MAX)
     description: str | None = Field(default=None, min_length=1, max_length=4000)
     resolution_criteria: str | None = Field(default=None, min_length=1, max_length=4000)
     resolution_source_url: str | None = Field(default=None, max_length=500)
