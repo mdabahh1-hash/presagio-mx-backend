@@ -47,7 +47,7 @@ SUBCATEGORIAS_CONOCIDAS: set[str] = {
     # Crypto
     "Bitcoin", "Ethereum", "Solana", "Stablecoins", "Regulación", "Adopción México", "Mercado cripto",
     # Economía
-    "Tasas Banxico", "Inflación (INPC)", "Tipo de cambio USD/MXN", "PIB México", "Empleo / IMSS",
+    "Tasas Banxico", "Inflación (INPC)", "Tipo de cambio", "PIB México", "Empleo / IMSS",
     "Aranceles / T-MEC", "Fed / tasas EE.UU.", "Bolsa (BMV)", "Mercados EEUU", "Remesas",
     # Global
     "Europa", "Elecciones EEUU", "Trump", "Medio Oriente", "Asia-Pacífico", "Rusia-Ucrania",
