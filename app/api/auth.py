@@ -109,9 +109,11 @@ def _callback_redirect(query: dict[str, str]) -> RedirectResponse:
     return resp
 
 
-def _oauth_success_redirect(user: User, next_path: str | None = None) -> RedirectResponse:
+def _oauth_success_redirect(user: User, next_path: str | None = None, nuevo: bool = False) -> RedirectResponse:
     jwt_token = create_access_token(user.id)
     query = {"token": jwt_token}
+    if nuevo:
+        query["nuevo"] = "1"  # el frontend muestra el cuadro de bienvenida
     if next_path:
         query["next"] = next_path
     response = _callback_redirect(query)
@@ -186,7 +188,8 @@ async def get_or_create_user(
     avatar_url: str | None,
     provider: str,
     provider_id: str,
-) -> User:
+) -> tuple[User, bool]:
+    """Devuelve (usuario, creado): creado=True solo si la cuenta es nueva."""
     filter_col = User.google_id if provider == "google" else User.github_id
     result = await db.execute(select(User).where(filter_col == provider_id))
     user = result.scalar_one_or_none()
@@ -206,7 +209,7 @@ async def get_or_create_user(
             user.avatar_url = avatar_url
         await db.commit()
         await db.refresh(user)
-        return user
+        return user, False
 
     # Create new user
     base_username = slugify_username(display_name)
@@ -232,7 +235,7 @@ async def get_or_create_user(
     db.add(user)
     await db.commit()
     await db.refresh(user)
-    return user
+    return user, True
 
 
 # ── Google OAuth ──────────────────────────────────────────────────────────────
@@ -291,7 +294,7 @@ async def google_callback(
             info = user_resp.json()
 
         email = info["email"]
-        user = await get_or_create_user(
+        user, nuevo = await get_or_create_user(
             db,
             email=email,
             display_name=info.get("name") or email,
@@ -301,7 +304,7 @@ async def google_callback(
         )
     except Exception:
         return _oauth_error_redirect("google", next_path=next_path)
-    return _oauth_success_redirect(user, next_path)
+    return _oauth_success_redirect(user, next_path, nuevo)
 
 
 # ── GitHub OAuth ──────────────────────────────────────────────────────────────
@@ -367,7 +370,7 @@ async def github_callback(
                 primary = next((e for e in emails if e.get("primary")), None)
                 email = primary["email"] if primary else f"{gh_user['login']}@github.invalid"
 
-        user = await get_or_create_user(
+        user, nuevo = await get_or_create_user(
             db,
             email=email,
             display_name=gh_user.get("name") or gh_user["login"],
@@ -377,7 +380,7 @@ async def github_callback(
         )
     except Exception:
         return _oauth_error_redirect("github", next_path=next_path)
-    return _oauth_success_redirect(user, next_path)
+    return _oauth_success_redirect(user, next_path, nuevo)
 
 
 @router.post("/register")
