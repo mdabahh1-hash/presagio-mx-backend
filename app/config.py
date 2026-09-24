@@ -103,6 +103,10 @@ class Settings(BaseSettings):
     # POST /api/admin/siembra/planes/proponer. Vacía → solo el admin con Bearer.
     SIEMBRA_API_KEY: str = ""
     EN_VIVO_INTERVALO_SEGUNDOS: int = 120
+    # Agente revisor (app/services/revision): una corrida al día revisa los mercados
+    # activos y, si hay algo nuevo, manda un correo con casillas al admin.
+    REVISION_ENABLED: bool = False
+    REVISION_HORA_UTC: int = 13   # 07:00 CDMX
 
 
 settings = Settings()
