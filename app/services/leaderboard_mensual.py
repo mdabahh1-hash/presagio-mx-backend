@@ -5,7 +5,9 @@ Ganancia del mes = Σ de los trades hechos en el mes calendario (CDMX) de
 acciones hasta resolver:
   resuelto  → shares si ganó, 0 si no (lmsr.posicion_gana)
   cancelado → su costo (el reembolso lo devuelve: ganancia 0)
-  sin resolver → shares × precio LMSR actual del lado comprado
+  sin resolver → min(shares × precio LMSR, costo): una pérdida abierta resta,
+                 una ganancia abierta no suma hasta resolver (nadie sube puestos
+                 inflando el precio de un mercado poco líquido al cierre)
 Bonos, referidos y los 10k de registro no cuentan (no son trades).
 
 El día 1 el loop de mantenimiento congela el mes anterior (`cerrar_mes_anterior`)
@@ -26,7 +28,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.core import lmsr
 from app.core.auth import ADMIN_EMAIL
-from app.models.leaderboard_mes import LeaderboardMes, LeaderboardMesFila
+from app.models.leaderboard_mes import LeaderboardAviso, LeaderboardMes, LeaderboardMesFila
 from app.models.market import Market, MarketStatus
 from app.models.outcome import Outcome
 from app.models.trade import Trade, TradeSide
@@ -39,6 +41,7 @@ MIN_PREDICCIONES = 10
 MIN_MERCADOS = 5
 PREMIADOS = 3
 TOKEN_TYP = "leaderboard_approval"
+INICIO = date(2026, 10, 1)  # primer mes con premios: octubre 2026
 
 _RESUELTOS = {MarketStatus.RESOLVED_YES: "YES", MarketStatus.RESOLVED_NO: "NO"}
 
@@ -84,14 +87,16 @@ def valor_trade(t: Trade, m: Market, q_multi: dict[str, float] | None) -> float:
     ganador = _RESUELTOS.get(m.status) or (m.resolved_outcome_key if m.status == MarketStatus.RESOLVED else None)
     if ganador:
         return t.shares if lmsr.posicion_gana(side, t.outcome_key, ganador, multi) else 0.0
-    # Sin resolver: marca LMSR, igual que `users._enrich_positions`.
+    # Sin resolver: marca LMSR (igual que `users._enrich_positions`), topada en el costo.
     if multi:
         if not q_multi or t.outcome_key not in q_multi:
             return t.cost
         p = lmsr.outcome_price(q_multi, m.b, t.outcome_key)
-        return t.shares * (1.0 - p if t.side == TradeSide.NO else p)
-    p_yes = lmsr.yes_price(m.q_yes, m.q_no, m.b)
-    return t.shares * (p_yes if (t.outcome_key or side) == "YES" else 1.0 - p_yes)
+        marca = t.shares * (1.0 - p if t.side == TradeSide.NO else p)
+    else:
+        p_yes = lmsr.yes_price(m.q_yes, m.q_no, m.b)
+        marca = t.shares * (p_yes if (t.outcome_key or side) == "YES" else 1.0 - p_yes)
+    return min(marca, t.cost)
 
 
 def asignar_ranks(filas: list[Fila]) -> None:
@@ -137,6 +142,23 @@ async def ranking_mes(db: AsyncSession, mes: date) -> list[Fila]:
                       and f.user.email_verified and f.user.email != ADMIN_EMAIL)
     asignar_ranks(filas)
     return filas
+
+
+async def trofeos_de(db: AsyncSession, user_ids: list[int]) -> dict[int, list[dict]]:
+    """{user_id: [{mes, rank}]} de los podios en meses publicados, del más reciente al más viejo."""
+    if not user_ids:
+        return {}
+    rows = (await db.execute(
+        select(LeaderboardMesFila.user_id, LeaderboardMesFila.mes, LeaderboardMesFila.rank)
+        .join(LeaderboardMes, LeaderboardMes.mes == LeaderboardMesFila.mes)
+        .where(LeaderboardMes.status == "approved", LeaderboardMesFila.rank <= PREMIADOS,
+               LeaderboardMesFila.user_id.in_(user_ids))
+        .order_by(LeaderboardMesFila.mes.desc())
+    )).all()
+    out: dict[int, list[dict]] = {}
+    for uid, mes, rank in rows:
+        out.setdefault(uid, []).append({"mes": mes, "rank": rank})
+    return out
 
 
 # ── cierre y aprobación ──────────────────────────────────────────────────────
@@ -196,7 +218,7 @@ async def cerrar_mes_anterior() -> None:
 
     ahora = datetime.now(timezone.utc)
     anterior = (mes_de(ahora) - timedelta(days=1)).replace(day=1)
-    if anterior < date(2026, 10, 1):  # primer mes con premios: octubre 2026
+    if anterior < INICIO:
         return
     async with app_db.AsyncSessionLocal() as db:
         cierre = await cerrar_mes(db, anterior)
@@ -210,3 +232,64 @@ async def cerrar_mes_anterior() -> None:
         cierre.correo_at = ahora
         await db.commit()
         logger.info("leaderboard %s: correo de cierre enviado (%d en el top)", cierre.mes, len(top))
+
+
+# ── avisos de competencia ────────────────────────────────────────────────────
+
+AVISO_ULTIMOS = timedelta(hours=72)
+
+
+def tipo_aviso(ahora: datetime) -> str | None:
+    """`ultimos` en las 72 h antes del cierre; `semana-<n>` los lunes desde las 09:00 CDMX."""
+    mx = ahora.astimezone(MX)
+    if mes_de(ahora) < INICIO:
+        return None
+    if limites(mes_de(ahora))[1] - ahora <= AVISO_ULTIMOS:
+        return "ultimos"
+    if mx.weekday() == 0 and mx.hour >= 9:
+        return f"semana-{mx.isocalendar().week}"
+    return None
+
+
+async def avisos_competencia(ahora: datetime | None = None) -> int:
+    """Idempotente (tabla `leaderboard_avisos`); lo llama el loop de mantenimiento.
+    Manda a quien operó este mes su lugar o lo que le falta. Devuelve cuántos mandó."""
+    import app.database as app_db
+    from app.services.email import send_competencia_email
+
+    ahora = ahora or datetime.now(timezone.utc)
+    tipo = tipo_aviso(ahora)
+    if tipo is None:
+        return 0
+    mes = mes_de(ahora)
+    fin = limites(mes)[1]
+    enviados = 0
+    async with app_db.AsyncSessionLocal() as db:
+        ya = set((await db.execute(select(LeaderboardAviso.user_id).where(
+            LeaderboardAviso.mes == clave(mes), LeaderboardAviso.tipo == tipo))).scalars())
+        filas = await ranking_mes(db, mes)
+        podio = [f.ganancia for f in filas if f.rank and f.rank <= PREMIADOS]
+        umbral = podio[-1] if len(podio) >= PREMIADOS else None
+        for f in filas:
+            u = f.user
+            if u.id in ya or not u.email or not u.email_notifications or u.email == ADMIN_EMAIL:
+                continue
+            para_podio = None
+            if f.elegible and f.rank and f.rank > PREMIADOS and umbral is not None:
+                para_podio = max(0.0, umbral - f.ganancia)
+            try:
+                await send_competencia_email(
+                    u.email, u.display_name, ultimos=tipo == "ultimos", dias=max(0, (fin - ahora).days),
+                    rank=f.rank, ganancia=f.ganancia, para_podio=para_podio,
+                    faltan_predicciones=max(0, MIN_PREDICCIONES - f.n_trades),
+                    faltan_mercados=max(0, MIN_MERCADOS - f.n_mercados),
+                )
+            except Exception:  # noqa: BLE001  (se reintenta en la siguiente vuelta)
+                logger.exception("leaderboard: aviso %s a %s falló", tipo, u.id)
+                continue
+            db.add(LeaderboardAviso(user_id=u.id, mes=clave(mes), tipo=tipo))
+            await db.commit()
+            enviados += 1
+    if enviados:
+        logger.info("leaderboard %s: %d avisos %s", clave(mes), enviados, tipo)
+    return enviados

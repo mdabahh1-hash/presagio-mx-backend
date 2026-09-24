@@ -283,6 +283,34 @@ async def send_closing_soon_email(
     await _send(to_email, _asunto("Cierra pronto", question), html, text)
 
 
+async def send_competencia_email(
+    to_email: str, display_name: str, *, ultimos: bool, dias: int, rank: int | None, ganancia: float,
+    para_podio: float | None, faltan_predicciones: int, faltan_mercados: int,
+) -> None:
+    """Leaderboard mensual (app/services/leaderboard_mensual.avisos_competencia):
+    el lunes y en los últimos 3 días, tu lugar o lo que te falta para calificar."""
+    url = f"{_SITE}/#/clasificacion"
+    g = f"{ganancia:+,.0f} PT"
+    if rank is None:
+        titulo = "Te falta poco para calificar"
+        situacion = (f"Te faltan {faltan_predicciones} predicciones y {faltan_mercados} mercados distintos "
+                     f"para entrar a la clasificación del mes. Por ahora llevas {g}.")
+    elif rank <= 3:
+        titulo = f"Vas en el lugar {rank} del mes"
+        situacion = f"Estás en el podio con {g}. Los 3 primeros lugares del mes se llevan premios."
+    else:
+        titulo = f"Vas en el lugar {rank} del mes"
+        situacion = f"Llevas {g}." + (f" Te faltan {para_podio:,.0f} PT para el podio." if para_podio else "")
+    cuando = ("Quedan menos de 3 días para el cierre." if ultimos
+              else f"El mes cierra en {dias} días.")
+    cuerpo = _p(f"Hola {_esc(display_name)},") + _p(_esc(situacion)) + _p(_esc(cuando)) + _boton("Ver clasificación", url)
+    motivo = "Recibes este correo porque predijiste este mes en VEREDIKT."
+    html = _shell_usuario(titulo, f"{situacion} {cuando}", cuerpo, _pie_notificaciones(motivo))
+    text = _texto_plano(titulo, [f"Hola {display_name},", "", situacion, cuando], url, _PIE_TEXTO)
+    asunto = f"Últimos días: {titulo.lower()}" if ultimos else titulo
+    await _send(to_email, asunto, html, text)
+
+
 async def send_admin_resolution_reminder(markets: list[tuple[str, str, datetime]]) -> None:
     """Digest to the admin listing markets that closed and need resolution.
 

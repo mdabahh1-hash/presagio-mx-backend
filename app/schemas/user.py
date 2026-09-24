@@ -45,6 +45,7 @@ class LeaderboardEntry(BaseModel):
     # Solo en period=month (leaderboard mensual): lugar entre los elegibles.
     rank: int | None = None
     elegible: bool | None = None
+    trofeos: int = 0  # veces en el podio de un mes publicado
 
 
 class ProfilePublic(BaseModel):
@@ -60,6 +61,7 @@ class ProfilePublic(BaseModel):
     followers_count: int = 0
     following_count: int = 0
     is_following: bool | None = None  # null: viewer anónimo o perfil propio
+    trofeos: list[dict] = []  # [{mes: 'YYYY-MM', rank}] podios del leaderboard mensual
 
     model_config = {"from_attributes": True}
 

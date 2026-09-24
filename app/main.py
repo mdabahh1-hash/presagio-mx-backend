@@ -15,7 +15,7 @@ from app.services.market_maintenance import run_market_maintenance, get_maintena
 from app.services.resolucion.nocturno import nightly_loop, get_nightly_status
 from app.services.en_vivo import en_vivo_loop, get_en_vivo_status
 from app.services.siembra.job import siembra_loop
-from app.services.leaderboard_mensual import cerrar_mes_anterior
+from app.services.leaderboard_mensual import avisos_competencia, cerrar_mes_anterior
 
 # How often the background job runs (closing-soon notices, auto-close, admin reminders).
 MAINTENANCE_INTERVAL_SECONDS = 900  # 15 min
@@ -41,6 +41,10 @@ async def _maintenance_loop() -> None:
             await cerrar_mes_anterior()
         except Exception as e:  # noqa: BLE001
             print(f"[leaderboard] cierre mensual: {e}")
+        try:
+            await avisos_competencia()
+        except Exception as e:  # noqa: BLE001
+            print(f"[leaderboard] avisos: {e}")
 
 
 @asynccontextmanager

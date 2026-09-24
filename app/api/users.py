@@ -421,8 +421,14 @@ def _period_start(period: str) -> datetime | None:
 
 @router.get("/leaderboard", response_model=list[LeaderboardEntry])
 async def get_leaderboard(limit: int = 50, period: str = "all", db: AsyncSession = Depends(get_db)):
-    limit = max(1, min(limit, 100))
+    entries = await _leaderboard(max(1, min(limit, 100)), period, db)
+    trofeos = await leaderboard_mensual.trofeos_de(db, [e.id for e in entries])
+    for e in entries:
+        e.trofeos = len(trofeos.get(e.id, []))
+    return entries
 
+
+async def _leaderboard(limit: int, period: str, db: AsyncSession) -> list[LeaderboardEntry]:
     if period == "month":
         return await _monthly_leaderboard(db, limit)
     start = _period_start(period)
@@ -619,6 +625,7 @@ async def get_user(
         avatar_url=user.avatar_url, pnl=pnl, volume=volume,
         markets_traded=user.markets_traded, accuracy=user.accuracy, created_at=user.created_at,
         followers_count=followers_count, following_count=following_count, is_following=is_following,
+        trofeos=(await leaderboard_mensual.trofeos_de(db, [user.id])).get(user.id, []),
     )
 
 
