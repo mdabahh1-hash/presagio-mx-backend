@@ -48,7 +48,8 @@ SUBCATEGORIAS_CONOCIDAS: set[str] = {
     # Crypto
     "Bitcoin", "Ethereum", "Solana", "Stablecoins", "Regulación", "Adopción México", "Mercado cripto",
     # Entretenimiento, Tech, México, Clima
-    "Influencers", "Reality shows", "IA", "Huracanes", "Sequía y calor",
+    "Influencers", "Reality shows", "Música", "Cine y series", "Farándula",
+    "IA", "Videojuegos", "Apps y redes", "Huracanes", "Sequía y calor",
     "CDMX", "Cultura y tradición", "Estados", "Mascotas y virales", "Batallas de aura", "Seguridad",
     # Global
     "Europa", "Elecciones EEUU", "Trump", "Medio Oriente", "Asia-Pacífico", "Rusia-Ucrania", "Américas",
