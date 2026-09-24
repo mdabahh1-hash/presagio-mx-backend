@@ -50,7 +50,7 @@ SUBCATEGORIAS_CONOCIDAS: set[str] = {
     # Entretenimiento, Tech, México, Clima
     "Influencers", "Reality shows", "Música", "Cine y series", "Farándula",
     "IA", "Videojuegos", "Apps y redes", "Huracanes", "Sequía y calor",
-    "CDMX", "Cultura y tradición", "Estados", "Mascotas y virales", "Batallas de aura", "Seguridad",
+    "CDMX", "Cultura", "Estados", "Mascotas y virales", "Batallas de aura", "Seguridad",
     # Global
     "Europa", "Elecciones EEUU", "Trump", "Medio Oriente", "Asia-Pacífico", "Rusia-Ucrania", "Américas",
     "África", "ONU y OTAN", "Migración",
