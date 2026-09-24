@@ -2,7 +2,7 @@
 casillas y siembra lo aprobado. Mismo esquema que el job de resolución
 (`app/services/resolucion/nocturno.py`), sin LLM.
 
-  correr_siembra()  → generadores (partidos, cripto) → SeedPlan(status=pending) + correo con URL firmada
+  correr_siembra()  → generadores (partidos, cripto, economía) → SeedPlan(status=pending) + correo con URL firmada
   GET  /api/admin/siembra/planes/{id}/aprobar?t= → página con casillas (no ejecuta)
   POST …/aprobar?t= (ids marcados)              → aplicar_siembra(): sembrador YAML
 """
@@ -25,7 +25,7 @@ from app.models.seed_plan import SeedPlan
 from app.services.email import send_seed_plan_email
 from app.services.resolucion.fuentes import Http
 from app.services.resolucion.nocturno import make_plan_token, segundos_hasta_proxima_corrida
-from app.services.siembra import cripto, partidos
+from app.services.siembra import cripto, economia, partidos
 from app.services.siembra.partidos import _yaml
 from seeds.runner import sembrar
 from seeds.schema import cargar_texto
@@ -81,7 +81,8 @@ def resumen_de(plan: dict) -> dict:
             "descartes": len(plan.get("descartes", []))}
 
 
-GENERADORES = [("partidos", partidos.armar_propuestas), ("cripto", cripto.armar_propuestas)]
+GENERADORES = [("partidos", partidos.armar_propuestas), ("cripto", cripto.armar_propuestas),
+               ("economia", economia.armar_propuestas)]
 
 
 def _correr_generadores(ahora: datetime, excluir: set[str], existentes: list[dict]) -> tuple[list[dict], list[dict]]:
