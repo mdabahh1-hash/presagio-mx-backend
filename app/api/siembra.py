@@ -1,5 +1,5 @@
 """Agente de siembra: listar/disparar planes (admin con Bearer) y aprobar un plan
-desde el enlace firmado del correo (sin sesión), eligiendo partido por partido.
+desde el enlace firmado del correo (sin sesión), eligiendo mercado por mercado.
 
 GET  /admin/siembra/planes/{id}/aprobar?t=…  → página con casillas (NO ejecuta:
       los clientes de correo pre-cargan los enlaces).
@@ -23,7 +23,7 @@ from app.models.seed_plan import SeedPlan
 from app.models.user import User
 from app.services.email import _fmt_mx
 from app.services.resolucion.nocturno import verify_plan_token
-from app.services.siembra import job
+from app.services.siembra import job, vista
 
 router = APIRouter(prefix="/admin/siembra", tags=["admin"])
 
@@ -38,9 +38,9 @@ async def listar_planes(current_user: User = Depends(get_current_user), db: Asyn
 
 @router.post("/planes", status_code=202)
 async def disparar_plan(current_user: User = Depends(get_current_user)):
-    """Arma un plan ahora, en segundo plano (≈100 consultas a ESPN)."""
+    """Arma un plan ahora, en segundo plano (≈100 consultas a ESPN, Binance y DefiLlama)."""
     require_admin(current_user)
-    spawn(job.correr_siembra_partidos())
+    spawn(job.correr_siembra())
     return {"started": True}
 
 
@@ -72,24 +72,24 @@ async def pagina_aprobar(plan_id: int, t: str | None = None, db: AsyncSession = 
     p = await _cargar(db, plan_id, t)
     if p.status != "pending":
         return _ya_procesado(p)
-    props = p.plan.get("propuestas", [])
+    props = [vista(x) for x in p.plan.get("propuestas", [])]
     filas = "".join(
         f"<tr><td><input type='checkbox' name='ids' value='{_esc(x['doc']['id'])}' checked></td>"
-        f"<td>{_esc(x['liga'])}</td><td><a href='{_esc(x['url'])}'>{_esc(x['local'])} vs {_esc(x['visitante'])}</a>"
+        f"<td>{_esc(x['grupo'])}</td><td><a href='{_esc(x['url'])}'>{_esc(x['titulo'])}</a>"
         + (f"<br><span class='warn'>⚠️ revisar: {_esc('; '.join(x['revisar']))}</span>" if x["revisar"] else "")
-        + f"</td><td>{_fmt_mx(datetime.fromisoformat(x['kickoff'].replace('Z', '+00:00')))}</td>"
-        f"<td class='v'>{'/'.join(map(str, x['cuotas']))}<br><span class='muted'>tabla "
-        f"{'/'.join(map(str, x['tabla'])) if x.get('tabla') else '—'}</span></td></tr>"
+        + f"</td><td>{_fmt_mx(datetime.fromisoformat(x['cuando'].replace('Z', '+00:00')))}</td>"
+        f"<td class='v'>{_esc(x['precio'])}<br><span class='muted'>{_esc(x['nota'])}</span></td></tr>"
         for x in props
     )
-    desc = "".join(f"<li class='muted'>{_esc(d['liga'])} · {_esc(d['partido'])}: {_esc(d['motivo'])}</li>"
-                   for d in p.plan.get("descartes", []))
+    desc = "".join(f"<li class='muted'>{_esc(d['grupo'])} · {_esc(d['titulo'])}: {_esc(d['motivo'])}</li>"
+                   for d in map(vista, p.plan.get("descartes", [])))
     cuerpo = (
         f"<h1>Plan de siembra #{p.id}</h1>"
-        f"<p class='muted'>{len(props)} partidos. % = local/empate/visitante con las cuotas de DraftKings; "
-        f"debajo, lo que da la tabla de ESPN. Desmarca los que no quieras: no se vuelven a proponer.</p>"
+        f"<p class='muted'>{len(props)} mercados. Partidos: % local/empate/visitante con las cuotas de DraftKings y, "
+        f"debajo, lo que da la tabla de ESPN. Crypto: precio de apertura y el spot del día. "
+        f"Desmarca los que no quieras: no se vuelven a proponer.</p>"
         f"<form method='post' action='/api/admin/siembra/planes/{p.id}/aprobar?t={_esc(t or '')}'>"
-        f"<table><tr><th></th><th>Liga</th><th>Partido</th><th>Hora</th><th>%</th></tr>{filas}</table>"
+        f"<table><tr><th></th><th>Grupo</th><th>Mercado</th><th>Cierre</th><th>Apertura</th></tr>{filas}</table>"
         f"<button class='btn' type='submit'>Sembrar los marcados</button></form>"
         + (f"<div class='box'><b>Descartados</b><ul>{desc}</ul></div>" if desc else "")
     )
@@ -115,4 +115,4 @@ async def aplicar(plan_id: int, t: str | None = None, ids: list[str] = Form(defa
         raise
     return _pagina(f"Siembra #{plan_id} aplicada",
                    f"<h1>Plan de siembra #{plan_id} aplicado</h1>{_resultado_html(res)}"
-                   f"<p><a href='https://veredikt.mx/#/mercados?cat=Deportes'>Ver Deportes →</a></p>")
+                   f"<p><a href='https://veredikt.mx/#/mercados'>Ver mercados →</a></p>")

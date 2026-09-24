@@ -2,7 +2,7 @@
 
 La API no expone auto_resolucion, así que la landing de Crypto (veredikt-mx,
 src/components/crypto/escalera.ts) reconoce una escalera por la redacción
-«cerrará <mes> en US$N [millones] o más» y toma N de ahí. Este test garantiza que,
+«cerrará(n) <mes> en US$N [millones | mil millones] o más» y toma N de ahí. Este test garantiza que,
 en todo mercado del YAML con esa redacción, N es exactamente el umbral con el que
 el job lo resuelve (auto_resolucion.valor) y el mes es el de ends_at.
 """
@@ -17,7 +17,7 @@ YAML = Path(__file__).resolve().parents[1] / "mercados-pendientes.yaml"
 MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
          "septiembre", "octubre", "noviembre", "diciembre"]
 # Espejo exacto de LADDER_RE en src/components/crypto/escalera.ts
-LADDER_RE = re.compile(r"cerrará (" + "|".join(MESES) + r") en US\$([\d,]+(?:\.\d+)?)( millones)? o más")
+LADDER_RE = re.compile(r"cerrarán? (" + "|".join(MESES) + r") en US\$([\d,]+(?:\.\d+)?)( mil millones| millones)? o más")
 
 
 def umbral(question: str) -> tuple[str, float] | None:
@@ -25,12 +25,14 @@ def umbral(question: str) -> tuple[str, float] | None:
     if not m:
         return None
     n = float(m.group(2).replace(",", ""))
-    return m.group(1), n * 1e6 if m.group(3) else n
+    return m.group(1), n * {" mil millones": 1e9, " millones": 1e6}.get(m.group(3) or "", 1)
 
 
 def test_regex_de_ejemplo():
     assert umbral("¿Bitcoin cerrará septiembre en US$80,000 o más?") == ("septiembre", 80000)
     assert umbral("¿La capitalización de las stablecoins cerrará septiembre en US$310,500 millones o más?") == ("septiembre", 310_500e6)
+    # redacción corta desde octubre-2026 (70 caracteres): miles de millones
+    assert umbral("¿Las stablecoins cerrarán octubre en US$312 mil millones o más?") == ("octubre", 312e9)
     # Redacciones de los mercados de fin de año ya sembrados: no son escalera
     assert umbral("¿Bitcoin cerrará 2026 en US$100,000 o más?") is None
     assert umbral("¿Bitcoin alcanzará US$120,000 en algún momento entre el 27 de agosto y el 31 de diciembre?") is None
