@@ -40,16 +40,18 @@ def get_nightly_status() -> dict:
 
 # ── token de aprobación ──────────────────────────────────────────────────────
 
-def make_plan_token(plan_id: int, nonce: str) -> str:
+def make_plan_token(plan_id: int, nonce: str, typ: str = "plan_approval") -> str:
+    """`typ` separa los planes de resolución (`plan_approval`) de los de siembra
+    (`seed_approval`): el enlace de uno no aprueba el otro."""
     now = datetime.now(timezone.utc)
     payload = {
-        "typ": "plan_approval", "plan": plan_id, "n": nonce,
+        "typ": typ, "plan": plan_id, "n": nonce,
         "iat": now, "exp": now + timedelta(hours=settings.PLAN_APPROVAL_TTL_HOURS),
     }
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=ALGORITHM)
 
 
-def verify_plan_token(token: str | None, plan_id: int) -> str | None:
+def verify_plan_token(token: str | None, plan_id: int, typ: str = "plan_approval") -> str | None:
     """Devuelve el nonce si el token es válido para este plan; None si no."""
     if not token:
         return None
@@ -58,7 +60,7 @@ def verify_plan_token(token: str | None, plan_id: int) -> str | None:
     except JWTError:
         return None
     nonce = payload.get("n")
-    if payload.get("typ") != "plan_approval" or payload.get("plan") != plan_id or not isinstance(nonce, str):
+    if payload.get("typ") != typ or payload.get("plan") != plan_id or not isinstance(nonce, str):
         return None
     return nonce
 
