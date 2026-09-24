@@ -2,7 +2,7 @@
 casillas y siembra lo aprobado. Mismo esquema que el job de resolución
 (`app/services/resolucion/nocturno.py`), sin LLM.
 
-  correr_siembra_partidos() → SeedPlan(status=pending) + correo con URL firmada
+  correr_siembra()  → generadores (partidos, cripto) → SeedPlan(status=pending) + correo con URL firmada
   GET  /api/admin/siembra/planes/{id}/aprobar?t= → página con casillas (no ejecuta)
   POST …/aprobar?t= (ids marcados)              → aplicar_siembra(): sembrador YAML
 """
@@ -25,7 +25,8 @@ from app.models.seed_plan import SeedPlan
 from app.services.email import send_seed_plan_email
 from app.services.resolucion.fuentes import Http
 from app.services.resolucion.nocturno import make_plan_token, segundos_hasta_proxima_corrida
-from app.services.siembra.partidos import _yaml, armar_propuestas
+from app.services.siembra import cripto, partidos
+from app.services.siembra.partidos import _yaml
 from seeds.runner import sembrar
 from seeds.schema import cargar_texto
 
@@ -56,8 +57,13 @@ async def _ya_propuestos(db: AsyncSession) -> set[str]:
     return {x["doc"]["id"] for plan in filas for x in plan.get("propuestas", [])}
 
 
-async def _partidos_abiertos(db: AsyncSession) -> tuple[set[str], list[dict]]:
-    """(ids de todos los partidos abiertos, [{subcategory, kickoff_at, labels}])."""
+async def _vigentes(db: AsyncSession) -> set[str]:
+    """Ids de los mercados que aún no cierran (una escalera del mes ya sembrada no se repite)."""
+    return set((await db.execute(select(Market.id).where(Market.ends_at >= datetime.now(timezone.utc)))).scalars())
+
+
+async def _partidos_abiertos(db: AsyncSession) -> list[dict]:
+    """[{subcategory, kickoff_at, labels}] de los partidos abiertos (duplicados con otro id)."""
     mercados = (await db.execute(select(Market.id, Market.subcategory, Market.kickoff_at).where(
         Market.kind == "partido", Market.kickoff_at.is_not(None),
         Market.status.in_((MarketStatus.OPEN, MarketStatus.PENDING_RESOLUTION))))).all()
@@ -66,8 +72,7 @@ async def _partidos_abiertos(db: AsyncSession) -> tuple[set[str], list[dict]]:
         for mid, label in (await db.execute(select(Outcome.market_id, Outcome.label).where(
                 Outcome.market_id.in_([m.id for m in mercados])))).all():
             labels.setdefault(mid, []).append(label)
-    return ({m.id for m in mercados},
-            [{"subcategory": m.subcategory, "kickoff_at": m.kickoff_at, "labels": labels.get(m.id, [])} for m in mercados])
+    return [{"subcategory": m.subcategory, "kickoff_at": m.kickoff_at, "labels": labels.get(m.id, [])} for m in mercados]
 
 
 def resumen_de(plan: dict) -> dict:
@@ -76,7 +81,24 @@ def resumen_de(plan: dict) -> dict:
             "descartes": len(plan.get("descartes", []))}
 
 
-async def correr_siembra_partidos() -> SeedPlan | None:
+GENERADORES = [("partidos", partidos.armar_propuestas), ("cripto", cripto.armar_propuestas)]
+
+
+def _correr_generadores(ahora: datetime, excluir: set[str], existentes: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Síncrono (urllib). Un generador que truena sale en descartes y no tumba a los demás."""
+    props, desc = [], []
+    for nombre, gen in GENERADORES:
+        try:
+            p, d = gen(Http(), ahora, excluir, existentes)
+        except Exception as e:  # noqa: BLE001
+            logger.exception("siembra: el generador %s falló", nombre)
+            p, d = [], [{"grupo": nombre, "titulo": "(generador completo)", "motivo": f"falló: {e}"[:300]}]
+        props += p
+        desc += d
+    return props, desc
+
+
+async def correr_siembra() -> SeedPlan | None:
     """Arma, guarda y manda el plan. None si no hay nada nuevo que proponer."""
     ahora = datetime.now(timezone.utc)
     _LAST.update(ran_at=ahora.isoformat(), last_error=None)
@@ -84,13 +106,13 @@ async def correr_siembra_partidos() -> SeedPlan | None:
         async with app_db.AsyncSessionLocal() as db:
             await _expirar_viejos(db)
             await db.commit()
-            abiertos, existentes = await _partidos_abiertos(db)
-            excluir = abiertos | await _ya_propuestos(db)
-            propuestas, descartes = await asyncio.to_thread(armar_propuestas, Http(), ahora, excluir, existentes)
+            existentes = await _partidos_abiertos(db)
+            excluir = await _vigentes(db) | await _ya_propuestos(db)
+            propuestas, descartes = await asyncio.to_thread(_correr_generadores, ahora, excluir, existentes)
             if not propuestas:
-                logger.info("siembra: sin partidos nuevos (%d descartes)", len(descartes))
+                logger.info("siembra: sin mercados nuevos (%d descartes)", len(descartes))
                 return None
-            plan = {"generado": ahora.isoformat(), "generador": "partidos",
+            plan = {"generado": ahora.isoformat(),
                     "propuestas": propuestas, "descartes": descartes}
             row = SeedPlan(status="pending", nonce=secrets.token_urlsafe(16), plan=plan, resumen=resumen_de(plan))
             db.add(row)
@@ -132,6 +154,6 @@ async def siembra_loop() -> None:
     while True:
         await asyncio.sleep(segundos_hasta_proxima_corrida(horas=[settings.SIEMBRA_HORA_UTC]))
         try:
-            await correr_siembra_partidos()
+            await correr_siembra()
         except Exception as e:  # noqa: BLE001
             print(f"[siembra] error: {e}")

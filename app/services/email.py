@@ -6,6 +6,7 @@ import httpx
 
 from app.config import settings
 from app.services.resolucion.sujeto import texto_identidad  # puro (sin BD ni red)
+from app.services.siembra import vista  # puro (sin BD ni red)
 
 logger = logging.getLogger(__name__)
 
@@ -441,33 +442,33 @@ async def send_proposal_notification(
 
 
 async def send_seed_plan_email(plan_id: int, plan: dict, url_aprobar: str) -> None:
-    """Plan de siembra al admin (app/services/siembra): partidos propuestos por liga
-    con % inicial (cuotas) contra la tabla, los «revisar» resaltados y un botón a
-    la página de casillas (enlace firmado, un solo uso). Descartes al final."""
-    props, desc = plan.get("propuestas", []), plan.get("descartes", [])
+    """Plan de siembra al admin (app/services/siembra): mercados propuestos con su
+    precio de apertura y la nota de la segunda fuente, los «revisar» resaltados y un
+    botón a la página de casillas (enlace firmado, un solo uso). Descartes al final."""
+    props, desc = [vista(x) for x in plan.get("propuestas", [])], [vista(d) for d in plan.get("descartes", [])]
     n_rev = sum(1 for p in props if p["revisar"])
     td = 'style="padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:12px"'
 
     def fila(p: dict) -> str:
-        tabla = "/".join(map(str, p["tabla"])) if p.get("tabla") else "—"
         rev = f'<br><span style="color:#FFD700">⚠️ revisar: {_esc("; ".join(p["revisar"]))}</span>' if p["revisar"] else ""
-        return (f'<tr><td {td}>{_esc(p["liga"])}</td><td {td}>{_esc(p["local"])} vs {_esc(p["visitante"])}{rev}</td>'
-                f'<td {td}>{_fmt_mx(datetime.fromisoformat(p["kickoff"].replace("Z", "+00:00")))}</td>'
-                f'<td {td}><b>{"/".join(map(str, p["cuotas"]))}</b><br><span style="color:rgba(245,240,232,0.55)">tabla {tabla}</span></td></tr>')
+        return (f'<tr><td {td}>{_esc(p["grupo"])}</td><td {td}>{_esc(p["titulo"])}{rev}</td>'
+                f'<td {td}>{_fmt_mx(datetime.fromisoformat(p["cuando"].replace("Z", "+00:00")))}</td>'
+                f'<td {td}><b>{_esc(p["precio"])}</b><br><span style="color:rgba(245,240,232,0.55)">{_esc(p["nota"])}</span></td></tr>')
 
-    descartes = "".join(f'<li style="font-size:12px;color:rgba(245,240,232,0.6)">{_esc(d["liga"])} · {_esc(d["partido"])}: {_esc(d["motivo"])}</li>'
+    descartes = "".join(f'<li style="font-size:12px;color:rgba(245,240,232,0.6)">{_esc(d["grupo"])} · {_esc(d["titulo"])}: {_esc(d["motivo"])}</li>'
                         for d in desc)
     body = f"""
       <p style="margin: 0 0 8px; font-size: 16px;">🌱 Plan de siembra #{plan_id}</p>
       <p style="margin: 0 0 18px; font-size: 14px; color: rgba(245,240,232,0.6);">
-        {len(props)} partidos de las próximas jornadas · {n_rev} para revisar · {len(desc)} descartados.
-        % = local/empate/visitante con las cuotas de DraftKings; debajo, lo que da la tabla de ESPN.
+        {len(props)} mercados · {n_rev} para revisar · {len(desc)} descartados.
+        Partidos: % local/empate/visitante con las cuotas de DraftKings y, debajo, la tabla de ESPN.
+        Crypto: precio de apertura y el spot del día.
       </p>
       <a href="{_esc(url_aprobar)}" style="display:inline-block; background:#FFD700; color:#07071A; text-decoration:none;
          font-weight:800; font-size:14px; padding:12px 24px; border-radius:10px; margin:0 0 6px;">Elegir y sembrar →</a>
-      <p style="margin:0 0 18px;font-size:11px;color:rgba(245,240,232,0.35)">La página trae una casilla por partido. Vence en {settings.PLAN_APPROVAL_TTL_HOURS} h.</p>
+      <p style="margin:0 0 18px;font-size:11px;color:rgba(245,240,232,0.35)">La página trae una casilla por mercado. Vence en {settings.PLAN_APPROVAL_TTL_HOURS} h.</p>
       <table style="width:100%;border-collapse:collapse;margin:0 0 18px">{"".join(fila(p) for p in props)}</table>
       {f'<p style="margin:18px 0 6px;font-size:14px;font-weight:700">Descartados ({len(desc)})</p><ul style="padding-left:18px;margin:0">{descartes}</ul>' if desc else ""}
     """
-    subject = f"🌱 Siembra: {len(props)} partidos listos" + (f" ({n_rev} para revisar)" if n_rev else "")
+    subject = f"🌱 Siembra: {len(props)} mercados listos" + (f" ({n_rev} para revisar)" if n_rev else "")
     await _send(_ADMIN_EMAIL, subject, _wrap(body).replace("max-width: 480px", "max-width: 720px"))

@@ -1,8 +1,9 @@
-"""Agente de siembra de 1X2 (app/services/siembra): prior de dos fuentes,
-duplicados, plan con correo, página de casillas y aplicación de un solo uso.
-Sin red: ESPN simulado con FakeHttp."""
+"""Agente de siembra (app/services/siembra): 1X2 con prior de dos fuentes y
+duplicados; escaleras y rangos de Crypto; plan con correo, página de casillas y
+aplicación de un solo uso. Sin red: ESPN, Binance, Kraken y DefiLlama simulados."""
 import asyncio
-from datetime import datetime, timedelta, timezone
+import math
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 from sqlalchemy import select
@@ -12,8 +13,9 @@ from app.models.seed_plan import SeedPlan
 from app.services import email as email_mod
 from app.services.resolucion import nocturno
 from app.services.resolucion.fuentes import Partido
-from app.services.siembra import job, partidos as P
+from app.services.siembra import cripto as C, job, partidos as P
 from tests.fakes import FakeHttp
+from tests.test_escaleras_crypto import MESES, umbral
 
 CUOTAS_CRUZ_TOLUCA = {"local": "+165", "empate": "+230", "visitante": "+155"}  # ESPN, 24-sep-2026
 
@@ -117,10 +119,10 @@ def espn(monkeypatch):
 
 
 async def test_plan_casillas_y_un_solo_uso(client, db, correos, espn):
-    row = await job.correr_siembra_partidos()
+    row = await job.correr_siembra()
     assert row.status == "pending" and row.resumen["propuestas"] == 2
     await asyncio.sleep(0)  # el correo sale con spawn()
-    assert correos and "2 partidos" in correos[0][0]
+    assert correos and "2 mercados" in correos[0][0]
     ids = [x["doc"]["id"] for x in row.plan["propuestas"]]
 
     t = nocturno.make_plan_token(row.id, row.nonce, job.TOKEN_TYP)
@@ -145,4 +147,70 @@ async def test_plan_casillas_y_un_solo_uso(client, db, correos, espn):
     r = await client.post(f"/api/admin/siembra/planes/{row.id}/aprobar?t={t}", data={"ids": ids})
     assert "ya no está pendiente" in r.text
     assert len((await db.execute(select(Market))).scalars().all()) == 1
-    assert await job.correr_siembra_partidos() is None
+    assert await job.correr_siembra() is None
+
+
+# ── Crypto ──────────────────────────────────────────────────────────────────
+
+def test_mes_objetivo():
+    assert C.mes_objetivo(date(2026, 9, 24)) == date(2026, 10, 31)   # quedan 6 días → el siguiente
+    assert C.mes_objetivo(date(2026, 10, 5)) == date(2026, 10, 31)
+    assert C.mes_objetivo(date(2026, 12, 25)) == date(2027, 1, 31)
+
+
+def _klines(spot: float) -> list:
+    """91 velas diarias con ±2% alternado (σ diaria ≈ 2%) que terminan en `spot`."""
+    cl = [spot * math.exp(0.02 * (1 if i % 2 else -1)) for i in range(90)] + [spot]
+    return [[0, 0, 0, 0, str(c)] for c in cl]
+
+
+def _defillama(nivel: float) -> list:
+    hoy = datetime(2026, 9, 24, tzinfo=timezone.utc)
+    return [{"date": str(int((hoy - timedelta(days=60 - i)).timestamp())),
+             "totalCirculatingUSD": {"peggedUSD": nivel * (1 + 0.0005 * (i - 60)) * (1.001 if i % 2 else 0.999)}}
+            for i in range(61)]
+
+
+def _cripto_http(binance: bool = True) -> FakeHttp:
+    m = {"stablecoincharts": _defillama(310e9)}
+    if binance:
+        m.update({"symbol=BTCUSDT": _klines(84_000), "symbol=ETHUSDT": _klines(2_700), "symbol=SOLUSDT": _klines(117)})
+    else:
+        m.update({f"pair={p}": {"error": [], "result": {f"X{p}": [[0, 0, 0, 0, str(v)] for v in [r[4] for r in _klines(s)]], "last": 1}}
+                  for p, s in (("XBTUSD", 84_000), ("ETHUSD", 2_700), ("SOLUSD", 117))})
+    return FakeHttp(m)
+
+
+def test_escaleras_y_rangos_de_cripto():
+    ahora = datetime(2026, 9, 24, 14, tzinfo=timezone.utc)
+    props, desc = C.armar_propuestas(_cripto_http(), ahora, set())
+    assert desc == []
+    escaleras: dict[str, list] = {}
+    for x in props:
+        d = x["doc"]
+        assert d["ends_at"].startswith("2026-10-31")
+        if d["tipo"] == "binario":
+            mes, n = umbral(d["question"])   # la landing la reconoce como escalera
+            assert mes == MESES[9] and n == d["auto_resolucion"]["valor"] and d["auto_resolucion"]["op"] == ">="
+            assert C.PRIOR_MIN <= d["initial_yes_price"] <= C.PRIOR_MAX and len(d["question"]) <= 70
+            escaleras.setdefault(d["subcategory"], []).append(n)
+        else:
+            pcts = [o["pct"] for o in d["outcomes"]]
+            assert sum(pcts) == 100 and min(pcts) >= C.MIN_OPCION
+            assert d["outcomes"][0]["key"].startswith("r_menos_") and d["outcomes"][-1]["key"].endswith("_mas")
+    assert set(escaleras) == {"Bitcoin", "Ethereum", "Solana", "Stablecoins"}
+    for sub, ns in escaleras.items():
+        assert len(ns) >= C.MIN_PELDANOS and ns == sorted(ns), sub
+    assert sum(1 for x in props if x["doc"]["tipo"] == "multi") == 3
+
+    # ya sembrado (escalera y rango de BTC) → no se repite; sin Binance cae a Kraken
+    excluir = {"btc-cierre-oct26-85000", "btc-rango-cierre-oct26"}
+    props2, desc2 = C.armar_propuestas(_cripto_http(binance=False), ahora, excluir)
+    assert desc2 == [] and not any(x["grupo"] == "Bitcoin" for x in props2)
+    assert "Kraken" in next(x["nota"] for x in props2 if x["grupo"] == "Ethereum")
+
+
+def test_rangos_juntan_puntas_chicas():
+    prior = lambda K: C._N(math.log(100 / K) / 0.05)   # distribución angosta alrededor de 100
+    cortes, pcts = C.rangos([60, 80, 100, 120, 140], prior)
+    assert sum(pcts) == 100 and min(pcts) >= C.MIN_OPCION and len(cortes) >= 1

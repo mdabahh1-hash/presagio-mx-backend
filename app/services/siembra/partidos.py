@@ -152,9 +152,10 @@ def propuesta(p: Partido, liga: str, tabla: dict, ahora: datetime) -> tuple[dict
         return None, "; ".join(e.errores)[:300]
     if len(specs[0].question) > QUESTION_MAX:  # el runner rechazaría la tanda entera
         return None, f"pregunta de {len(specs[0].question)} caracteres (máximo {QUESTION_MAX})"
+    tabla_txt = "/".join(map(str, ints_100(t))) if t else "—"
     return {
-        "doc": doc, "liga": liga, "local": p.home, "visitante": p.away, "kickoff": doc["kickoff"],
-        "cuotas": pct, "tabla": ints_100(t) if t else None, "revisar": revisar, "url": p.url,
+        "doc": doc, "grupo": liga, "titulo": f"{p.home} vs {p.away}", "cuando": doc["kickoff"],
+        "precio": "/".join(map(str, pct)), "nota": f"tabla {tabla_txt}", "revisar": revisar, "url": p.url,
     }, None
 
 
@@ -176,16 +177,15 @@ def armar_propuestas(http: Http, ahora: datetime, excluir: set[str], existentes:
                         if p.estado == SCHEDULED and desde <= p.kickoff <= hasta]
             tabla = espn_tabla(http, liga) if partidos else {}
         except RuntimeError as e:
-            descartes.append({"liga": liga, "partido": "(toda la liga)", "motivo": f"ESPN no respondió: {e}"[:300]})
+            descartes.append({"grupo": liga, "titulo": "(toda la liga)", "motivo": f"ESPN no respondió: {e}"[:300]})
             continue
         for p in partidos:
             if id_partido(p, liga) in excluir or es_duplicado(p, liga, existentes):
                 continue
             prop, motivo = propuesta(p, liga, tabla, ahora)
             if prop is None:
-                descartes.append({"liga": liga, "partido": f"{p.home} vs {p.away}", "kickoff": p.kickoff.isoformat(),
-                                  "motivo": motivo})
+                descartes.append({"grupo": liga, "titulo": f"{p.home} vs {p.away}", "motivo": motivo})
             else:
                 propuestas.append(prop)
-    propuestas.sort(key=lambda x: (x["kickoff"], x["liga"]))
+    propuestas.sort(key=lambda x: (x["cuando"], x["grupo"]))
     return propuestas, descartes
