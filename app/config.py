@@ -99,6 +99,9 @@ class Settings(BaseSettings):
     # de fútbol de los próximos 8 días y manda un correo con casillas al admin.
     SIEMBRA_PARTIDOS_ENABLED: bool = False
     SIEMBRA_HORA_UTC: int = 14   # 08:00 CDMX
+    # Clave de la rutina creativa de Claude en la nube (header X-Siembra-Key) para
+    # POST /api/admin/siembra/planes/proponer. Vacía → solo el admin con Bearer.
+    SIEMBRA_API_KEY: str = ""
     EN_VIVO_INTERVALO_SEGUNDOS: int = 120
 
 

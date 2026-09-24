@@ -10,20 +10,26 @@ from __future__ import annotations
 from datetime import datetime
 from html import escape as _esc
 
-from fastapi import APIRouter, Depends, Form, HTTPException
+import secrets
+from datetime import timezone
+
+from fastapi import APIRouter, Depends, Form, Header, HTTPException
 from fastapi.responses import HTMLResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.resolucion import _pagina
-from app.core.auth import get_current_user, require_admin
+from pydantic import BaseModel, Field
+
+from app.config import settings
+from app.core.auth import ADMIN_EMAIL, get_current_user, get_current_user_optional, require_admin
 from app.core.background import spawn
 from app.database import get_db
 from app.models.seed_plan import SeedPlan
 from app.models.user import User
 from app.services.email import _fmt_mx
 from app.services.resolucion.nocturno import verify_plan_token
-from app.services.siembra import job, vista
+from app.services.siembra import filtros, job, vista
 
 router = APIRouter(prefix="/admin/siembra", tags=["admin"])
 
@@ -42,6 +48,42 @@ async def disparar_plan(current_user: User = Depends(get_current_user)):
     require_admin(current_user)
     spawn(job.correr_siembra())
     return {"started": True}
+
+
+class PropuestaExterna(BaseModel):
+    doc: dict                                   # doc YAML del sembrador (binario | multi)
+    evidencia: dict = Field(default_factory=dict)  # tendencia_url, fuente_prior, score_total, score, raya…
+    loco: bool = False
+    revisar: list[str] = Field(default_factory=list)
+
+
+class LotePropuesto(BaseModel):
+    propuestas: list[PropuestaExterna] = Field(min_length=1, max_length=20)
+    nota: str | None = Field(default=None, max_length=500)
+
+
+@router.post("/planes/proponer")
+async def proponer(
+    lote: LotePropuesto,
+    dry_run: bool = False,
+    x_siembra_key: str | None = Header(default=None),
+    current_user: User | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """Entrada de la rutina creativa (Claude en la nube): pasa cada propuesta por
+    `filtros` y, salvo `dry_run`, arma un plan con las que pasan y manda el correo.
+    Autoriza el header X-Siembra-Key (= SIEMBRA_API_KEY) o el admin con Bearer."""
+    clave_ok = bool(settings.SIEMBRA_API_KEY) and x_siembra_key is not None and \
+        secrets.compare_digest(x_siembra_key, settings.SIEMBRA_API_KEY)
+    if not clave_ok and (current_user is None or current_user.email != ADMIN_EMAIL):
+        raise HTTPException(status_code=403, detail={"code": "NOT_AUTHORIZED", "message": "No autorizado"})
+    vigentes, abiertas, locos = await job.contexto_revisor(db)
+    ok, desc = filtros.revisar_lote([p.model_dump() for p in lote.propuestas], datetime.now(timezone.utc),
+                                   vigentes, abiertas, locos)
+    plan_id = None
+    if ok and not dry_run:
+        plan_id = (await job.crear_plan(db, ok, desc, "creativos", lote.nota)).id
+    return {"plan_id": plan_id, "aceptadas": [x["doc"]["id"] for x in ok], "descartes": desc}
 
 
 async def _cargar(db: AsyncSession, plan_id: int, t: str | None) -> SeedPlan:

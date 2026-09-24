@@ -283,3 +283,89 @@ def test_economia_propone_fed_banxico_e_inflacion(monkeypatch):
     monkeypatch.setattr(E.settings, "BANXICO_TOKEN", "")
     props, desc = E.armar_propuestas(_eco_http(), ahora, set())
     assert "fed-decision-oct26" in {x["doc"]["id"] for x in props} and any("BANXICO_TOKEN" in d["motivo"] for d in desc)
+
+
+# ── Revisor de reglas y propuestas de la rutina creativa ────────────────────
+
+from app.services.siembra import filtros as F  # noqa: E402
+from tests.conftest import auth_headers  # noqa: E402
+
+_EV = {"tendencia_url": "https://trends.google.com/x", "fuente_prior": "Polymarket 42%", "score_total": 9}
+
+
+def _creativa(**cambios) -> dict:
+    ahora = datetime.now(timezone.utc)
+    doc = {
+        "tipo": "binario", "id": "sheinbaum-trump-x-oct26",
+        "question": "¿Sheinbaum le contestará a Trump en X antes del 15 de octubre?",
+        "description": "Resuelve SÍ si la cuenta oficial de Claudia Sheinbaum en X publica una respuesta directa a Trump.",
+        "category": "POLITICA_MX", "subcategory": "Sheinbaum",
+        "resolution_criteria": "Publicación en la cuenta oficial @Claudiashein que mencione o responda a Donald Trump.",
+        "resolution_source_url": "https://x.com/Claudiashein",
+        "rules_cuerpo": "Cuenta cualquier publicación, respuesta o cita en la cuenta oficial de Claudia Sheinbaum en X que "
+                        "mencione a Donald Trump por nombre o responda a una publicación suya, hecha antes del cierre.",
+        "context": "Sheinbaum y Trump han intercambiado mensajes públicos sobre aranceles y migración durante 2026; la "
+                   "presidenta suele responder en la mañanera más que en redes sociales.",
+        "ends_at": (ahora + timedelta(days=20)).strftime("%Y-%m-%dT%H:%M:%SZ"), "initial_yes_price": 42,
+    }
+    base = {"doc": doc, "evidencia": dict(_EV), "loco": False}
+    for k, v in cambios.items():
+        (base if k in ("evidencia", "loco") else doc)[k] = v
+    return base
+
+
+def test_filtros_reglas():
+    ahora = datetime.now(timezone.utc)
+    r = lambda p, **kw: F.revisar(p, ahora, kw.get("vigentes", set()), kw.get("abiertas", []), kw.get("locos", 0))
+    assert r(_creativa()) is None
+    assert "lista negra" in r(_creativa(question="¿Habrá un atentado en el Zócalo antes del 15 de octubre?"))
+    assert "70" in r(_creativa(question="¿" + "x" * 80 + "?"))
+    assert "subcategoría" in r(_creativa(subcategory="Chismes"))
+    assert "10–90" in r(_creativa(initial_yes_price=5))
+    assert r(_creativa(initial_yes_price=5, loco=True)) is None
+    assert "1–15" in r(_creativa(initial_yes_price=40, loco=True))
+    assert "plazo" in r(_creativa(ends_at=(ahora + timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")))
+    assert "evidencia" in r(_creativa(evidencia={"score_total": 9}))
+    assert "score" in r(_creativa(evidencia={**_EV, "score_total": 6}))
+    assert "ya existe" in r(_creativa(), vigentes={"sheinbaum-trump-x-oct26"})
+    assert "duplicado" in r(_creativa(), abiertas=["¿Sheinbaum contestará a Trump en X antes del 15 de octubre?"])
+    assert "locos" in r(_creativa(initial_yes_price=5, loco=True), locos=5)
+    assert r(_creativa(question="¿Habrá desfile de Día de Muertos en la CDMX este año?")) is None
+
+
+def test_lote_no_repite_dentro_del_mismo_envio():
+    ahora = datetime.now(timezone.utc)
+    ok, desc = F.revisar_lote([_creativa(), _creativa(id="otro-id")], ahora, set(), [], 0)
+    assert len(ok) == 1 and "duplicado" in desc[0]["motivo"]
+    assert ok[0]["nota"].startswith("score 9/12")
+
+
+async def test_proponer_por_clave_y_dry_run(client, db, correos, make_user, monkeypatch):
+    from app.api import siembra as api
+    monkeypatch.setattr(api.settings, "SIEMBRA_API_KEY", "clave-secreta")
+    body = {"propuestas": [_creativa(), _creativa(id="malo", subcategory="Chismes")], "nota": "rutina lunes"}
+
+    r = await client.post("/api/admin/siembra/planes/proponer", json=body)
+    assert r.status_code == 403
+    r = await client.post("/api/admin/siembra/planes/proponer", json=body, headers={"X-Siembra-Key": "otra"})
+    assert r.status_code == 403
+    u = await make_user("normal")
+    r = await client.post("/api/admin/siembra/planes/proponer", json=body, headers=auth_headers(u))
+    assert r.status_code == 403
+
+    r = await client.post("/api/admin/siembra/planes/proponer?dry_run=true", json=body, headers={"X-Siembra-Key": "clave-secreta"})
+    assert r.status_code == 200 and r.json()["plan_id"] is None and r.json()["aceptadas"] == ["sheinbaum-trump-x-oct26"]
+    assert (await db.execute(select(SeedPlan))).first() is None
+
+    r = await client.post("/api/admin/siembra/planes/proponer", json=body, headers={"X-Siembra-Key": "clave-secreta"})
+    pid = r.json()["plan_id"]
+    assert pid and "subcategoría" in r.json()["descartes"][0]["motivo"]
+    await asyncio.sleep(0)
+    assert correos and "1 mercados" in correos[-1][0]
+    plan = (await db.execute(select(SeedPlan).where(SeedPlan.id == pid))).scalar_one()
+    t = nocturno.make_plan_token(pid, plan.nonce, job.TOKEN_TYP)
+    r = await client.post(f"/api/admin/siembra/planes/{pid}/aprobar?t={t}", data={"ids": ["sheinbaum-trump-x-oct26"]})
+    assert "Sembrados (1)" in r.text
+    # ya propuesto → la siguiente vez sale como existente
+    r = await client.post("/api/admin/siembra/planes/proponer?dry_run=true", json=body, headers={"X-Siembra-Key": "clave-secreta"})
+    assert r.json()["aceptadas"] == []

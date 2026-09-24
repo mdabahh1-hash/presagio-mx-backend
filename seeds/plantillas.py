@@ -37,14 +37,21 @@ COMPETENCIAS: dict[str, Competencia] = {
 # Espejo de src/lib/categories.ts (SUBCATEGORIES). Una subcategoría fuera de
 # esta lista solo produce un AVISO: subcategoría nueva = solo datos, pero hay
 # que agregarla al frontend (SUBCATEGORIES y, si es deporte, SPORT_GROUPS).
+# Espejo exacto de SUBCATEGORIES en veredikt-mx/src/lib/categories.ts (lo exige el agente de
+# siembra: una propuesta con otra subcategoría sale en descartes).
 SUBCATEGORIAS_CONOCIDAS: set[str] = {
     # Deportes
     "Liga MX", "Leagues Cup", "Premier League", "LaLiga", "Serie A", "Bundesliga", "Ligue 1",
     "Liga Portugal", "MLS", "Champions League", "Saudi Pro League", "NFL", "F1", "Boxeo",
-    # Política / sociedad
-    "Elecciones", "Sheinbaum", "Influencers", "Migración",
+    # Política
+    "Elecciones", "Sheinbaum", "Visas de EEUU", "Congreso", "Regulación digital",
     # Crypto
-    "Bitcoin", "Ethereum", "Solana", "Stablecoins", "Regulación", "Adopción México",
+    "Bitcoin", "Ethereum", "Solana", "Stablecoins", "Regulación", "Adopción México", "Mercado cripto",
+    # Entretenimiento, Tech, México, Clima
+    "Influencers", "Reality shows", "IA", "Batallas de aura", "Seguridad", "Huracanes", "Sequía y calor",
+    # Global
+    "Europa", "Elecciones EEUU", "Trump", "Medio Oriente", "Asia-Pacífico", "Rusia-Ucrania", "Américas",
+    "África", "ONU y OTAN", "Migración",
     # Economía (espejo de SUBCATEGORIES['Economía'] del frontend)
     "Tasas Banxico", "Inflación (INPC)", "Tipo de cambio", "PIB México", "Empleo / IMSS",
     "Aranceles / T-MEC", "Fed / tasas EE.UU.", "Bolsa (BMV)", "Mercados EEUU", "Remesas",

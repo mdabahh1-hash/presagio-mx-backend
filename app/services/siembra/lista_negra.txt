@@ -1,0 +1,51 @@
+# Lista negra del agente de siembra (CRITERIOS-DE-MERCADOS.md §6 y §13).
+# Una palabra o frase por línea, sin importar mayúsculas ni acentos. Una propuesta
+# cuya pregunta, descripción o criterio contenga alguna NO entra (sale en descartes).
+# Se edita sin tocar código; el cambio aplica en el siguiente deploy.
+#
+# Muerte, salud o enfermedad de personas reales
+muere
+muera
+murió
+muerte
+fallece
+fallecimiento
+asesinato
+asesinan
+asesinado
+suicidio
+hospitalizado
+hospitalizada
+cáncer
+enfermedad de
+salud de
+# Violencia, crimen, cárteles, atentados
+homicidio
+homicidios
+secuestro
+secuestran
+cártel
+cartel de
+narco
+atentado
+tiroteo
+masacre
+violación
+feminicidio
+desaparecidos
+# Tragedias y guerras medidas en víctimas
+víctimas
+número de muertos
+cifra de muertos
+personas muertas
+heridos
+bajas civiles
+# Menores de edad
+menor de edad
+menores de edad
+niños
+niñas
+# Vida sexual y vida privada
+embarazada
+infidelidad
+sexual
