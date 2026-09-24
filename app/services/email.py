@@ -458,7 +458,8 @@ async def send_seed_plan_email(plan_id: int, plan: dict, url_aprobar: str) -> No
     descartes = "".join(f'<li style="font-size:12px;color:rgba(245,240,232,0.6)">{_esc(d["grupo"])} · {_esc(d["titulo"])}: {_esc(d["motivo"])}</li>'
                         for d in desc)
     body = f"""
-      <p style="margin: 0 0 8px; font-size: 16px;">🌱 Plan de siembra #{plan_id}</p>
+      <p style="margin: 0 0 8px; font-size: 16px;">🌱 Plan de siembra #{plan_id}{" · rutina creativa" if plan.get("generador") == "creativos" else ""}</p>
+      {f'<p style="margin: 0 0 12px; font-size: 13px; color: rgba(245,240,232,0.75);">{_esc(plan["nota"])}</p>' if plan.get("nota") else ""}
       <p style="margin: 0 0 18px; font-size: 14px; color: rgba(245,240,232,0.6);">
         {len(props)} mercados · {n_rev} para revisar · {len(desc)} descartados.
         Partidos: % local/empate/visitante con las cuotas de DraftKings y, debajo, la tabla de ESPN.

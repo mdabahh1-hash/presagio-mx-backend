@@ -113,21 +113,39 @@ async def correr_siembra() -> SeedPlan | None:
             if not propuestas:
                 logger.info("siembra: sin mercados nuevos (%d descartes)", len(descartes))
                 return None
-            plan = {"generado": ahora.isoformat(),
-                    "propuestas": propuestas, "descartes": descartes}
-            row = SeedPlan(status="pending", nonce=secrets.token_urlsafe(16), plan=plan, resumen=resumen_de(plan))
-            db.add(row)
-            await db.commit()
-            await db.refresh(row)
-            plan_id, nonce = row.id, row.nonce
-        _LAST["last_plan_id"] = plan_id
-        logger.info("siembra #%d: %s", plan_id, row.resumen)
-        spawn(send_seed_plan_email(plan_id, plan, url_aprobacion(plan_id, nonce)))
+            row = await crear_plan(db, propuestas, descartes, "diario")
+        _LAST["last_plan_id"] = row.id
         return row
     except Exception as e:  # noqa: BLE001
         _LAST["last_error"] = str(e)
         logger.exception("siembra falló")
         raise
+
+
+async def crear_plan(db: AsyncSession, propuestas: list[dict], descartes: list[dict], generador: str,
+                     nota: str | None = None) -> SeedPlan:
+    """Guarda el plan y manda el correo con el enlace firmado."""
+    plan = {"generado": datetime.now(timezone.utc).isoformat(), "generador": generador, "nota": nota,
+            "propuestas": propuestas, "descartes": descartes}
+    row = SeedPlan(status="pending", nonce=secrets.token_urlsafe(16), plan=plan, resumen=resumen_de(plan))
+    db.add(row)
+    await db.commit()
+    await db.refresh(row)
+    logger.info("siembra #%d (%s): %s", row.id, generador, row.resumen)
+    spawn(send_seed_plan_email(row.id, plan, url_aprobacion(row.id, row.nonce)))
+    return row
+
+
+async def contexto_revisor(db: AsyncSession) -> tuple[set[str], list[str], int]:
+    """(ids vigentes o ya propuestos, preguntas abiertas, locos abiertos) para `filtros`."""
+    vigentes = await _vigentes(db)
+    abiertas = list((await db.execute(select(Market.question).where(
+        Market.status.in_((MarketStatus.OPEN, MarketStatus.PENDING_RESOLUTION))))).scalars())
+    desde = datetime.now(timezone.utc) - timedelta(days=800)
+    locos = {x["doc"]["id"] for plan in (await db.execute(select(SeedPlan.plan).where(
+        SeedPlan.status == "applied", SeedPlan.created_at >= desde))).scalars()
+        for x in plan.get("propuestas", []) if x.get("loco")}
+    return vigentes | await _ya_propuestos(db), abiertas, len(locos & vigentes)
 
 
 async def aplicar_siembra(db: AsyncSession, plan_id: int, plan: dict, ids: list[str]) -> dict:
