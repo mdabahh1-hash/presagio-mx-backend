@@ -55,7 +55,7 @@ def test_todas_las_entradas_validan():
     for clave, data in CATEGORIAS.items():
         assert clave in MarketCategory.__members__, f"{clave} no es un NOMBRE de MarketCategory"
         c = ContenidoCategoria.model_validate(data)
-        referidos = set(c.notas) | set(c.titulos.values())
+        referidos = set(c.notas) | {i for v in c.titulos.values() for i in ([v] if isinstance(v, str) else v)}
         if c.hero.secundario_id:
             referidos.add(c.hero.secundario_id)
         if c.proyeccion and c.proyeccion.mercado_umbral_id:
