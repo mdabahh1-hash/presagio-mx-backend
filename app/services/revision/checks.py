@@ -4,9 +4,6 @@ Puro: recibe la fila (o cualquier objeto con los mismos atributos), sin BD ni re
 Cada hallazgo es {id, market_id, pregunta, check, mensaje, fix}; `fix` es
 {campo, antes, despues} cuando el agente puede arreglarlo solo (casilla en el
 correo) o None cuando es un aviso para revisar a mano.
-
-Sin revisión de título: toda vía de alta (runner, MarketCreate, MarketPatch) ya
-rechaza > 70 y los largos que quedan los decidió Mark (scripts/titulos-largos.json).
 """
 from __future__ import annotations
 
@@ -17,7 +14,7 @@ from app.services.resolucion.sujeto import requiere_sujeto, validar_sujeto
 from seeds.plantillas import (
     COMPETENCIAS, MERCADOS_CON_IMAGEN, SUBCATEGORIAS_CON_IMAGEN, SUBCATEGORIAS_CONOCIDAS,
 )
-from seeds.schema import CATEGORIAS_PROHIBIDAS, CONTEXT_MIN, RULES_MIN
+from seeds.schema import CATEGORIAS_PROHIBIDAS, CONTEXT_MIN, QUESTION_MAX, RULES_MIN
 
 SUBCATEGORIA_MAX = 18       # «Explora por tema» la pinta en un renglón (§7)
 PENDIENTE_DIAS = 3          # pendiente de resolución más de esto → aviso
@@ -29,7 +26,7 @@ NOMBRES = {
     "kickoff_orden": "Hora de inicio incoherente", "imagen_invalida": "Imagen inválida",
     "imagen_generica": "Solo ícono genérico de la categoría", "normas": "Normas cortas",
     "contexto": "Contexto corto", "criterios": "Sin criterios de resolución",
-    "subcategoria": "Subcategoría", "categoria": "Categoría o tipo",
+    "subcategoria": "Subcategoría", "categoria": "Categoría o tipo", "titulo": "Título largo",
     "multi": "Multi incompleto", "sujeto": "Accesorio sin sujeto", "receta": "Escalera sin receta",
     "pendiente_viejo": "Pendiente de resolver",
 }
@@ -59,7 +56,7 @@ def valor(v):
     return v.isoformat() if isinstance(v, datetime) else v
 
 
-def revisar(m, n_outcomes: int, ahora: datetime) -> list[dict]:
+def revisar(m, n_outcomes: int, con_posiciones: bool, ahora: datetime) -> list[dict]:
     out: list[dict] = []
     cat = getattr(m.category, "name", m.category)
     sub = m.subcategory
@@ -106,6 +103,11 @@ def revisar(m, n_outcomes: int, ahora: datetime) -> list[dict]:
 
     if cat in CATEGORIAS_PROHIBIDAS or (m.kind is not None and cat != "DEPORTES"):
         h("categoria", f"Categoría {cat} retirada o kind '{m.kind}' fuera de Deportes")
+
+    # Solo aviso: el título nunca lo cambia el agente, y con apuestas no se toca (Mark, 20-sep).
+    if len(m.question) > QUESTION_MAX:
+        h("titulo", f"Título de {len(m.question)} caracteres (máximo {QUESTION_MAX})"
+          + (": tiene apuestas, no se puede tocar hasta que resuelva" if con_posiciones else ""))
 
     if m.market_type == "multi" and n_outcomes < 2:
         h("multi", f"Multi con {n_outcomes} opciones")

@@ -22,6 +22,7 @@ from app.config import settings
 from app.core.background import spawn
 from app.models.market import Market, MarketStatus
 from app.models.outcome import Outcome
+from app.models.position import Position
 from app.models.review_plan import ReviewPlan
 from app.services.email import send_review_plan_email
 from app.services.resolucion.nocturno import make_plan_token, segundos_hasta_proxima_corrida
@@ -43,7 +44,8 @@ def url_aprobacion(plan_id: int, nonce: str) -> str:
 async def hallazgos(db: AsyncSession, ahora: datetime) -> list[dict]:
     mercados = list((await db.execute(select(Market).where(Market.status.in_(ACTIVOS)).order_by(Market.id))).scalars())
     n_out = dict((await db.execute(select(Outcome.market_id, func.count()).group_by(Outcome.market_id))).all())
-    return [x for m in mercados for x in revisar(m, n_out.get(m.id, 0), ahora)]
+    con_pos = set((await db.execute(select(Position.market_id).where(Position.shares > 0).distinct())).scalars())
+    return [x for m in mercados for x in revisar(m, n_out.get(m.id, 0), m.id in con_pos, ahora)]
 
 
 async def _historial(db: AsyncSession) -> tuple[set[str], set[str]]:

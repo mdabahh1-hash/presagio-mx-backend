@@ -28,8 +28,8 @@ def _m(**kw):
     return SimpleNamespace(**base)
 
 
-def _checks(m, n=0):
-    return {x["check"]: x for x in revisar(m, n, AHORA)}
+def _checks(m, n=0, pos=False):
+    return {x["check"]: x for x in revisar(m, n, pos, AHORA)}
 
 
 def test_mercado_completo_no_tiene_hallazgos():
@@ -45,11 +45,12 @@ def test_partido_sin_fuente_ni_kickoff_se_arregla_solo():
 
 def test_avisos_sin_arreglo():
     c = _checks(_m(resolution_source_url=None, rules="corta", context="", resolution_criteria=" ",
-                   subcategory=None, market_type="multi",
-                   status=MarketStatus.PENDING_RESOLUTION, ends_at=AHORA - timedelta(days=4)), n=1)
-    assert set(c) == {"fuente", "normas", "contexto", "criterios", "subcategoria", "multi",
+                   subcategory=None, question="¿" + "a" * 80 + "?", market_type="multi",
+                   status=MarketStatus.PENDING_RESOLUTION, ends_at=AHORA - timedelta(days=4)), n=1, pos=True)
+    assert set(c) == {"fuente", "normas", "contexto", "criterios", "subcategoria", "titulo", "multi",
                       "pendiente_viejo", "imagen_generica"}
     assert all(x["fix"] is None for x in c.values())
+    assert "no se puede tocar" in c["titulo"]["mensaje"]
 
 
 def test_imagen():
