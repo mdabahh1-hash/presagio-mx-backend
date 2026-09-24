@@ -55,18 +55,18 @@ def test_avisos_sin_arreglo():
 
 def test_imagen():
     assert _checks(_m(image_url="http://hotlink.jpg"))["imagen_invalida"]["fix"]["despues"] is None
-    assert "imagen_generica" in _checks(_m(subcategory="Empleo / IMSS"))
-    assert "imagen_generica" in _checks(_m(subcategory="Tipo de cambio"))  # el frontend usa otra clave
-    assert _checks(_m(subcategory="Empleo / IMSS", image_url="/img/x.jpg")) == {}
-    assert _checks(_m(id="mexico-inflacion-2026", subcategory="Empleo / IMSS")) == {}
-    avisos = [_checks(_m(id=f"b{i}", subcategory="Bitcoin"))["imagen_generica"] for i in range(3)]
-    assert agrupar(avisos) == [("Solo ícono genérico de la categoría (3)", ["Bitcoin: 3 mercados"])]
+    assert "imagen_generica" in _checks(_m(subcategory="Apps y redes"))
+    assert "imagen_generica" not in _checks(_m(subcategory="Tipo de cambio"))
+    assert _checks(_m(subcategory="Apps y redes", image_url="/img/x.jpg")) == {}
+    assert _checks(_m(id="mexico-inflacion-2026", subcategory="Apps y redes")) == {}
+    avisos = [_checks(_m(id=f"b{i}", subcategory="Apps y redes"))["imagen_generica"] for i in range(3)]
+    assert agrupar(avisos) == [("Solo ícono genérico de la categoría (3)", ["Apps y redes: 3 mercados"])]
 
 
 def test_escalera_sin_receta_y_kind_fuera_de_deportes():
     c = _checks(_m(category=MarketCategory.CRYPTO, subcategory="Bitcoin",
                    question="¿Bitcoin cerrará octubre en US$120,000 o más?", kind="partido"))
-    assert {"receta", "categoria", "imagen_generica"} <= set(c)
+    assert {"receta", "categoria"} <= set(c)
     assert "receta" not in _checks(_m(question="¿Bitcoin cerrará octubre en US$120,000 o más?",
                                       auto_resolucion={"tipo": "cripto_cierre"}))
 
