@@ -158,6 +158,10 @@ class Partido:
     reloj: str | None = None     # status.displayClock ("58'", "12:34")
     periodo: int | None = None   # status.period (fútbol 1/2, NFL cuarto)
     detalle: str | None = None   # status.type.shortDetail ("2nd Half", "FT")
+    # Para sembrar (app/services/siembra): ids ESPN de (local, visitante) y
+    # moneyline americana de DraftKings {"local": "+165", "empate": …, "visitante": …}
+    equipo_ids: tuple[str, str] | None = None
+    cuotas: dict | None = None
 
     @property
     def marcador(self) -> str:
@@ -257,6 +261,17 @@ def _espn_partido(e: dict, liga: str) -> Partido:
         t = x["team"]
         return [n for n in (t.get("displayName"), t.get("shortDisplayName"), t.get("name"), t.get("abbreviation")) if n]
 
+    def cuotas() -> dict | None:
+        ml = ((c.get("odds") or [{}])[0] or {}).get("moneyline") or {}
+        out = {}
+        for lado, clave in (("home", "local"), ("draw", "empate"), ("away", "visitante")):
+            v = ml.get(lado) or {}
+            odds = (v.get("close") or {}).get("odds") or (v.get("open") or {}).get("odds")
+            if not odds:
+                return None
+            out[clave] = odds
+        return out
+
     return Partido(
         fuente="espn", id=str(e["id"]), url=_url_partido(liga, str(e["id"])),
         kickoff=_dt(e["date"]), home=h["team"]["displayName"], away=a["team"]["displayName"],
@@ -266,6 +281,8 @@ def _espn_partido(e: dict, liga: str) -> Partido:
         reloj=st.get("displayClock") if estado == LIVE else None,
         periodo=st.get("period") if estado == LIVE else None,
         detalle=tipo.get("shortDetail"),
+        equipo_ids=(str(h["team"].get("id", "")), str(a["team"].get("id", ""))),
+        cuotas=cuotas(),
     )
 
 
@@ -289,6 +306,26 @@ def espn_scoreboard(http: Http, liga: str, desde: datetime, hasta: datetime) -> 
             vistos.add(str(e["id"]))
             out.append(_espn_partido(e, liga))
         dia += timedelta(days=1)
+    return out
+
+
+def espn_tabla(http: Http, liga: str) -> dict[str, dict]:
+    """Tabla de posiciones de ESPN: id de equipo → {nombre, pj, pts, rank, grupos}.
+    `grupos` = cuántas tablas tiene la liga (MLS: 2 conferencias; el rank es dentro
+    de la suya). Liga sin tabla (eliminatorias) → {}."""
+    code = LIGAS[liga][0]
+    data = http.get(f"https://site.api.espn.com/apis/v2/sports/{code}/standings")
+    hijos = data.get("children") or []
+    out: dict[str, dict] = {}
+    for h in hijos:
+        for e in (h.get("standings") or {}).get("entries") or []:
+            st = {x.get("name"): x.get("value") for x in e.get("stats") or []}
+            if st.get("gamesPlayed") is None or st.get("points") is None:
+                continue
+            out[str(e["team"]["id"])] = {
+                "nombre": e["team"].get("displayName"), "pj": int(st["gamesPlayed"]),
+                "pts": int(st["points"]), "rank": int(st.get("rank") or 0), "grupos": len(hijos),
+            }
     return out
 
 

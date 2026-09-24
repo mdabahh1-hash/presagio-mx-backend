@@ -95,6 +95,10 @@ class Settings(BaseSettings):
     # del scoreboard de ESPN de los partidos en ventana. Informativo: un partido en
     # juego ya cerró (ends_at = kickoff). True en Railway.
     EN_VIVO_ENABLED: bool = False
+    # Agente de siembra (app/services/siembra): una corrida al día propone los 1X2
+    # de fútbol de los próximos 8 días y manda un correo con casillas al admin.
+    SIEMBRA_PARTIDOS_ENABLED: bool = False
+    SIEMBRA_HORA_UTC: int = 14   # 08:00 CDMX
     EN_VIVO_INTERVALO_SEGUNDOS: int = 120
 
 

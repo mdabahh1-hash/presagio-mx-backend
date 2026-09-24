@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import create_tables, migrate_enums, migrate_columns, AsyncSessionLocal
 from app.config import settings
-from app.api import auth, markets, trades, comments, users, websockets, admin, proposals, passkeys, leagues, resolucion, contenido
+from app.api import auth, markets, trades, comments, users, websockets, admin, proposals, passkeys, leagues, resolucion, contenido, siembra
 import app.models  # noqa: F401  (registers every table — incl. leagues — on Base.metadata before create_all)
 from app.services.seed import seed_markets
 from app.services.ledger_backfill import backfill_ledger
@@ -14,6 +14,7 @@ from app.services.referral import assign_codes_to_all
 from app.services.market_maintenance import run_market_maintenance, get_maintenance_status
 from app.services.resolucion.nocturno import nightly_loop, get_nightly_status
 from app.services.en_vivo import en_vivo_loop, get_en_vivo_status
+from app.services.siembra.job import siembra_loop
 
 # How often the background job runs (closing-soon notices, auto-close, admin reminders).
 MAINTENANCE_INTERVAL_SECONDS = 900  # 15 min
@@ -63,12 +64,16 @@ async def lifespan(app: FastAPI):
     nightly = asyncio.create_task(nightly_loop()) if settings.RESOLUCION_NOCTURNA_ENABLED else None
     # Marcador en vivo de la landing de Deportes (ESPN, sin LLM).
     vivo = asyncio.create_task(en_vivo_loop()) if settings.EN_VIVO_ENABLED else None
+    # Agente de siembra: 1X2 de fútbol de los próximos 8 días → correo con casillas.
+    siembra_task = asyncio.create_task(siembra_loop()) if settings.SIEMBRA_PARTIDOS_ENABLED else None
     yield
     task.cancel()
     if nightly:
         nightly.cancel()
     if vivo:
         vivo.cancel()
+    if siembra_task:
+        siembra_task.cancel()
 
 
 app = FastAPI(
@@ -105,6 +110,7 @@ app.include_router(passkeys.router, prefix="/api")
 app.include_router(leagues.router, prefix="/api")
 app.include_router(resolucion.router, prefix="/api")
 app.include_router(contenido.router, prefix="/api")
+app.include_router(siembra.router, prefix="/api")
 
 # WebSocket routes (no prefix — path is /ws/...)
 app.include_router(websockets.router)
