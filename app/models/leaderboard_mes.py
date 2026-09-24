@@ -33,3 +33,15 @@ class LeaderboardMesFila(Base):
     n_mercados: Mapped[int] = mapped_column(Integer, nullable=False)
     rank: Mapped[int | None] = mapped_column(Integer, nullable=True)
     descalificado: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false", default=False)
+
+
+class LeaderboardAviso(Base):
+    """Correo de competencia ya mandado (`avisos_competencia`): uno por usuario, mes y tipo."""
+    __tablename__ = "leaderboard_avisos"
+    __table_args__ = (UniqueConstraint("user_id", "mes", "tipo", name="uq_leaderboard_aviso"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    mes: Mapped[str] = mapped_column(String(7), nullable=False)
+    tipo: Mapped[str] = mapped_column(String(20), nullable=False)  # semana-<n> | ultimos
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

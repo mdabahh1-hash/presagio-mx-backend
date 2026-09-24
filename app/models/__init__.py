@@ -11,7 +11,7 @@ from app.models.market_proposal import MarketProposal
 from app.models.passkey import Passkey
 from app.models.resolution_plan import ResolutionPlan
 from app.models.seed_plan import SeedPlan
-from app.models.leaderboard_mes import LeaderboardMes, LeaderboardMesFila
+from app.models.leaderboard_mes import LeaderboardAviso, LeaderboardMes, LeaderboardMesFila
 from app.models.league import (
     League, LeagueMember, LeagueCycle, LeagueCycleMarket, LeagueCycleStanding, LeaguePrediction,
 )
@@ -19,6 +19,6 @@ from app.models.league import (
 __all__ = [
     "User", "Market", "MarketStatus", "MarketCategory",
     "Trade", "TradeSide", "Position", "Comment", "PriceHistory", "Outcome",
-    "PointsLedger", "Follow", "MarketProposal", "Passkey", "ResolutionPlan", "SeedPlan", "LeaderboardMes", "LeaderboardMesFila",
+    "PointsLedger", "Follow", "MarketProposal", "Passkey", "ResolutionPlan", "SeedPlan", "LeaderboardMes", "LeaderboardMesFila", "LeaderboardAviso",
     "League", "LeagueMember", "LeagueCycle", "LeagueCycleMarket", "LeagueCycleStanding", "LeaguePrediction",
 ]
