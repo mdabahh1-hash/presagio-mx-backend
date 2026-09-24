@@ -45,4 +45,7 @@ SUBCATEGORIAS_CONOCIDAS: set[str] = {
     "Elecciones", "Sheinbaum", "Influencers", "Migración",
     # Crypto
     "Bitcoin", "Ethereum", "Solana", "Stablecoins", "Regulación", "Adopción México",
+    # Economía (espejo de SUBCATEGORIES['Economía'] del frontend)
+    "Tasas Banxico", "Inflación (INPC)", "Tipo de cambio", "PIB México", "Empleo / IMSS",
+    "Aranceles / T-MEC", "Fed / tasas EE.UU.", "Bolsa (BMV)", "Mercados EEUU", "Remesas",
 }

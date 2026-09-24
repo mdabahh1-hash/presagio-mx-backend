@@ -214,3 +214,72 @@ def test_rangos_juntan_puntas_chicas():
     prior = lambda K: C._N(math.log(100 / K) / 0.05)   # distribución angosta alrededor de 100
     cortes, pcts = C.rangos([60, 80, 100, 120, 140], prior)
     assert sum(pcts) == 100 and min(pcts) >= C.MIN_OPCION and len(cortes) >= 1
+
+
+# ── Economía ────────────────────────────────────────────────────────────────
+
+from app.services.siembra import economia as E  # noqa: E402
+
+FED_HTML = ('<h4>2026 FOMC Meetings</h4><div class="fomc-meeting__month"><strong>October</strong></div>'
+            '<div class="fomc-meeting__date">27-28</div><div class="fomc-meeting__month"><strong>December</strong></div>'
+            '<div class="fomc-meeting__date">8-9*</div><h4>2027 FOMC Meetings</h4>'
+            '<div class="fomc-meeting__month"><strong>Jan/Feb</strong></div><div class="fomc-meeting__date">31-1</div>')
+
+
+def _poly(titulo: str, end: str, precios: dict) -> dict:
+    return {"title": titulo, "endDate": end, "closed": False, "slug": "x", "volume": "1000",
+            "markets": [{"groupItemTitle": k, "outcomePrices": f'["{v}", "{1 - v}"]'} for k, v in precios.items()]}
+
+
+def _eco_http(kalshi_mantiene: str = "0.34") -> FakeHttp:
+    return FakeHttp(
+        json_map={
+            "Fed%20decision": {"events": [_poly("Fed Decision in October?", "2026-10-29T03:59:00Z",
+                                                {"25 bps decrease": 0.01, "No change": 0.35, "25 bps increase": 0.64})]},
+            "Bank%20of%20Mexico": {"events": [
+                _poly("Bank of Mexico Decision in November?", "2026-11-05T23:59:00Z",
+                      {"25 bps decrease": 0.03, "No change": 0.70, "25 bps increase": 0.20}),
+                {**_poly("Bank of Mexico Decision in March?", "2026-03-26T00:00:00Z", {"No change": 1.0}), "closed": True}]},
+            "kalshi": {"markets": [{"ticker": "KXFEDDECISION-26OCT-C25", "yes_bid_dollars": "0.01", "yes_ask_dollars": "0.01"},
+                                   {"ticker": "KXFEDDECISION-26OCT-H0", "yes_bid_dollars": kalshi_mantiene, "yes_ask_dollars": kalshi_mantiene},
+                                   {"ticker": "KXFEDDECISION-26OCT-H25", "yes_bid_dollars": "0.65", "yes_ask_dollars": "0.65"}]},
+            "SF61745": {"bmx": {"series": [{"datos": [{"fecha": "24/09/2026", "dato": "6.50"}]}]}},
+            "SP30578": {"bmx": {"series": [{"datos": [{"fecha": "01/08/2026", "dato": "3.26"}]}]}},
+        },
+        text_map={"fomccalendars": FED_HTML, "DFEDTARU": "observation_date,DFEDTARU\n2026-09-23,4.00\n"},
+    )
+
+
+def test_fomc_fechas_y_pct_min():
+    assert E.fomc_fechas(_eco_http()) == [date(2026, 10, 28), date(2026, 12, 9), date(2027, 2, 1)]
+    out = E.pct_min([0.008, 0.355, 0.646])
+    assert sum(out) == 100 and min(out) >= E.MIN_OPCION
+
+
+def test_economia_propone_fed_banxico_e_inflacion(monkeypatch):
+    monkeypatch.setattr(E.settings, "BANXICO_TOKEN", "t")
+    ahora = datetime(2026, 9, 24, 14, tzinfo=timezone.utc)
+    props, desc = E.armar_propuestas(_eco_http(), ahora, set())
+    assert desc == []
+    por_id = {x["doc"]["id"]: x for x in props}
+    assert set(por_id) == {"fed-decision-oct26", "banxico-decision-nov26", "inflacion-sep26-menor-325"}
+    fed, bx, inf = por_id["fed-decision-oct26"], por_id["banxico-decision-nov26"], por_id["inflacion-sep26-menor-325"]
+    assert fed["doc"]["ends_at"] == "2026-10-28T17:55:00Z" and fed["revisar"] == []
+    assert [o["key"] for o in fed["doc"]["outcomes"]] == ["baja", "mantiene", "sube"]
+    assert min(o["pct"] for o in fed["doc"]["outcomes"]) >= E.MIN_OPCION
+    assert bx["revisar"] == ["una sola fuente (Polymarket)"] and "6.50%" in bx["doc"]["context"]
+    assert inf["doc"]["auto_resolucion"] == {"fuente": "inflacion_anual", "params": {"periodo": "2026-09"}, "op": "<", "valor": 3.25}
+    assert inf["doc"]["ends_at"] == "2026-10-07T05:59:00Z" and inf["doc"]["initial_yes_price"] == 50
+
+    # lo ya sembrado no se repite (el binario «sin cambio» de noviembre cuenta); la inflación pasa al mes siguiente
+    props, _ = E.armar_propuestas(_eco_http(), ahora, {"banxico-sin-cambio-nov26", "fed-decision-oct26", "inflacion-sep26-menor-340"})
+    assert [x["doc"]["id"] for x in props] == ["inflacion-oct26-menor-325"]
+
+    # Kalshi muy distinto → revisar
+    props, _ = E.armar_propuestas(_eco_http(kalshi_mantiene="0.60"), ahora, set())
+    assert "difieren" in next(x for x in props if x["doc"]["id"] == "fed-decision-oct26")["revisar"][0]
+
+    # sin token de Banxico: la inflación sale en descartes, la Fed sigue
+    monkeypatch.setattr(E.settings, "BANXICO_TOKEN", "")
+    props, desc = E.armar_propuestas(_eco_http(), ahora, set())
+    assert "fed-decision-oct26" in {x["doc"]["id"] for x in props} and any("BANXICO_TOKEN" in d["motivo"] for d in desc)
