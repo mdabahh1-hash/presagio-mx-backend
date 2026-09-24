@@ -9,7 +9,7 @@ marcador salen de la API (`/markets/resumen`, `/markets/movers`, `kickoff_at`, `
 
 CONTENIDO: dict = {
     "categoria": "DEPORTES",
-    "actualizado": "2026-09-16",
+    "actualizado": "2026-09-24",
     # Liga (subcategoría exacta de src/lib/categories.ts) → multi de campeón de la temporada.
     # Solo ids con normas en market_content o documentos en mercados-pendientes.yaml (lo exige
     # tests/test_contenido_categorias.py). Al resolverse el multi, quitar la entrada o apuntarla
@@ -17,6 +17,13 @@ CONTENIDO: dict = {
     "titulos": {
         "NFL": "nfl-campeon-super-bowl-lxi",
         "Liga MX": "mx-campeon-apertura-2026",
+        "F1": "f1-campeon-pilotos-2026",
+        "MLS": "mls-campeon-cup-2026",
+        "Premier League": "pl-campeon-2026-27",
+        "LaLiga": "laliga-campeon-2026-27",
+        "Champions League": "ucl-campeon-2026-27",
+        # Boxeo no tiene liga: un multi por cinturón (el panel pinta uno tras otro)
+        "Boxeo": ["box-cmb-168-campeon-2026", "box-amb-168-campeon-2026"],
     },
     # Etiqueta corta por host de `resolution_source_url` (comparar sin "www."). Hosts de
     # seeds/plantillas.py:COMPETENCIAS y de los seeds de NFL, F1 y boxeo.

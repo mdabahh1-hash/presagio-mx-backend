@@ -1636,3 +1636,203 @@ context: >-
   precio inicial supone un sesgo alcista modesto, no una certeza.
 ends_at: "2026-10-30T13:00:00Z"
 initial_yes_price: 58
+
+# ── Campeones para el panel de Deportes (propuesta 24-sep-2026) ───────────────
+# F1, MLS, Premier, LaLiga y Champions: priors = cuotas de casas publicadas
+# (covers.com, sportsbettingdime.com) y Kalshi, sin margen y redondeadas. Boxeo:
+# un multi por cinturón supermediano (CMB en juego en Canelo vs Mbilli; AMB de
+# Munguía). Se resuelven a mano.
+---
+tipo: multi
+id: f1-campeon-pilotos-2026
+question: ¿Quién será campeón del Mundial de Pilotos de F1 2026?
+description: >-
+  Campeón del Campeonato Mundial de Pilotos de Fórmula 1 2026, decidido tras el Gran Premio de Abu Dabi del 6 de diciembre de 2026.
+category: DEPORTES
+subcategory: F1
+trending: true
+resolution_criteria: >-
+  Gana la opción del piloto que termine primero en la clasificación final del Campeonato Mundial de Pilotos 2026 publicada por la Fórmula 1 tras la última carrera. Si es otro piloto, gana «Otro piloto». Fuente de resolución: https://www.formula1.com/en/results/2026/drivers. Respaldo: ESPN.
+resolution_source_url: https://www.formula1.com/en/results/2026/drivers
+rules: |
+  Gana la opción del piloto que termine primero en la clasificación final del Campeonato Mundial de Pilotos de Fórmula 1 2026, según la tabla oficial de formula1.com (Drivers' Standings) tras el Gran Premio de Abu Dabi, última de las 23 fechas del calendario. Si el campeón no es uno de los pilotos nombrados, gana «Otro piloto».
+
+  Cuenta la clasificación publicada al terminar la temporada, con los puntos de carreras y sprints y las sanciones aplicadas por la FIA hasta ese momento. Si el título queda decidido matemáticamente antes de Abu Dabi, el mercado se resuelve igual al final de la temporada. Una sanción o apelación posterior a la publicación de la clasificación final no cambia el resultado. Si la temporada se cancela sin campeón, el mercado se cancela y las posiciones se reembolsan.
+
+  El mercado cierra el 6 de diciembre de 2026 a las 12:00 UTC, antes de la salida del Gran Premio de Abu Dabi. Gana exactamente un resultado: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  La temporada 2026 de la Fórmula 1 tiene 23 grandes premios, del 8 de marzo en Australia al 6 de diciembre en Abu Dabi, según el calendario oficial. Tras 14 fechas (la última, España, el 13 de septiembre), Kimi Antonelli (Mercedes) lidera con 292 puntos, seguido de George Russell (Mercedes, 211), Lewis Hamilton (Ferrari, 191), Lando Norris (McLaren, 186) y Charles Leclerc (Ferrari, 167). Quedan nueve carreras, entre ellas el Gran Premio de la Ciudad de México (30 de octubre al 1 de noviembre).
+ends_at: 2026-12-06T12:00:00Z
+outcomes:
+  - {key: antonelli, label: "🇮🇹 Kimi Antonelli", pct: 88}
+  - {key: russell, label: "🇬🇧 George Russell", pct: 5}
+  - {key: hamilton, label: "🇬🇧 Lewis Hamilton", pct: 3}
+  - {key: norris, label: "🇬🇧 Lando Norris", pct: 2}
+  - {key: otro, label: "🏎️ Otro piloto", pct: 2}
+---
+tipo: multi
+id: mls-campeon-cup-2026
+question: ¿Quién ganará la MLS Cup 2026?
+description: >-
+  Campeón de la MLS 2026, decidido en la MLS Cup del 18 de diciembre de 2026 al final de los playoffs.
+category: DEPORTES
+subcategory: MLS
+kind: accesorio
+trending: false
+resolution_criteria: >-
+  Gana la opción del club que gane la MLS Cup 2026 (final de los playoffs de la MLS), según el resultado oficial de la MLS. Si es otro club, gana «Otro club». Fuente de resolución: https://www.mlssoccer.com/news/major-league-soccer-announces-audi-2026-mls-cup-playoffs-schedule. Respaldo: ESPN.
+resolution_source_url: https://www.mlssoccer.com/news/major-league-soccer-announces-audi-2026-mls-cup-playoffs-schedule
+rules: |
+  Gana la opción del club que gane la MLS Cup 2026, el partido final de los Audi 2026 MLS Cup Playoffs, según el resultado oficial de la Major League Soccer (mlssoccer.com). Cuenta el resultado final del partido, con tiempos extra y penales si hacen falta. Si el campeón no es uno de los clubes nombrados, gana «Otro club».
+
+  Según la MLS, los playoffs empiezan el 18 de noviembre de 2026 y la MLS Cup se juega el viernes 18 de diciembre de 2026. Los clubes eliminados antes no se resuelven por separado: todas las opciones se liquidan juntas al final. Si la final se pospone, el cierre se recorre a la nueva fecha oficial; si la temporada se cancela sin campeón, el mercado se cancela y las posiciones se reembolsan.
+
+  El mercado cierra el 18 de diciembre de 2026 a las 23:00 UTC, antes del inicio de la final. Gana exactamente un resultado: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  La MLS Cup 2026 es la última que se juega en diciembre antes de que la liga cambie a un calendario de verano a primavera, según la MLS. Los playoffs arrancan el 18 de noviembre con los partidos de comodín y la final es el 18 de diciembre. Inter Miami es el campeón vigente. A mediados de septiembre las casas de apuestas ponían como favoritos a Inter Miami, Vancouver Whitecaps, Nashville SC y LAFC.
+ends_at: 2026-12-18T23:00:00Z
+outcomes:
+  - {key: inter_miami, label: "🩷 Inter Miami", pct: 20}
+  - {key: vancouver, label: "🏔️ Vancouver Whitecaps", pct: 15}
+  - {key: nashville, label: "🎸 Nashville SC", pct: 13}
+  - {key: lafc, label: "🖤 LAFC", pct: 12}
+  - {key: chicago, label: "🔥 Chicago Fire", pct: 6}
+  - {key: houston, label: "🚀 Houston Dynamo", pct: 5}
+  - {key: dallas, label: "🐴 FC Dallas", pct: 5}
+  - {key: otro, label: "⚽ Otro club", pct: 24}
+---
+tipo: multi
+id: pl-campeon-2026-27
+question: ¿Quién será campeón de la Premier League 2026-27?
+description: >-
+  Campeón de la Premier League 2026-27, decidido por la tabla final tras la última jornada del 30 de mayo de 2027.
+category: DEPORTES
+subcategory: Premier League
+kind: accesorio
+trending: true
+resolution_criteria: >-
+  Gana la opción del club que termine primero en la tabla final de la Premier League 2026-27, según la Premier League. Si es otro club, gana «Otro club». Fuente de resolución: https://www.premierleague.com/en/tables. Respaldo: ESPN.
+resolution_source_url: https://www.premierleague.com/en/tables
+rules: |
+  Gana la opción del club que termine en primer lugar de la tabla final de la Premier League 2026-27, según la clasificación oficial de premierleague.com al terminar la jornada 38, con los criterios de desempate del reglamento de la liga y las deducciones de puntos vigentes en ese momento. Si el campeón no es uno de los clubes nombrados, gana «Otro club».
+
+  Si el título queda decidido matemáticamente antes de la última jornada, el mercado se resuelve igual al final de la temporada. Una deducción de puntos o decisión disciplinaria posterior a la publicación de la tabla final no cambia el resultado. Si la temporada se cancela sin campeón, el mercado se cancela y las posiciones se reembolsan.
+
+  El mercado cierra el 30 de mayo de 2027 a las 15:00 UTC, antes del inicio de la última jornada. Gana exactamente un resultado: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  La Premier League 2026-27 se juega de agosto de 2026 a mayo de 2027; la jornada 38 es el domingo 30 de mayo de 2027, con todos los partidos a las 16:00 (hora de Inglaterra), según la Premier League. Arsenal es el campeón vigente. A fines de septiembre las casas ponían a Arsenal y Manchester City muy por delante del resto, con City invicto en sus primeros cinco partidos.
+ends_at: 2027-05-30T15:00:00Z
+outcomes:
+  - {key: arsenal, label: "🔴 Arsenal", pct: 46}
+  - {key: man_city, label: "🩵 Manchester City", pct: 41}
+  - {key: liverpool, label: "🔴 Liverpool", pct: 5}
+  - {key: chelsea, label: "🔵 Chelsea", pct: 3}
+  - {key: otro, label: "⚽ Otro club", pct: 5}
+---
+tipo: multi
+id: laliga-campeon-2026-27
+question: ¿Quién será campeón de LaLiga 2026-27?
+description: >-
+  Campeón de LaLiga EA Sports 2026-27, decidido por la tabla final tras la jornada 38, el fin de semana del 30 de mayo de 2027.
+category: DEPORTES
+subcategory: LaLiga
+kind: accesorio
+trending: true
+resolution_criteria: >-
+  Gana la opción del club que termine primero en la clasificación final de LaLiga EA Sports 2026-27, según LaLiga. Si es otro club, gana «Otro club». Fuente de resolución: https://www.laliga.com/laliga-easports/clasificacion. Respaldo: ESPN.
+resolution_source_url: https://www.laliga.com/laliga-easports/clasificacion
+rules: |
+  Gana la opción del club que termine en primer lugar de la clasificación final de LaLiga EA Sports 2026-27, según la tabla oficial de laliga.com al terminar la jornada 38, con los criterios de desempate del reglamento de la competición. Si el campeón no es uno de los clubes nombrados, gana «Otro club».
+
+  Si el título queda decidido matemáticamente antes de la última jornada, el mercado se resuelve igual al final de la temporada. Una sanción posterior a la publicación de la clasificación final no cambia el resultado. Si la temporada se cancela sin campeón, el mercado se cancela y las posiciones se reembolsan.
+
+  El mercado cierra el 29 de mayo de 2027 a las 12:00 UTC, antes del inicio de la jornada 38. Gana exactamente un resultado: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  LaLiga EA Sports 2026-27 empezó el fin de semana del 15 y 16 de agosto de 2026 y su jornada 38 se juega el fin de semana del 30 de mayo de 2027, una semana antes de la final de la Champions, según el calendario de LaLiga. Barcelona es el bicampeón vigente: ganó 2025-26 con 94 puntos, ocho más que el Real Madrid. Las casas lo ven como una pelea de dos, con el Atlético de Madrid como tercero lejano.
+ends_at: 2027-05-29T12:00:00Z
+outcomes:
+  - {key: barcelona, label: "🔵🔴 Barcelona", pct: 49}
+  - {key: real_madrid, label: "⚪ Real Madrid", pct: 42}
+  - {key: atletico, label: "🔴⚪ Atlético de Madrid", pct: 5}
+  - {key: otro, label: "⚽ Otro club", pct: 4}
+---
+tipo: multi
+id: ucl-campeon-2026-27
+question: ¿Quién ganará la Champions League 2026-27?
+description: >-
+  Campeón de la UEFA Champions League 2026-27, decidido en la final del 5 de junio de 2027 en el Estadio Metropolitano de Madrid.
+category: DEPORTES
+subcategory: Champions League
+kind: accesorio
+trending: true
+resolution_criteria: >-
+  Gana la opción del club que gane la final de la UEFA Champions League 2026-27, según la UEFA. Si es otro club, gana «Otro club». Fuente de resolución: https://www.uefa.com/uefachampionsleague/news/029d-1eb2d5faf53c-d67c9fed04fa-1000--2027-uefa-champions-league-final-estadio-metropolitano-m/. Respaldo: ESPN.
+resolution_source_url: https://www.uefa.com/uefachampionsleague/news/029d-1eb2d5faf53c-d67c9fed04fa-1000--2027-uefa-champions-league-final-estadio-metropolitano-m/
+rules: |
+  Gana la opción del club que gane la final de la UEFA Champions League 2026-27, según el resultado oficial de la UEFA (uefa.com). Cuenta el resultado final del partido, con tiempos extra y penales si hacen falta. Si el campeón no es uno de los clubes nombrados, gana «Otro club».
+
+  Según la UEFA, la final se juega el sábado 5 de junio de 2027 en el Estadio Metropolitano de Madrid. Los clubes eliminados antes no se resuelven por separado: todas las opciones se liquidan juntas al final. Si la final se pospone o cambia de sede, el cierre se recorre a la nueva fecha oficial; si el torneo se cancela sin campeón, el mercado se cancela y las posiciones se reembolsan.
+
+  El mercado cierra el 5 de junio de 2027 a las 18:00 UTC, antes del inicio de la final. Gana exactamente un resultado: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  La Champions League 2026-27 tiene una fase liga de 36 clubes que empezó en septiembre de 2026, eliminatorias desde febrero y la final el 5 de junio de 2027 en el Estadio Metropolitano de Madrid, según la UEFA. El Paris Saint-Germain es el bicampeón vigente. A mediados de septiembre las casas ponían a Barcelona, Arsenal, PSG, Bayern y Real Madrid casi empatados como favoritos.
+ends_at: 2027-06-05T18:00:00Z
+outcomes:
+  - {key: barcelona, label: "🔵🔴 Barcelona", pct: 14}
+  - {key: arsenal, label: "🔴 Arsenal", pct: 14}
+  - {key: psg, label: "🔵 PSG", pct: 13}
+  - {key: bayern, label: "🔴 Bayern Múnich", pct: 12}
+  - {key: real_madrid, label: "⚪ Real Madrid", pct: 11}
+  - {key: man_city, label: "🩵 Manchester City", pct: 9}
+  - {key: liverpool, label: "🔴 Liverpool", pct: 6}
+  - {key: otro, label: "⚽ Otro club", pct: 21}
+---
+tipo: multi
+id: box-cmb-168-campeon-2026
+question: ¿Quién tendrá el cinturón CMB supermediano al 31 de diciembre?
+description: >-
+  Quién será el campeón mundial supermediano (168 lb) del Consejo Mundial de Boxeo al cierre de 2026, tras Canelo Álvarez vs. Christian Mbilli del 31 de octubre.
+category: DEPORTES
+subcategory: Boxeo
+trending: true
+resolution_criteria: >-
+  Gana la opción del boxeador que el CMB (WBC) reconozca como campeón mundial supermediano al 31 de diciembre de 2026 a las 23:59 (CDMX). Si el título está vacante, gana «Otro / vacante». Fuente de resolución: https://wbcboxing.com/en/canelo-alvarez-vs-christian-mbilli-rescheduled-for-october-31/. Respaldo: ESPN, BoxRec.
+resolution_source_url: https://wbcboxing.com/en/canelo-alvarez-vs-christian-mbilli-rescheduled-for-october-31/
+rules: |
+  Gana la opción del boxeador que el Consejo Mundial de Boxeo (CMB / WBC) reconozca como campeón mundial de peso supermediano (168 libras) al 31 de diciembre de 2026 a las 23:59, hora del centro de México, según wbcboxing.com y sus comunicados. No cuentan los títulos interinos, "franquicia" ni de otros organismos. Si el título está vacante en ese momento o lo tiene otro boxeador, gana «Otro / vacante».
+
+  Cuenta el reconocimiento vigente en esa fecha: si hay una pelea por el título después del 31 de diciembre, no cambia el resultado; si el CMB cambia una decisión (por ejemplo, un resultado anulado por dopaje) después de esa fecha, tampoco. Si la pelea Canelo vs. Mbilli se pospone o cancela, el mercado sigue abierto y se resuelve con quien tenga el cinturón al 31 de diciembre.
+
+  El mercado cierra el 31 de diciembre de 2026 a las 23:59 (CDMX). Gana exactamente un resultado: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  Christian Mbilli es el campeón supermediano del CMB: fue elevado de interino a campeón pleno cuando Terence Crawford se retiró en diciembre de 2025. Lo defiende ante Saúl «Canelo» Álvarez el 31 de octubre de 2026 en Riad, Arabia Saudita, según el CMB; la pelea estaba programada para el 12 de septiembre y se reprogramó. Es la primera pelea de Canelo desde que perdió por decisión ante Crawford en septiembre de 2025.
+ends_at: 2027-01-01T05:59:00Z
+outcomes:
+  - {key: canelo, label: "🇲🇽 Canelo Álvarez", pct: 72}
+  - {key: mbilli, label: "🇨🇦 Christian Mbilli", pct: 25}
+  - {key: otro, label: "🥊 Otro / vacante", pct: 3}
+---
+tipo: multi
+id: box-amb-168-campeon-2026
+question: ¿Quién tendrá el cinturón AMB supermediano al 31 de diciembre?
+description: >-
+  Quién será el campeón mundial supermediano (168 lb) de la Asociación Mundial de Boxeo al cierre de 2026. Jaime Munguía lo tiene desde mayo y la AMB le ordenó defenderlo ante Bektemir Melikuziev.
+category: DEPORTES
+subcategory: Boxeo
+trending: false
+resolution_criteria: >-
+  Gana la opción del boxeador que la AMB (WBA) reconozca como campeón mundial supermediano al 31 de diciembre de 2026 a las 23:59 (CDMX). Si el título está vacante, gana «Otro / vacante». Fuente de resolución: https://www.wbaboxing.com/boxing-news/wba-championship-committee-orders-jaime-munguia-vs-bektemir-melikuziev. Respaldo: ESPN, BoxRec.
+resolution_source_url: https://www.wbaboxing.com/boxing-news/wba-championship-committee-orders-jaime-munguia-vs-bektemir-melikuziev
+rules: |
+  Gana la opción del boxeador que la Asociación Mundial de Boxeo (AMB / WBA) reconozca como campeón mundial de peso supermediano (168 libras) al 31 de diciembre de 2026 a las 23:59, hora del centro de México, según wbaboxing.com y sus comunicados. No cuentan los títulos interinos, "regulares", "gold" ni de otros organismos. Si el título está vacante en ese momento o lo tiene otro boxeador, gana «Otro / vacante».
+
+  Cuenta el reconocimiento vigente en esa fecha: una pelea por el título después del 31 de diciembre no cambia el resultado, ni una decisión de la AMB posterior a esa fecha.
+
+  El mercado cierra el 31 de diciembre de 2026 a las 23:59 (CDMX). Gana exactamente un resultado: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  Jaime Munguía ganó el título supermediano de la AMB el 2 de mayo de 2026 al vencer por decisión unánime a Armando Reséndiz en Las Vegas. Su plazo de defensa voluntaria venció el 30 de agosto y la AMB ordenó la defensa obligatoria ante Bektemir Melikuziev, con negociación hasta el 21 de octubre de 2026; al ordenarse no había fecha, sede ni televisora, según la AMB.
+ends_at: 2027-01-01T05:59:00Z
+outcomes:
+  - {key: munguia, label: "🇲🇽 Jaime Munguía", pct: 82}
+  - {key: melikuziev, label: "🇺🇿 Bektemir Melikuziev", pct: 8}
+  - {key: otro, label: "🥊 Otro / vacante", pct: 10}

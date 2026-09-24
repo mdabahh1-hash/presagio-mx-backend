@@ -33,7 +33,7 @@ Formato (todas las claves en español; `?` = opcional):
         "partidos": [{"clave": str, "nombre": str, "siglas": str}, ...],
         "fuentes":  [{"host": str, "etiqueta": str}, ...],      # host sin "www."
         "notas":    {market_id: str},      # tercer dato de la meta de la fila (≈40 chars)
-        "titulos"?: {subcategoria: market_id},  # Deportes: multi de campeón por liga ("Probabilidad
+        "titulos"?: {subcategoria: market_id | [market_id, ...]},  # Deportes: multi de campeón por liga ("Probabilidad
                                            # de título"); la landing lo calcula con precios vivos
     }
 """
