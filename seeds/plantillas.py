@@ -61,13 +61,19 @@ SUBCATEGORIAS_CONOCIDAS: set[str] = {
 
 # Espejo de SUBCATEGORY_IMAGE y MARKET_IMAGE en veredikt-mx/src/lib/marketImage.ts: lo que
 # tiene imagen propia en el sitio. Un mercado sin image_url fuera de estas dos listas se
-# ve con el ícono genérico de la categoría (lo avisa el agente revisor). Ojo: el frontend
-# usa la clave 'Tipo de cambio USD/MXN', distinta de la subcategoría 'Tipo de cambio'.
+# ve con el ícono genérico de la categoría (lo avisa el agente revisor). Las fotos de tema
+# viven en veredikt-mx/public/img/markets/temas/ (`npm run photos:temas`).
 SUBCATEGORIAS_CON_IMAGEN: set[str] = {
     "Liga MX", "Leagues Cup", "Premier League", "LaLiga", "Serie A", "Bundesliga", "Ligue 1",
     "Liga Portugal", "MLS", "Champions League", "Saudi Pro League", "NFL", "F1", "Boxeo",
-    "Elecciones", "Tasas Banxico", "Inflación (INPC)", "Tipo de cambio USD/MXN", "PIB México",
-    "Aranceles / T-MEC", "Fed / tasas EE.UU.", "Bolsa (BMV)",
+    "Elecciones", "Tasas Banxico", "Inflación (INPC)", "Tipo de cambio", "PIB México",
+    "Aranceles / T-MEC", "Fed / tasas EE.UU.", "Bolsa (BMV)", "Empleo / IMSS", "Mercados EEUU",
+    "Remesas", "Bitcoin", "Ethereum", "Solana", "Stablecoins", "Mercado cripto", "Regulación",
+    "Sheinbaum", "Visas de EEUU", "Congreso", "Regulación digital", "Europa", "Elecciones EEUU",
+    "Trump", "Medio Oriente", "Asia-Pacífico", "Américas", "Rusia-Ucrania", "África", "ONU y OTAN",
+    "Migración", "IA", "Videojuegos", "Influencers", "Reality shows", "Música", "Cine y series",
+    "Farándula", "CDMX", "Cultura", "Estados", "Batallas de aura", "Seguridad", "Huracanes",
+    "Sequía y calor",
 }
 MERCADOS_CON_IMAGEN: set[str] = {
     "banxico-mantiene-tasa-sep26", "banxico-recorte-tasa-2026-q3", "mexico-inflacion-2026",
