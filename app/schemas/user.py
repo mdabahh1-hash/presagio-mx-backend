@@ -42,6 +42,9 @@ class LeaderboardEntry(BaseModel):
     volume: float
     markets_traded: int
     accuracy: float
+    # Solo en period=month (leaderboard mensual): lugar entre los elegibles.
+    rank: int | None = None
+    elegible: bool | None = None
 
 
 class ProfilePublic(BaseModel):

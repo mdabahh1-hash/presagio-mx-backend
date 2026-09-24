@@ -472,3 +472,25 @@ async def send_seed_plan_email(plan_id: int, plan: dict, url_aprobar: str) -> No
     """
     subject = f"🌱 Siembra: {len(props)} mercados listos" + (f" ({n_rev} para revisar)" if n_rev else "")
     await _send(_ADMIN_EMAIL, subject, _wrap(body).replace("max-width: 480px", "max-width: 720px"))
+
+
+async def send_leaderboard_cierre_email(mes: str, top: list[tuple], url_aprobar: str) -> None:
+    """Cierre del leaderboard mensual (app/services/leaderboard_mensual): top 10
+    elegible y botón a la página donde se descalifica y se publica el top 3."""
+    td = 'style="padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:13px"'
+    filas = "".join(
+        f'<tr><td {td}>{r}</td><td {td}>@{_esc(u)}</td><td {td}><b>{g:+,.0f} PT</b></td>'
+        f'<td {td} style="color:rgba(245,240,232,0.55)">{n} predicciones · {m} mercados</td></tr>'
+        for r, u, g, n, m in top
+    ) or f'<tr><td {td}>Nadie calificó este mes.</td></tr>'
+    body = f"""
+      <p style="margin: 0 0 8px; font-size: 16px;">🏆 Leaderboard {mes}: cierre del mes</p>
+      <p style="margin: 0 0 18px; font-size: 14px; color: rgba(245,240,232,0.6);">
+        Top 10 de los elegibles. Revisa multicuentas o abusos, descalifica si hace falta y publica el top 3.
+      </p>
+      <a href="{_esc(url_aprobar)}" style="display:inline-block; background:#FFD700; color:#07071A; text-decoration:none;
+         font-weight:800; font-size:14px; padding:12px 24px; border-radius:10px; margin:0 0 6px;">Revisar y publicar →</a>
+      <p style="margin:0 0 18px;font-size:11px;color:rgba(245,240,232,0.35)">Vence en {settings.PLAN_APPROVAL_TTL_HOURS} h; si vence, llega otro correo.</p>
+      <table style="width:100%;border-collapse:collapse">{filas}</table>
+    """
+    await _send(_ADMIN_EMAIL, f"🏆 Leaderboard {mes}: revisa y publica el top 3", _wrap(body))
