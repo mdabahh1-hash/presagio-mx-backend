@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import create_tables, migrate_enums, migrate_columns, AsyncSessionLocal
 from app.config import settings
-from app.api import auth, markets, trades, comments, users, websockets, admin, proposals, passkeys, leagues, resolucion, contenido, siembra, leaderboard
+from app.api import auth, markets, trades, comments, users, websockets, admin, proposals, passkeys, leagues, resolucion, contenido, siembra, leaderboard, revision
 import app.models  # noqa: F401  (registers every table — incl. leagues — on Base.metadata before create_all)
 from app.services.seed import seed_markets
 from app.services.ledger_backfill import backfill_ledger
@@ -15,6 +15,7 @@ from app.services.market_maintenance import run_market_maintenance, get_maintena
 from app.services.resolucion.nocturno import nightly_loop, get_nightly_status
 from app.services.en_vivo import en_vivo_loop, get_en_vivo_status
 from app.services.siembra.job import siembra_loop
+from app.services.revision.job import revision_loop
 from app.services.leaderboard_mensual import avisos_competencia, cerrar_mes_anterior
 
 # How often the background job runs (closing-soon notices, auto-close, admin reminders).
@@ -75,6 +76,8 @@ async def lifespan(app: FastAPI):
     vivo = asyncio.create_task(en_vivo_loop()) if settings.EN_VIVO_ENABLED else None
     # Agente de siembra: 1X2 de fútbol de los próximos 8 días → correo con casillas.
     siembra_task = asyncio.create_task(siembra_loop()) if settings.SIEMBRA_PARTIDOS_ENABLED else None
+    # Agente revisor: mercados activos contra los requisitos → correo con casillas.
+    revision_task = asyncio.create_task(revision_loop()) if settings.REVISION_ENABLED else None
     yield
     task.cancel()
     if nightly:
@@ -83,6 +86,8 @@ async def lifespan(app: FastAPI):
         vivo.cancel()
     if siembra_task:
         siembra_task.cancel()
+    if revision_task:
+        revision_task.cancel()
 
 
 app = FastAPI(
@@ -121,6 +126,7 @@ app.include_router(resolucion.router, prefix="/api")
 app.include_router(contenido.router, prefix="/api")
 app.include_router(siembra.router, prefix="/api")
 app.include_router(leaderboard.router, prefix="/api")
+app.include_router(revision.router, prefix="/api")
 
 # WebSocket routes (no prefix — path is /ws/...)
 app.include_router(websockets.router)

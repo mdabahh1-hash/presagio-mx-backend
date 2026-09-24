@@ -7,6 +7,7 @@ import httpx
 from app.config import settings
 from app.services.resolucion.sujeto import texto_identidad  # puro (sin BD ni red)
 from app.services.siembra import vista  # puro (sin BD ni red)
+from app.services.revision.checks import agrupar  # puro (sin BD ni red)
 
 logger = logging.getLogger(__name__)
 
@@ -500,6 +501,40 @@ async def send_seed_plan_email(plan_id: int, plan: dict, url_aprobar: str) -> No
       {f'<p style="margin:18px 0 6px;font-size:14px;font-weight:700">Descartados ({len(desc)})</p><ul style="padding-left:18px;margin:0">{descartes}</ul>' if desc else ""}
     """
     subject = f"🌱 Siembra: {len(props)} mercados listos" + (f" ({n_rev} para revisar)" if n_rev else "")
+    await _send(_ADMIN_EMAIL, subject, _wrap(body).replace("max-width: 480px", "max-width: 720px"))
+
+
+async def send_review_plan_email(plan_id: int, plan: dict, url_aprobar: str) -> None:
+    """Plan del agente revisor (app/services/revision): arreglos con casilla
+    (mercado, campo, antes → después) y avisos para revisar a mano, agrupados por
+    tipo (`agrupar`). Lo nuevo desde el último correo va marcado."""
+    hs, nuevos = plan.get("hallazgos", []), set(plan.get("ids_nuevos", []))
+    fixes, avisos = [x for x in hs if x["fix"]], [x for x in hs if not x["fix"]]
+    td = 'style="padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.08);font-size:12px"'
+    filas = "".join(
+        f'<tr><td {td}><a style="color:#8ab4ff" href="{_SITE}/#/mercado/{_esc(x["market_id"])}">{_esc(x["pregunta"])}</a>'
+        + (' <b style="color:#FFD700">nuevo</b>' if x["id"] in nuevos else "")
+        + f'<br><span style="color:rgba(245,240,232,0.55)">{_esc(x["mensaje"])}</span></td>'
+        f'<td {td}><code>{_esc(x["fix"]["campo"])}</code><br>{_esc(str(x["fix"]["antes"]))} → <b>{_esc(str(x["fix"]["despues"]))}</b></td></tr>'
+        for x in fixes)
+    bloques = "".join(
+        f'<p style="margin:14px 0 4px;font-size:13px;font-weight:700">{_esc(titulo)}</p><ul style="padding-left:18px;margin:0">'
+        + "".join(f'<li style="font-size:12px;margin-bottom:4px">{_esc(f)}</li>' for f in renglones) + "</ul>"
+        for titulo, renglones in agrupar(avisos))
+    boton = (f'<a href="{_esc(url_aprobar)}" style="display:inline-block; background:#FFD700; color:#07071A; text-decoration:none;'
+             f' font-weight:800; font-size:14px; padding:12px 24px; border-radius:10px; margin:0 0 6px;">Elegir y aplicar →</a>'
+             f'<p style="margin:0 0 18px;font-size:11px;color:rgba(245,240,232,0.35)">La página trae una casilla por arreglo. '
+             f'Vence en {settings.PLAN_APPROVAL_TTL_HOURS} h.</p>') if fixes else ""
+    body = f"""
+      <p style="margin: 0 0 8px; font-size: 16px;">🔎 Revisión de mercados #{plan_id}</p>
+      <p style="margin: 0 0 18px; font-size: 14px; color: rgba(245,240,232,0.6);">
+        {len(fixes)} arreglos que puedo aplicar · {len(avisos)} avisos para revisar a mano · {len(nuevos)} nuevos desde el último correo.
+      </p>
+      {boton}
+      {f'<table style="width:100%;border-collapse:collapse;margin:0 0 18px">{filas}</table>' if fixes else ""}
+      {f'<p style="margin:18px 0 0;font-size:14px;font-weight:700">Revisar a mano</p>{bloques}' if avisos else ""}
+    """
+    subject = f"🔎 Revisión: {len(fixes)} arreglos, {len(avisos)} avisos ({len(nuevos)} nuevos)"
     await _send(_ADMIN_EMAIL, subject, _wrap(body).replace("max-width: 480px", "max-width: 720px"))
 
 

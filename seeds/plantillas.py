@@ -58,3 +58,18 @@ SUBCATEGORIAS_CONOCIDAS: set[str] = {
     "Tasas Banxico", "Inflación (INPC)", "Tipo de cambio", "PIB México", "Empleo / IMSS",
     "Aranceles / T-MEC", "Fed / tasas EE.UU.", "Bolsa (BMV)", "Mercados EEUU", "Remesas",
 }
+
+# Espejo de SUBCATEGORY_IMAGE y MARKET_IMAGE en veredikt-mx/src/lib/marketImage.ts: lo que
+# tiene imagen propia en el sitio. Un mercado sin image_url fuera de estas dos listas se
+# ve con el ícono genérico de la categoría (lo avisa el agente revisor). Ojo: el frontend
+# usa la clave 'Tipo de cambio USD/MXN', distinta de la subcategoría 'Tipo de cambio'.
+SUBCATEGORIAS_CON_IMAGEN: set[str] = {
+    "Liga MX", "Leagues Cup", "Premier League", "LaLiga", "Serie A", "Bundesliga", "Ligue 1",
+    "Liga Portugal", "MLS", "Champions League", "Saudi Pro League", "NFL", "F1", "Boxeo",
+    "Elecciones", "Tasas Banxico", "Inflación (INPC)", "Tipo de cambio USD/MXN", "PIB México",
+    "Aranceles / T-MEC", "Fed / tasas EE.UU.", "Bolsa (BMV)",
+}
+MERCADOS_CON_IMAGEN: set[str] = {
+    "banxico-mantiene-tasa-sep26", "banxico-recorte-tasa-2026-q3", "mexico-inflacion-2026",
+    "tmec-extension-16-anos-2026",
+}
