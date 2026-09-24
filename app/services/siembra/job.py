@@ -33,6 +33,19 @@ from seeds.schema import cargar_texto
 logger = logging.getLogger(__name__)
 
 TOKEN_TYP = "seed_approval"
+# Foto por defecto de lo que siembran los generadores (Wikimedia Commons, licencia libre,
+# aprobadas por Mark el 24-sep). Un doc que ya trae image_url (rutina creativa) la conserva;
+# Deportes no la necesita (escudos y caras en el frontend).
+_WM = "https://thumb.wikimedia.org/wikipedia/commons/thumb/"
+FOTO_POR_SUBCATEGORIA = {
+    "Bitcoin": "https://upload.wikimedia.org/wikipedia/commons/8/8d/Bitcoin-dw.png",
+    "Ethereum": _WM + "0/05/Ethereum_logo_2014.svg/330px-Ethereum_logo_2014.svg.png",
+    "Solana": _WM + "3/34/Solana_cryptocurrency_two.jpg/330px-Solana_cryptocurrency_two.jpg",
+    "Stablecoins": _WM + "0/01/USDT_Logo.png/330px-USDT_Logo.png",
+    "Fed / tasas EE.UU.": _WM + "8/89/Eccles_Building_%2826088200676%29.jpg/330px-Eccles_Building_%2826088200676%29.jpg",
+    "Tasas Banxico": _WM + "4/44/Edificio_del_Banco_de_Mexico_2021.jpg/330px-Edificio_del_Banco_de_Mexico_2021.jpg",
+    "Inflación (INPC)": _WM + "d/de/Dulces_t%C3%ADpicos_mexicanos.jpg/330px-Dulces_t%C3%ADpicos_mexicanos.jpg",
+}
 _LAST: dict = {"ran_at": None, "last_plan_id": None, "last_error": None}
 
 
@@ -153,6 +166,9 @@ async def aplicar_siembra(db: AsyncSession, plan_id: int, plan: dict, ids: list[
     ya existen y los vencidos). El plan ya debe estar en `applying`."""
     marcados = set(ids)
     docs = [p["doc"] for p in plan.get("propuestas", []) if p["doc"]["id"] in marcados]
+    for d in docs:
+        if not d.get("image_url") and d.get("subcategory") in FOTO_POR_SUBCATEGORIA:
+            d["image_url"] = FOTO_POR_SUBCATEGORIA[d["subcategory"]]
     r = None
     if docs:
         specs, _ = cargar_texto(_yaml(docs))

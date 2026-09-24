@@ -22,7 +22,7 @@ CONTEXT = "c" * 130
 def _m(**kw):
     base = dict(id="m1", question="¿Algo pasará?", category=MarketCategory.ECONOMIA, subcategory="Tasas Banxico",
                 rules=RULES, context=CONTEXT, resolution_criteria="Criterio", resolution_source_url="https://x.mx",
-                image_url=None, kind=None, kickoff_at=None, ends_at=AHORA + timedelta(days=5),
+                image_url="https://upload.wikimedia.org/x.jpg", kind=None, kickoff_at=None, ends_at=AHORA + timedelta(days=5),
                 market_type="binary", sujeto=None, auto_resolucion=None, status=MarketStatus.OPEN)
     base.update(kw)
     return SimpleNamespace(**base)
@@ -45,22 +45,22 @@ def test_partido_sin_fuente_ni_kickoff_se_arregla_solo():
 
 def test_avisos_sin_arreglo():
     c = _checks(_m(resolution_source_url=None, rules="corta", context="", resolution_criteria=" ",
-                   subcategory=None, question="¿" + "a" * 80 + "?", market_type="multi",
+                   subcategory=None, image_url=None, question="¿" + "a" * 80 + "?", market_type="multi",
                    status=MarketStatus.PENDING_RESOLUTION, ends_at=AHORA - timedelta(days=4)), n=1, pos=True)
     assert set(c) == {"fuente", "normas", "contexto", "criterios", "subcategoria", "titulo", "multi",
-                      "pendiente_viejo", "imagen_generica"}
+                      "pendiente_viejo", "sin_foto"}
     assert all(x["fix"] is None for x in c.values())
     assert "no se puede tocar" in c["titulo"]["mensaje"]
 
 
 def test_imagen():
     assert _checks(_m(image_url="http://hotlink.jpg"))["imagen_invalida"]["fix"]["despues"] is None
-    assert "imagen_generica" in _checks(_m(subcategory="Apps y redes"))
-    assert "imagen_generica" not in _checks(_m(subcategory="Tipo de cambio"))
-    assert _checks(_m(subcategory="Apps y redes", image_url="/img/x.jpg")) == {}
-    assert _checks(_m(id="mexico-inflacion-2026", subcategory="Apps y redes")) == {}
-    avisos = [_checks(_m(id=f"b{i}", subcategory="Apps y redes"))["imagen_generica"] for i in range(3)]
-    assert agrupar(avisos) == [("Solo ícono genérico de la categoría (3)", ["Apps y redes: 3 mercados"])]
+    assert "sin_foto" in _checks(_m(image_url=None))  # fuera de Deportes, foto por mercado
+    dep = dict(category=MarketCategory.DEPORTES, image_url=None)
+    assert "imagen_generica" in _checks(_m(subcategory="Pádel", **dep))
+    assert _checks(_m(subcategory="Liga MX", **dep)) == {}  # escudo de la liga
+    avisos = [_checks(_m(id=f"b{i}", subcategory="Pádel", **dep))["imagen_generica"] for i in range(3)]
+    assert agrupar(avisos)[0] == ("Solo ícono genérico de la categoría (3)", ["Pádel: 3 mercados"])
 
 
 def test_escalera_sin_receta_y_kind_fuera_de_deportes():
