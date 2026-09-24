@@ -19,7 +19,8 @@ from app.schemas.trade import PositionOut
 from app.core import lmsr
 from app.core.auth import get_current_user, get_current_user_optional
 from app.config import settings
-from app.services import ledger, referral
+from app.services import ledger, referral, leaderboard_mensual
+from app.models.leaderboard_mes import LeaderboardMes, LeaderboardMesFila
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -413,8 +414,6 @@ def _period_start(period: str) -> datetime | None:
         start_mx = now_mx.replace(hour=0, minute=0, second=0, microsecond=0)
     elif period == "week":
         start_mx = now_mx - timedelta(days=7)
-    elif period == "month":
-        start_mx = now_mx - timedelta(days=30)
     else:
         return None
     return start_mx.astimezone(timezone.utc)
@@ -424,6 +423,8 @@ def _period_start(period: str) -> datetime | None:
 async def get_leaderboard(limit: int = 50, period: str = "all", db: AsyncSession = Depends(get_db)):
     limit = max(1, min(limit, 100))
 
+    if period == "month":
+        return await _monthly_leaderboard(db, limit)
     start = _period_start(period)
     if start is not None:
         return await _period_leaderboard(db, start, limit)
@@ -468,7 +469,7 @@ async def _period_leaderboard(db: AsyncSession, start: datetime, limit: int) -> 
     # top the board over actual traders.
     pnl_res = await db.execute(
         select(PointsLedger.user_id, safunc.sum(PointsLedger.delta))
-        .where(PointsLedger.created_at >= start, PointsLedger.reason.in_(("trade", "payout")))
+        .where(PointsLedger.created_at >= start, PointsLedger.reason.in_(("trade", "payout", "refund")))
         .group_by(PointsLedger.user_id)
     )
     pnl_by_user = {uid: float(d or 0.0) for uid, d in pnl_res.all()}
@@ -502,6 +503,64 @@ async def _period_leaderboard(db: AsyncSession, start: datetime, limit: int) -> 
     ]
     entries.sort(key=lambda e: e.pnl, reverse=True)
     return entries[:limit]
+
+
+async def _monthly_leaderboard(db: AsyncSession, limit: int) -> list[LeaderboardEntry]:
+    """Mes calendario CDMX en vivo: primero los elegibles por lugar, luego el resto."""
+    filas = await leaderboard_mensual.ranking_mes(db, leaderboard_mensual.mes_de(datetime.now(timezone.utc)))
+    filas.sort(key=lambda f: (f.rank is None, f.rank or 0))
+    return [
+        LeaderboardEntry(
+            id=f.user.id, username=f.user.username, display_name=f.user.display_name,
+            avatar_url=f.user.avatar_url, pnl=round(f.ganancia, 2), volume=round(f.volumen, 2),
+            markets_traded=f.n_mercados, accuracy=f.user.accuracy, rank=f.rank, elegible=f.elegible,
+        )
+        for f in filas[:limit]
+    ]
+
+
+@router.get("/leaderboard/mes")
+async def get_leaderboard_mes(
+    current_user: User | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """Reglas del mes en curso y, con sesión, mi lugar y lo que me falta para calificar."""
+    lb = leaderboard_mensual
+    mes = lb.mes_de(datetime.now(timezone.utc))
+    yo = None
+    if current_user:
+        f = next((f for f in await lb.ranking_mes(db, mes) if f.user.id == current_user.id), None)
+        n_trades, n_mercados = (f.n_trades, f.n_mercados) if f else (0, 0)
+        yo = {
+            "rank": f.rank if f else None, "elegible": bool(f and f.elegible),
+            "ganancia": round(f.ganancia, 2) if f else 0.0,
+            "n_trades": n_trades, "n_mercados": n_mercados,
+            "faltan_predicciones": max(0, lb.MIN_PREDICCIONES - n_trades),
+            "faltan_mercados": max(0, lb.MIN_MERCADOS - n_mercados),
+        }
+    return {
+        "mes": lb.clave(mes), "termina_at": lb.limites(mes)[1],
+        "min_predicciones": lb.MIN_PREDICCIONES, "min_mercados": lb.MIN_MERCADOS,
+        "premiados": lb.PREMIADOS, "yo": yo,
+    }
+
+
+@router.get("/leaderboard/ganadores")
+async def get_leaderboard_ganadores(db: AsyncSession = Depends(get_db)):
+    """Top 3 de los meses ya publicados (aprobados), del más reciente al más viejo."""
+    rows = (await db.execute(
+        select(LeaderboardMesFila, User).join(User, User.id == LeaderboardMesFila.user_id)
+        .join(LeaderboardMes, LeaderboardMes.mes == LeaderboardMesFila.mes)
+        .where(LeaderboardMes.status == "approved", LeaderboardMesFila.rank <= leaderboard_mensual.PREMIADOS)
+        .order_by(desc(LeaderboardMesFila.mes), LeaderboardMesFila.rank, LeaderboardMesFila.id)
+    )).all()
+    meses: dict[str, list] = {}
+    for f, u in rows:
+        meses.setdefault(f.mes, []).append({
+            "rank": f.rank, "username": u.username, "display_name": u.display_name,
+            "avatar_url": u.avatar_url, "ganancia": f.ganancia,
+        })
+    return [{"mes": m, "ganadores": g} for m, g in meses.items()]
 
 
 async def _pnl_and_volume(db: AsyncSession, user: User) -> tuple[float, float]:

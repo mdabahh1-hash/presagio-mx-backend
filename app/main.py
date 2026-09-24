@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import create_tables, migrate_enums, migrate_columns, AsyncSessionLocal
 from app.config import settings
-from app.api import auth, markets, trades, comments, users, websockets, admin, proposals, passkeys, leagues, resolucion, contenido, siembra
+from app.api import auth, markets, trades, comments, users, websockets, admin, proposals, passkeys, leagues, resolucion, contenido, siembra, leaderboard
 import app.models  # noqa: F401  (registers every table — incl. leagues — on Base.metadata before create_all)
 from app.services.seed import seed_markets
 from app.services.ledger_backfill import backfill_ledger
@@ -15,6 +15,7 @@ from app.services.market_maintenance import run_market_maintenance, get_maintena
 from app.services.resolucion.nocturno import nightly_loop, get_nightly_status
 from app.services.en_vivo import en_vivo_loop, get_en_vivo_status
 from app.services.siembra.job import siembra_loop
+from app.services.leaderboard_mensual import cerrar_mes_anterior
 
 # How often the background job runs (closing-soon notices, auto-close, admin reminders).
 MAINTENANCE_INTERVAL_SECONDS = 900  # 15 min
@@ -36,6 +37,10 @@ async def _maintenance_loop() -> None:
             await run_market_maintenance()
         except Exception as e:  # noqa: BLE001
             print(f"[maintenance] error: {e}")
+        try:
+            await cerrar_mes_anterior()
+        except Exception as e:  # noqa: BLE001
+            print(f"[leaderboard] cierre mensual: {e}")
 
 
 @asynccontextmanager
@@ -111,6 +116,7 @@ app.include_router(leagues.router, prefix="/api")
 app.include_router(resolucion.router, prefix="/api")
 app.include_router(contenido.router, prefix="/api")
 app.include_router(siembra.router, prefix="/api")
+app.include_router(leaderboard.router, prefix="/api")
 
 # WebSocket routes (no prefix — path is /ws/...)
 app.include_router(websockets.router)
