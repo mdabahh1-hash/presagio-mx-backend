@@ -209,6 +209,19 @@ def test_resolver_ganador_doble_fuente_y_sede_invertida():
     assert e["escalar"] and "discrepan" in e["razon"]
 
 
+def test_college_football_va_por_la_ruta_nfl():
+    # nombre corto de escuela (label/TSDB) contra el displayName de ESPN, con otro Texas el mismo día
+    assert fuentes.deporte("College Football") == "nfl"
+    assert "college-football/game" in fuentes._url_partido("College Football", "401")
+    tex = P("Tennessee Volunteers", "Texas Longhorns", 24, 31, id="1")
+    otro = P("LSU Tigers", "Texas A&M Aggies", 20, 17, id="2")
+    p, nota = cruce.emparejar_cualquier_sede(["Tennessee", "Texas"], K, [otro, tex])
+    assert p is tex and nota == ""
+    outs = [("tennessee", "Tennessee"), ("texas", "Texas")]
+    e = cruce.resolver_ganador({"id": "x"}, outs, tex, "", P("Tennessee", "Texas", 24, 31, fuente="tsdb"))
+    assert e["veredicto"] == "texas" and e["confianza"] == "alta"
+
+
 def test_resolver_ganador_empate_sugiere_cancelar():
     espn = P("Seattle Seahawks", "New England Patriots", 20, 20)
     tsdb = P("Seattle Seahawks", "New England Patriots", 20, 20, fuente="tsdb")

@@ -39,6 +39,7 @@ LIGAS: dict[str, tuple[str, str, str]] = {
     "Saudi Pro League": ("soccer/ksa.1", "4668", "Saudi-Arabian Pro League"),
     "Champions League": ("soccer/uefa.champions", "4480", "UEFA Champions League"),
     "NFL": ("football/nfl", "4391", "NFL"),
+    "College Football": ("football/college-football", "4479", "NCAA Division 1 Football"),
     # Selecciones: amistosos + Nations League (ESPN_EXTRA). TSDB solo cubre los amistosos
     # por nombre de archivo; los de Nations League los encuentra searchevents por nombre.
     "Fecha FIFA": ("soccer/fifa.friendly", "4562", "International Friendlies"),
@@ -72,14 +73,15 @@ def rutas_espn(liga: str) -> list[str]:
 
 
 def deporte(liga: str) -> str:
-    """'futbol' | 'nfl' según la ruta ESPN de la liga."""
+    """'futbol' | 'nfl' según la ruta ESPN de la liga ('nfl' = futbol americano, también college)."""
     code = LIGAS.get(liga, ("soccer/",))[0]
-    return "nfl" if code.startswith("football/nfl") else "futbol"
+    return "nfl" if code.startswith("football/") else "futbol"
 
 
 def _url_partido(liga: str, event_id: str) -> str:
-    return (f"https://www.espn.com/nfl/game/_/gameId/{event_id}" if deporte(liga) == "nfl"
-            else f"https://www.espn.com/soccer/match/_/gameId/{event_id}")
+    if deporte(liga) == "nfl":
+        return f"https://www.espn.com/{LIGAS[liga][0].split('/')[1]}/game/_/gameId/{event_id}"
+    return f"https://www.espn.com/soccer/match/_/gameId/{event_id}"
 
 # Nombre en ESPN (o en el mercado) → nombre exacto en TheSportsDB, para los
 # clubes que las transformaciones genéricas no resuelven. Se prueba primero.
