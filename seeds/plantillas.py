@@ -44,7 +44,8 @@ COMPETENCIAS: dict[str, Competencia] = {
 SUBCATEGORIAS_CONOCIDAS: set[str] = {
     # Deportes
     "Liga MX", "Leagues Cup", "Premier League", "LaLiga", "Serie A", "Bundesliga", "Ligue 1",
-    "Liga Portugal", "MLS", "Champions League", "Saudi Pro League", "NFL", "F1", "Boxeo", "Fecha FIFA",
+    "Liga Portugal", "MLS", "Champions League", "Saudi Pro League", "NFL", "College Football", "F1",
+    "Boxeo", "Fecha FIFA",
     # Política
     "Elecciones", "Sheinbaum", "Visas de EEUU", "Congreso", "Regulación digital",
     # Crypto
@@ -67,8 +68,8 @@ SUBCATEGORIAS_CONOCIDAS: set[str] = {
 # viven en veredikt-mx/public/img/markets/temas/ (`npm run photos:temas`).
 SUBCATEGORIAS_CON_IMAGEN: set[str] = {
     "Liga MX", "Leagues Cup", "Premier League", "LaLiga", "Serie A", "Bundesliga", "Ligue 1",
-    "Liga Portugal", "MLS", "Champions League", "Saudi Pro League", "NFL", "F1", "Boxeo", "Fecha FIFA",
-    "Elecciones", "Tasas Banxico", "Inflación (INPC)", "Tipo de cambio", "PIB México",
+    "Liga Portugal", "MLS", "Champions League", "Saudi Pro League", "NFL", "College Football", "F1",
+    "Boxeo", "Fecha FIFA", "Elecciones", "Tasas Banxico", "Inflación (INPC)", "Tipo de cambio", "PIB México",
     "Aranceles / T-MEC", "Fed / tasas EE.UU.", "Bolsa (BMV)", "Empleo / IMSS", "Mercados EEUU",
     "Remesas", "Bitcoin", "Ethereum", "Solana", "Stablecoins", "Mercado cripto", "Regulación",
     "Sheinbaum", "Visas de EEUU", "Congreso", "Regulación digital", "Europa", "Elecciones EEUU",

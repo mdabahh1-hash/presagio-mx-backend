@@ -1836,3 +1836,771 @@ outcomes:
   - {key: munguia, label: "🇲🇽 Jaime Munguía", pct: 82}
   - {key: melikuziev, label: "🇺🇿 Bektemir Melikuziev", pct: 8}
   - {key: otro, label: "🥊 Otro / vacante", pct: 10}
+---
+tipo: multi
+id: nfl-bills-chargers-s3-2026
+question: ¿Quién gana Bills vs Chargers? (Semana 3)
+description: Ganador del partido Buffalo Bills contra Los Angeles Chargers de la Semana 3 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Buffalo Bills vs. Los Angeles Chargers de la Semana 3 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 3 de la temporada 2026 (24 al 28 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 27 de septiembre de 2026, 11:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 3 de la NFL 2026. Buffalo Bills (2-0) recibe a Los Angeles Chargers (0-2) en Highmark Stadium, Orchard Park, el domingo 27 de septiembre de 2026 a las 11:00 (CDMX). Récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-27T17:00:00Z
+kickoff_at: 2026-09-27T17:00:00Z
+outcomes:
+  - {key: bills, label: "Bills", pct: 73}
+  - {key: chargers, label: "Chargers", pct: 27}
+---
+tipo: multi
+id: nfl-browns-panthers-s3-2026
+question: ¿Quién gana Browns vs Panthers? (Semana 3)
+description: Ganador del partido Cleveland Browns contra Carolina Panthers de la Semana 3 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Cleveland Browns vs. Carolina Panthers de la Semana 3 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 3 de la temporada 2026 (24 al 28 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 27 de septiembre de 2026, 11:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 3 de la NFL 2026. Cleveland Browns (1-1) recibe a Carolina Panthers (1-1) en Huntington Bank Field, Cleveland, el domingo 27 de septiembre de 2026 a las 11:00 (CDMX). Récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-27T17:00:00Z
+kickoff_at: 2026-09-27T17:00:00Z
+outcomes:
+  - {key: browns, label: "Browns", pct: 43}
+  - {key: panthers, label: "Panthers", pct: 57}
+---
+tipo: multi
+id: nfl-lions-jets-s3-2026
+question: ¿Quién gana Lions vs Jets? (Semana 3)
+description: Ganador del partido Detroit Lions contra New York Jets de la Semana 3 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Detroit Lions vs. New York Jets de la Semana 3 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 3 de la temporada 2026 (24 al 28 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 27 de septiembre de 2026, 11:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 3 de la NFL 2026. Detroit Lions (1-1) recibe a New York Jets (1-1) en Ford Field, Detroit, el domingo 27 de septiembre de 2026 a las 11:00 (CDMX). Récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-27T17:00:00Z
+kickoff_at: 2026-09-27T17:00:00Z
+outcomes:
+  - {key: lions, label: "Lions", pct: 72}
+  - {key: jets, label: "Jets", pct: 28}
+---
+tipo: multi
+id: nfl-colts-texans-s3-2026
+question: ¿Quién gana Colts vs Texans? (Semana 3)
+description: Ganador del partido Indianapolis Colts contra Houston Texans de la Semana 3 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Indianapolis Colts vs. Houston Texans de la Semana 3 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 3 de la temporada 2026 (24 al 28 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 27 de septiembre de 2026, 11:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 3 de la NFL 2026. Indianapolis Colts (0-2) recibe a Houston Texans (0-2) en Lucas Oil Stadium, Indianapolis, el domingo 27 de septiembre de 2026 a las 11:00 (CDMX). Récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-27T17:00:00Z
+kickoff_at: 2026-09-27T17:00:00Z
+outcomes:
+  - {key: colts, label: "Colts", pct: 47}
+  - {key: texans, label: "Texans", pct: 53}
+---
+tipo: multi
+id: nfl-dolphins-chiefs-s3-2026
+question: ¿Quién gana Dolphins vs Chiefs? (Semana 3)
+description: Ganador del partido Miami Dolphins contra Kansas City Chiefs de la Semana 3 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Miami Dolphins vs. Kansas City Chiefs de la Semana 3 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 3 de la temporada 2026 (24 al 28 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 27 de septiembre de 2026, 11:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 3 de la NFL 2026. Miami Dolphins (0-2) recibe a Kansas City Chiefs (2-0) en Hard Rock Stadium, Miami Gardens, el domingo 27 de septiembre de 2026 a las 11:00 (CDMX). Récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-27T17:00:00Z
+kickoff_at: 2026-09-27T17:00:00Z
+outcomes:
+  - {key: dolphins, label: "Dolphins", pct: 18}
+  - {key: chiefs, label: "Chiefs", pct: 82}
+---
+tipo: multi
+id: nfl-giants-titans-s3-2026
+question: ¿Quién gana Giants vs Titans? (Semana 3)
+description: Ganador del partido New York Giants contra Tennessee Titans de la Semana 3 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido New York Giants vs. Tennessee Titans de la Semana 3 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 3 de la temporada 2026 (24 al 28 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 27 de septiembre de 2026, 11:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 3 de la NFL 2026. New York Giants (1-1) recibe a Tennessee Titans (0-2) en MetLife Stadium, East Rutherford, el domingo 27 de septiembre de 2026 a las 11:00 (CDMX). Récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-27T17:00:00Z
+kickoff_at: 2026-09-27T17:00:00Z
+outcomes:
+  - {key: giants, label: "Giants", pct: 55}
+  - {key: titans, label: "Titans", pct: 45}
+---
+tipo: multi
+id: nfl-steelers-bengals-s3-2026
+question: ¿Quién gana Steelers vs Bengals? (Semana 3)
+description: Ganador del partido Pittsburgh Steelers contra Cincinnati Bengals de la Semana 3 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Pittsburgh Steelers vs. Cincinnati Bengals de la Semana 3 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 3 de la temporada 2026 (24 al 28 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 27 de septiembre de 2026, 11:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 3 de la NFL 2026. Pittsburgh Steelers (1-1) recibe a Cincinnati Bengals (2-0) en Acrisure Stadium, Pittsburgh, el domingo 27 de septiembre de 2026 a las 11:00 (CDMX). Récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-27T17:00:00Z
+kickoff_at: 2026-09-27T17:00:00Z
+outcomes:
+  - {key: steelers, label: "Steelers", pct: 39}
+  - {key: bengals, label: "Bengals", pct: 61}
+---
+tipo: multi
+id: nfl-commanders-seahawks-s3-2026
+question: ¿Quién gana Commanders vs Seahawks? (Semana 3)
+description: Ganador del partido Washington Commanders contra Seattle Seahawks de la Semana 3 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Washington Commanders vs. Seattle Seahawks de la Semana 3 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 3 de la temporada 2026 (24 al 28 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 27 de septiembre de 2026, 11:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 3 de la NFL 2026. Washington Commanders (0-2) recibe a Seattle Seahawks (2-0) en Northwest Stadium, Landover, el domingo 27 de septiembre de 2026 a las 11:00 (CDMX). Récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-27T17:00:00Z
+kickoff_at: 2026-09-27T17:00:00Z
+outcomes:
+  - {key: commanders, label: "Commanders", pct: 25}
+  - {key: seahawks, label: "Seahawks", pct: 75}
+---
+tipo: multi
+id: nfl-jaguars-patriots-s3-2026
+question: ¿Quién gana Jaguars vs Patriots? (Semana 3)
+description: Ganador del partido Jacksonville Jaguars contra New England Patriots de la Semana 3 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Jacksonville Jaguars vs. New England Patriots de la Semana 3 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 3 de la temporada 2026 (24 al 28 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 27 de septiembre de 2026, 11:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 3 de la NFL 2026. Jacksonville Jaguars (1-1) recibe a New England Patriots (1-1) en EverBank Stadium, Jacksonville, el domingo 27 de septiembre de 2026 a las 11:00 (CDMX). Récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-27T17:00:00Z
+kickoff_at: 2026-09-27T17:00:00Z
+outcomes:
+  - {key: jaguars, label: "Jaguars", pct: 58}
+  - {key: patriots, label: "Patriots", pct: 42}
+---
+tipo: multi
+id: nfl-49ers-cardinals-s3-2026
+question: ¿Quién gana 49ers vs Cardinals? (Semana 3)
+description: Ganador del partido San Francisco 49ers contra Arizona Cardinals de la Semana 3 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido San Francisco 49ers vs. Arizona Cardinals de la Semana 3 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 3 de la temporada 2026 (24 al 28 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 27 de septiembre de 2026, 14:05 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 3 de la NFL 2026. San Francisco 49ers (2-0) recibe a Arizona Cardinals (1-1) en Levi's Stadium, Santa Clara, el domingo 27 de septiembre de 2026 a las 14:05 (CDMX). Récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-27T20:05:00Z
+kickoff_at: 2026-09-27T20:05:00Z
+outcomes:
+  - {key: 49ers, label: "49ers", pct: 78}
+  - {key: cardinals, label: "Cardinals", pct: 22}
+---
+tipo: multi
+id: nfl-buccaneers-vikings-s3-2026
+question: ¿Quién gana Buccaneers vs Vikings? (Semana 3)
+description: Ganador del partido Tampa Bay Buccaneers contra Minnesota Vikings de la Semana 3 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Tampa Bay Buccaneers vs. Minnesota Vikings de la Semana 3 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 3 de la temporada 2026 (24 al 28 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 27 de septiembre de 2026, 14:05 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 3 de la NFL 2026. Tampa Bay Buccaneers (0-2) recibe a Minnesota Vikings (2-0) en Raymond James Stadium, Tampa, el domingo 27 de septiembre de 2026 a las 14:05 (CDMX). Récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-27T20:05:00Z
+kickoff_at: 2026-09-27T20:05:00Z
+outcomes:
+  - {key: buccaneers, label: "Buccaneers", pct: 48}
+  - {key: vikings, label: "Vikings", pct: 52}
+---
+tipo: multi
+id: nfl-cowboys-ravens-s3-2026
+question: ¿Quién gana Cowboys vs Ravens? (Semana 3)
+description: Ganador del partido Dallas Cowboys contra Baltimore Ravens de la Semana 3 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Dallas Cowboys vs. Baltimore Ravens de la Semana 3 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 3 de la temporada 2026 (24 al 28 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 27 de septiembre de 2026, 14:25 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 3 de la NFL 2026. Dallas Cowboys (1-1) enfrenta a Baltimore Ravens (1-1) en Maracanã Stadium, Rio De Janeiro (sede neutral), el domingo 27 de septiembre de 2026 a las 14:25 (CDMX). Récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-27T20:25:00Z
+kickoff_at: 2026-09-27T20:25:00Z
+outcomes:
+  - {key: cowboys, label: "Cowboys", pct: 39}
+  - {key: ravens, label: "Ravens", pct: 61}
+---
+tipo: multi
+id: nfl-saints-raiders-s3-2026
+question: ¿Quién gana Saints vs Raiders? (Semana 3)
+description: Ganador del partido New Orleans Saints contra Las Vegas Raiders de la Semana 3 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido New Orleans Saints vs. Las Vegas Raiders de la Semana 3 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 3 de la temporada 2026 (24 al 28 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 27 de septiembre de 2026, 14:25 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 3 de la NFL 2026. New Orleans Saints (1-1) recibe a Las Vegas Raiders (2-0) en Caesars Superdome, New Orleans, el domingo 27 de septiembre de 2026 a las 14:25 (CDMX). Récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-27T20:25:00Z
+kickoff_at: 2026-09-27T20:25:00Z
+outcomes:
+  - {key: saints, label: "Saints", pct: 62}
+  - {key: raiders, label: "Raiders", pct: 38}
+---
+tipo: multi
+id: nfl-broncos-rams-s3-2026
+question: ¿Quién gana Broncos vs Rams? (Semana 3)
+description: Ganador del partido Denver Broncos contra Los Angeles Rams de la Semana 3 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Denver Broncos vs. Los Angeles Rams de la Semana 3 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 3 de la temporada 2026 (24 al 28 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: domingo 27 de septiembre de 2026, 18:20 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 3 de la NFL 2026. Denver Broncos (1-1) recibe a Los Angeles Rams (1-1) en Empower Field at Mile High, Denver, el domingo 27 de septiembre de 2026 a las 18:20 (CDMX). Récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-28T00:20:00Z
+kickoff_at: 2026-09-28T00:20:00Z
+outcomes:
+  - {key: broncos, label: "Broncos", pct: 45}
+  - {key: rams, label: "Rams", pct: 55}
+---
+tipo: multi
+id: nfl-bears-eagles-s3-2026
+question: ¿Quién gana Bears vs Eagles? (Semana 3)
+description: Ganador del partido Chicago Bears contra Philadelphia Eagles de la Semana 3 de la NFL 2026, incluido el tiempo extra.
+category: DEPORTES
+subcategory: NFL
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de NFL.com, incluido el tiempo extra. Si termina empatado tras el tiempo extra, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.nfl.com/scores/. Respaldo: ESPN.
+resolution_source_url: https://www.nfl.com/scores/
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Chicago Bears vs. Philadelphia Eagles de la Semana 3 de la NFL 2026 según el resultado oficial de NFL.com, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  Si el partido termina oficialmente empatado tras el tiempo extra, ningún equipo gana: el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma fuera de la Semana 3 de la temporada 2026 (24 al 28 de septiembre) o se cancela, el mercado se cancela.
+
+  Si NFL.com y otro medio reportan marcadores distintos, prevalece el resultado que aparece en NFL.com una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: lunes 28 de septiembre de 2026, 18:15 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 3 de la NFL 2026. Chicago Bears (1-1) recibe a Philadelphia Eagles (2-0) en Soldier Field, Chicago, el lunes 28 de septiembre de 2026 a las 18:15 (CDMX). Récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-29T00:15:00Z
+kickoff_at: 2026-09-29T00:15:00Z
+outcomes:
+  - {key: bears, label: "Bears", pct: 34}
+  - {key: eagles, label: "Eagles", pct: 66}
+---
+tipo: multi
+id: cfb-campeon-cfp-2026
+question: ¿Quién ganará el College Football Playoff 2026-27?
+description: >-
+  Campeón nacional del college football 2026, decidido en el partido por el campeonato del College Football Playoff del 25 de enero de 2027 en Las Vegas.
+category: DEPORTES
+subcategory: College Football
+kind: accesorio
+trending: false
+image_url: https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/2019_CFP_-_trophy_on_the_sidelines_%28crop%29.jpg/330px-2019_CFP_-_trophy_on_the_sidelines_%28crop%29.jpg
+resolution_criteria: >-
+  Gana la opción del equipo que gane el CFP National Championship 2027 (final de la temporada 2026), según el resultado oficial del College Football Playoff. Si es otro equipo, gana «Otro equipo». Fuente de resolución: https://collegefootballplayoff.com/sports/2025/2/20/2027vegas. Respaldo: ESPN.
+resolution_source_url: https://collegefootballplayoff.com/sports/2025/2/20/2027vegas
+rules: |
+  Gana la opción del equipo que gane el CFP National Championship de la temporada 2026, el partido final del College Football Playoff, según el resultado oficial publicado por el College Football Playoff (collegefootballplayoff.com). Cuenta el resultado final del partido, con tiempos extra si hacen falta. Si el campeón no es uno de los equipos nombrados, gana «Otro equipo».
+
+  Según el College Football Playoff, la final se juega el lunes 25 de enero de 2027 en el Allegiant Stadium de Las Vegas. Los equipos eliminados antes no se resuelven por separado: todas las opciones se liquidan juntas al final. Si la final se pospone, el cierre se recorre a la nueva fecha oficial; si la temporada se cancela sin campeón, el mercado se cancela y las posiciones se reembolsan.
+
+  El mercado cierra el 26 de enero de 2027 a las 00:30 UTC (25 de enero, 18:30 h CDMX), al inicio de la final. Gana exactamente un resultado: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  El College Football Playoff 2026-27 termina con la final del 25 de enero de 2027 en Las Vegas, según el calendario oficial del CFP. Al 25 de septiembre de 2026, en la cuarta semana de la temporada, el mercado de Kalshi ponía como favoritos a Texas, Ohio State, Georgia, Indiana, Notre Dame y Miami.
+ends_at: 2027-01-26T00:30:00Z
+outcomes:
+  - {key: texas, label: "Texas", pct: 15}
+  - {key: ohiostate, label: "Ohio State", pct: 13}
+  - {key: georgia, label: "Georgia", pct: 12}
+  - {key: indiana, label: "Indiana", pct: 11}
+  - {key: notredame, label: "Notre Dame", pct: 11}
+  - {key: miami, label: "Miami", pct: 10}
+  - {key: olemiss, label: "Ole Miss", pct: 6}
+  - {key: lsu, label: "LSU", pct: 4}
+  - {key: oregon, label: "Oregon", pct: 4}
+  - {key: otro, label: "Otro equipo", pct: 14}
+---
+tipo: multi
+id: cfb-heisman-2026
+question: ¿Quién ganará el Trofeo Heisman 2026?
+description: >-
+  Ganador del Trofeo Heisman 2026 al mejor jugador del college football, anunciado en la ceremonia del 12 de diciembre de 2026.
+category: DEPORTES
+subcategory: College Football
+kind: accesorio
+trending: false
+image_url: https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Matt_Leinart%27s_Heisman_Trophy.jpg/330px-Matt_Leinart%27s_Heisman_Trophy.jpg
+resolution_criteria: >-
+  Gana la opción del jugador anunciado como ganador del Trofeo Heisman 2026 en la ceremonia oficial, según heisman.com. Si es otro jugador, gana «Otro jugador». Fuente de resolución: https://www.heisman.com/. Respaldo: ESPN.
+resolution_source_url: https://www.heisman.com/
+rules: |
+  Gana la opción del jugador que el Heisman Trophy Trust anuncie como ganador del Trofeo Heisman 2026 en su ceremonia oficial, según heisman.com. Si el ganador no es uno de los jugadores nombrados, gana «Otro jugador».
+
+  Según heisman.com, los finalistas se anuncian el 7 de diciembre de 2026 y el ganador se da a conocer en la ceremonia del sábado 12 de diciembre de 2026. Cuenta el anuncio de esa noche; una revocación o decisión posterior no cambia un mercado ya resuelto. Si la ceremonia se pospone, el cierre se recorre a la nueva fecha oficial; si no se entrega el trofeo de la temporada 2026, el mercado se cancela y las posiciones se reembolsan.
+
+  El mercado cierra el 12 de diciembre de 2026 a las 23:00 UTC (17:00 h CDMX), antes de la ceremonia. Gana exactamente un resultado: cada acción del ganador paga 1 PT y las demás valen 0.
+context: >-
+  El Trofeo Heisman premia al jugador más destacado del college football; lo votan periodistas, exganadores y el público. La ceremonia de 2026 es el 12 de diciembre, según heisman.com. Al 25 de septiembre de 2026, el mercado de Kalshi ponía como favoritos a Trinidad Chambliss (QB, Ole Miss) y Darian Mensah (QB, Miami), seguidos de Kamario Taylor (Mississippi State) y Jeremiah Smith (WR, Ohio State).
+ends_at: 2026-12-12T23:00:00Z
+outcomes:
+  - {key: chambliss, label: "Trinidad Chambliss", pct: 20}
+  - {key: mensah, label: "Darian Mensah", pct: 16}
+  - {key: taylor, label: "Kamario Taylor", pct: 9}
+  - {key: smith, label: "Jeremiah Smith", pct: 9}
+  - {key: carr, label: "CJ Carr", pct: 6}
+  - {key: manning, label: "Arch Manning", pct: 6}
+  - {key: baugh, label: "Jadan Baugh", pct: 5}
+  - {key: otro, label: "Otro jugador", pct: 29}
+---
+tipo: multi
+id: cfb-tennessee-texas-20260926
+question: ¿Quién gana Tennessee vs Texas? (College Football)
+description: Ganador del partido Tennessee Volunteers contra Texas Longhorns de la Semana 4 del college football 2026 (FBS), incluido el tiempo extra.
+category: DEPORTES
+subcategory: College Football
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de ESPN, incluido el tiempo extra. Si el resultado oficial no tiene ganador, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.espn.com/college-football/scoreboard. Respaldo: NCAA.com.
+resolution_source_url: https://www.espn.com/college-football/scoreboard
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Tennessee Volunteers vs. Texas Longhorns de la Semana 4 del college football 2026 (FBS) según el resultado oficial de ESPN, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  En college football no hay empates: los tiempos extra se juegan hasta que haya ganador. Si por cualquier motivo el resultado oficial no tiene ganador, el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma a otra semana o se cancela, el mercado se cancela.
+
+  Si ESPN y otro medio reportan marcadores distintos, prevalece el resultado que aparece en ESPN una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: sábado 26 de septiembre de 2026, 10:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 4 del college football 2026. No. 14 Tennessee Volunteers (3-0) recibe a No. 1 Texas Longhorns (3-0) en Neyland Stadium, Knoxville, el sábado 26 de septiembre de 2026 a las 10:00 (CDMX). Ranking AP y récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-26T16:00:00Z
+kickoff_at: 2026-09-26T16:00:00Z
+outcomes:
+  - {key: tennessee, label: "Tennessee", pct: 36}
+  - {key: texas, label: "Texas", pct: 64}
+---
+tipo: multi
+id: cfb-louisville-wakeforest-20260926
+question: ¿Quién gana Louisville vs Wake Forest? (College Football)
+description: Ganador del partido Louisville Cardinals contra Wake Forest Demon Deacons de la Semana 4 del college football 2026 (FBS), incluido el tiempo extra.
+category: DEPORTES
+subcategory: College Football
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de ESPN, incluido el tiempo extra. Si el resultado oficial no tiene ganador, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.espn.com/college-football/scoreboard. Respaldo: NCAA.com.
+resolution_source_url: https://www.espn.com/college-football/scoreboard
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Louisville Cardinals vs. Wake Forest Demon Deacons de la Semana 4 del college football 2026 (FBS) según el resultado oficial de ESPN, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  En college football no hay empates: los tiempos extra se juegan hasta que haya ganador. Si por cualquier motivo el resultado oficial no tiene ganador, el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma a otra semana o se cancela, el mercado se cancela.
+
+  Si ESPN y otro medio reportan marcadores distintos, prevalece el resultado que aparece en ESPN una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: sábado 26 de septiembre de 2026, 10:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 4 del college football 2026. No. 16 Louisville Cardinals (2-1) recibe a Wake Forest Demon Deacons (2-1) en L&N Federal Credit Union Stadium, Louisville, el sábado 26 de septiembre de 2026 a las 10:00 (CDMX). Ranking AP y récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-26T16:00:00Z
+kickoff_at: 2026-09-26T16:00:00Z
+outcomes:
+  - {key: louisville, label: "Louisville", pct: 81}
+  - {key: wakeforest, label: "Wake Forest", pct: 19}
+---
+tipo: multi
+id: cfb-georgia-oklahoma-20260926
+question: ¿Quién gana Georgia vs Oklahoma? (College Football)
+description: Ganador del partido Georgia Bulldogs contra Oklahoma Sooners de la Semana 4 del college football 2026 (FBS), incluido el tiempo extra.
+category: DEPORTES
+subcategory: College Football
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de ESPN, incluido el tiempo extra. Si el resultado oficial no tiene ganador, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.espn.com/college-football/scoreboard. Respaldo: NCAA.com.
+resolution_source_url: https://www.espn.com/college-football/scoreboard
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Georgia Bulldogs vs. Oklahoma Sooners de la Semana 4 del college football 2026 (FBS) según el resultado oficial de ESPN, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  En college football no hay empates: los tiempos extra se juegan hasta que haya ganador. Si por cualquier motivo el resultado oficial no tiene ganador, el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma a otra semana o se cancela, el mercado se cancela.
+
+  Si ESPN y otro medio reportan marcadores distintos, prevalece el resultado que aparece en ESPN una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: sábado 26 de septiembre de 2026, 13:30 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 4 del college football 2026. No. 2 Georgia Bulldogs (3-0) recibe a Oklahoma Sooners (2-1) en Sanford Stadium, Athens, el sábado 26 de septiembre de 2026 a las 13:30 (CDMX). Ranking AP y récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-26T19:30:00Z
+kickoff_at: 2026-09-26T19:30:00Z
+outcomes:
+  - {key: georgia, label: "Georgia", pct: 82}
+  - {key: oklahoma, label: "Oklahoma", pct: 18}
+---
+tipo: multi
+id: cfb-florida-olemiss-20260926
+question: ¿Quién gana Florida vs Ole Miss? (College Football)
+description: Ganador del partido Florida Gators contra Ole Miss Rebels de la Semana 4 del college football 2026 (FBS), incluido el tiempo extra.
+category: DEPORTES
+subcategory: College Football
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de ESPN, incluido el tiempo extra. Si el resultado oficial no tiene ganador, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.espn.com/college-football/scoreboard. Respaldo: NCAA.com.
+resolution_source_url: https://www.espn.com/college-football/scoreboard
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Florida Gators vs. Ole Miss Rebels de la Semana 4 del college football 2026 (FBS) según el resultado oficial de ESPN, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  En college football no hay empates: los tiempos extra se juegan hasta que haya ganador. Si por cualquier motivo el resultado oficial no tiene ganador, el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma a otra semana o se cancela, el mercado se cancela.
+
+  Si ESPN y otro medio reportan marcadores distintos, prevalece el resultado que aparece en ESPN una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: sábado 26 de septiembre de 2026, 13:30 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 4 del college football 2026. No. 21 Florida Gators (3-0) recibe a No. 4 Ole Miss Rebels (3-0) en Ben Hill Griffin Stadium, Gainesville, el sábado 26 de septiembre de 2026 a las 13:30 (CDMX). Ranking AP y récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-26T19:30:00Z
+kickoff_at: 2026-09-26T19:30:00Z
+outcomes:
+  - {key: florida, label: "Florida", pct: 60}
+  - {key: olemiss, label: "Ole Miss", pct: 40}
+---
+tipo: multi
+id: cfb-iowastate-utah-20260926
+question: ¿Quién gana Iowa State vs Utah? (College Football)
+description: Ganador del partido Iowa State Cyclones contra Utah Utes de la Semana 4 del college football 2026 (FBS), incluido el tiempo extra.
+category: DEPORTES
+subcategory: College Football
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de ESPN, incluido el tiempo extra. Si el resultado oficial no tiene ganador, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.espn.com/college-football/scoreboard. Respaldo: NCAA.com.
+resolution_source_url: https://www.espn.com/college-football/scoreboard
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Iowa State Cyclones vs. Utah Utes de la Semana 4 del college football 2026 (FBS) según el resultado oficial de ESPN, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  En college football no hay empates: los tiempos extra se juegan hasta que haya ganador. Si por cualquier motivo el resultado oficial no tiene ganador, el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma a otra semana o se cancela, el mercado se cancela.
+
+  Si ESPN y otro medio reportan marcadores distintos, prevalece el resultado que aparece en ESPN una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: sábado 26 de septiembre de 2026, 13:30 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 4 del college football 2026. Iowa State Cyclones (2-1) recibe a No. 15 Utah Utes (3-0) en Jack Trice Stadium, Ames, el sábado 26 de septiembre de 2026 a las 13:30 (CDMX). Ranking AP y récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-26T19:30:00Z
+kickoff_at: 2026-09-26T19:30:00Z
+outcomes:
+  - {key: iowastate, label: "Iowa State", pct: 26}
+  - {key: utah, label: "Utah", pct: 74}
+---
+tipo: multi
+id: cfb-michigan-iowa-20260926
+question: ¿Quién gana Michigan vs Iowa? (College Football)
+description: Ganador del partido Michigan Wolverines contra Iowa Hawkeyes de la Semana 4 del college football 2026 (FBS), incluido el tiempo extra.
+category: DEPORTES
+subcategory: College Football
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de ESPN, incluido el tiempo extra. Si el resultado oficial no tiene ganador, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.espn.com/college-football/scoreboard. Respaldo: NCAA.com.
+resolution_source_url: https://www.espn.com/college-football/scoreboard
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Michigan Wolverines vs. Iowa Hawkeyes de la Semana 4 del college football 2026 (FBS) según el resultado oficial de ESPN, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  En college football no hay empates: los tiempos extra se juegan hasta que haya ganador. Si por cualquier motivo el resultado oficial no tiene ganador, el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma a otra semana o se cancela, el mercado se cancela.
+
+  Si ESPN y otro medio reportan marcadores distintos, prevalece el resultado que aparece en ESPN una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: sábado 26 de septiembre de 2026, 13:30 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 4 del college football 2026. No. 18 Michigan Wolverines (3-0) recibe a No. 17 Iowa Hawkeyes (3-0) en Michigan Stadium, Ann Arbor, el sábado 26 de septiembre de 2026 a las 13:30 (CDMX). Ranking AP y récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-26T19:30:00Z
+kickoff_at: 2026-09-26T19:30:00Z
+outcomes:
+  - {key: michigan, label: "Michigan", pct: 66}
+  - {key: iowa, label: "Iowa", pct: 34}
+---
+tipo: multi
+id: cfb-georgiasouthern-houston-20260926
+question: ¿Quién gana Georgia Southern vs Houston? (College Football)
+description: Ganador del partido Georgia Southern Eagles contra Houston Cougars de la Semana 4 del college football 2026 (FBS), incluido el tiempo extra.
+category: DEPORTES
+subcategory: College Football
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de ESPN, incluido el tiempo extra. Si el resultado oficial no tiene ganador, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.espn.com/college-football/scoreboard. Respaldo: NCAA.com.
+resolution_source_url: https://www.espn.com/college-football/scoreboard
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Georgia Southern Eagles vs. Houston Cougars de la Semana 4 del college football 2026 (FBS) según el resultado oficial de ESPN, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  En college football no hay empates: los tiempos extra se juegan hasta que haya ganador. Si por cualquier motivo el resultado oficial no tiene ganador, el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma a otra semana o se cancela, el mercado se cancela.
+
+  Si ESPN y otro medio reportan marcadores distintos, prevalece el resultado que aparece en ESPN una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: sábado 26 de septiembre de 2026, 14:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 4 del college football 2026. Georgia Southern Eagles (1-2) recibe a No. 25 Houston Cougars (2-1) en Allen E. Paulson Stadium, Statesboro, el sábado 26 de septiembre de 2026 a las 14:00 (CDMX). Ranking AP y récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-26T20:00:00Z
+kickoff_at: 2026-09-26T20:00:00Z
+outcomes:
+  - {key: georgiasouthern, label: "Georgia Southern", pct: 13}
+  - {key: houston, label: "Houston", pct: 87}
+---
+tipo: multi
+id: cfb-pennstate-wisconsin-20260926
+question: ¿Quién gana Penn State vs Wisconsin? (College Football)
+description: Ganador del partido Penn State Nittany Lions contra Wisconsin Badgers de la Semana 4 del college football 2026 (FBS), incluido el tiempo extra.
+category: DEPORTES
+subcategory: College Football
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de ESPN, incluido el tiempo extra. Si el resultado oficial no tiene ganador, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.espn.com/college-football/scoreboard. Respaldo: NCAA.com.
+resolution_source_url: https://www.espn.com/college-football/scoreboard
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Penn State Nittany Lions vs. Wisconsin Badgers de la Semana 4 del college football 2026 (FBS) según el resultado oficial de ESPN, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  En college football no hay empates: los tiempos extra se juegan hasta que haya ganador. Si por cualquier motivo el resultado oficial no tiene ganador, el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma a otra semana o se cancela, el mercado se cancela.
+
+  Si ESPN y otro medio reportan marcadores distintos, prevalece el resultado que aparece en ESPN una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: sábado 26 de septiembre de 2026, 15:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 4 del college football 2026. No. 13 Penn State Nittany Lions (3-0) recibe a Wisconsin Badgers (2-1) en Beaver Stadium, University Park, el sábado 26 de septiembre de 2026 a las 15:00 (CDMX). Ranking AP y récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-26T21:00:00Z
+kickoff_at: 2026-09-26T21:00:00Z
+outcomes:
+  - {key: pennstate, label: "Penn State", pct: 76}
+  - {key: wisconsin, label: "Wisconsin", pct: 24}
+---
+tipo: multi
+id: cfb-alabama-southcarolina-20260926
+question: ¿Quién gana Alabama vs South Carolina? (College Football)
+description: Ganador del partido Alabama Crimson Tide contra South Carolina Gamecocks de la Semana 4 del college football 2026 (FBS), incluido el tiempo extra.
+category: DEPORTES
+subcategory: College Football
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de ESPN, incluido el tiempo extra. Si el resultado oficial no tiene ganador, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.espn.com/college-football/scoreboard. Respaldo: NCAA.com.
+resolution_source_url: https://www.espn.com/college-football/scoreboard
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Alabama Crimson Tide vs. South Carolina Gamecocks de la Semana 4 del college football 2026 (FBS) según el resultado oficial de ESPN, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  En college football no hay empates: los tiempos extra se juegan hasta que haya ganador. Si por cualquier motivo el resultado oficial no tiene ganador, el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma a otra semana o se cancela, el mercado se cancela.
+
+  Si ESPN y otro medio reportan marcadores distintos, prevalece el resultado que aparece en ESPN una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: sábado 26 de septiembre de 2026, 17:00 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 4 del college football 2026. No. 8 Alabama Crimson Tide (3-0) recibe a South Carolina Gamecocks (2-1) en Bryant-Denny Stadium, Tuscaloosa, el sábado 26 de septiembre de 2026 a las 17:00 (CDMX). Ranking AP y récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-26T23:00:00Z
+kickoff_at: 2026-09-26T23:00:00Z
+outcomes:
+  - {key: alabama, label: "Alabama", pct: 80}
+  - {key: southcarolina, label: "South Carolina", pct: 20}
+---
+tipo: multi
+id: cfb-lsu-texasam-20260926
+question: ¿Quién gana LSU vs Texas A&M? (College Football)
+description: Ganador del partido LSU Tigers contra Texas A&M Aggies de la Semana 4 del college football 2026 (FBS), incluido el tiempo extra.
+category: DEPORTES
+subcategory: College Football
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de ESPN, incluido el tiempo extra. Si el resultado oficial no tiene ganador, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.espn.com/college-football/scoreboard. Respaldo: NCAA.com.
+resolution_source_url: https://www.espn.com/college-football/scoreboard
+rules: |
+  El mercado se resuelve con el equipo ganador del partido LSU Tigers vs. Texas A&M Aggies de la Semana 4 del college football 2026 (FBS) según el resultado oficial de ESPN, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  En college football no hay empates: los tiempos extra se juegan hasta que haya ganador. Si por cualquier motivo el resultado oficial no tiene ganador, el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma a otra semana o se cancela, el mercado se cancela.
+
+  Si ESPN y otro medio reportan marcadores distintos, prevalece el resultado que aparece en ESPN una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: sábado 26 de septiembre de 2026, 17:30 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 4 del college football 2026. No. 10 LSU Tigers (2-1) recibe a No. 23 Texas A&M Aggies (2-1) en Tiger Stadium, Baton Rouge, el sábado 26 de septiembre de 2026 a las 17:30 (CDMX). Ranking AP y récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-26T23:30:00Z
+kickoff_at: 2026-09-26T23:30:00Z
+outcomes:
+  - {key: lsu, label: "LSU", pct: 75}
+  - {key: texasam, label: "Texas A&M", pct: 25}
+---
+tipo: multi
+id: cfb-usc-oregon-20260926
+question: ¿Quién gana USC vs Oregon? (College Football)
+description: Ganador del partido USC Trojans contra Oregon Ducks de la Semana 4 del college football 2026 (FBS), incluido el tiempo extra.
+category: DEPORTES
+subcategory: College Football
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de ESPN, incluido el tiempo extra. Si el resultado oficial no tiene ganador, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.espn.com/college-football/scoreboard. Respaldo: NCAA.com.
+resolution_source_url: https://www.espn.com/college-football/scoreboard
+rules: |
+  El mercado se resuelve con el equipo ganador del partido USC Trojans vs. Oregon Ducks de la Semana 4 del college football 2026 (FBS) según el resultado oficial de ESPN, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  En college football no hay empates: los tiempos extra se juegan hasta que haya ganador. Si por cualquier motivo el resultado oficial no tiene ganador, el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma a otra semana o se cancela, el mercado se cancela.
+
+  Si ESPN y otro medio reportan marcadores distintos, prevalece el resultado que aparece en ESPN una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: sábado 26 de septiembre de 2026, 17:30 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 4 del college football 2026. No. 12 USC Trojans (4-0) recibe a No. 20 Oregon Ducks (2-1) en Los Angeles Memorial Coliseum, Los Angeles, el sábado 26 de septiembre de 2026 a las 17:30 (CDMX). Ranking AP y récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-26T23:30:00Z
+kickoff_at: 2026-09-26T23:30:00Z
+outcomes:
+  - {key: usc, label: "USC", pct: 40}
+  - {key: oregon, label: "Oregon", pct: 60}
+---
+tipo: multi
+id: cfb-mississippistate-missouri-20260926
+question: ¿Quién gana Mississippi State vs Missouri? (College Football)
+description: Ganador del partido Mississippi State Bulldogs contra Missouri Tigers de la Semana 4 del college football 2026 (FBS), incluido el tiempo extra.
+category: DEPORTES
+subcategory: College Football
+kind: partido
+resolution_criteria: >-
+  Gana el equipo que gane el partido según el resultado oficial de ESPN, incluido el tiempo extra. Si el resultado oficial no tiene ganador, el mercado se cancela y se reembolsan las posiciones. Fuente de resolución: https://www.espn.com/college-football/scoreboard. Respaldo: NCAA.com.
+resolution_source_url: https://www.espn.com/college-football/scoreboard
+rules: |
+  El mercado se resuelve con el equipo ganador del partido Mississippi State Bulldogs vs. Missouri Tigers de la Semana 4 del college football 2026 (FBS) según el resultado oficial de ESPN, incluido el tiempo extra. Gana exactamente uno de los dos resultados.
+
+  En college football no hay empates: los tiempos extra se juegan hasta que haya ganador. Si por cualquier motivo el resultado oficial no tiene ganador, el mercado se cancela y las posiciones se reembolsan. Si el kickoff se reprograma, el cierre se mueve al nuevo horario oficial; si el partido se reprograma a otra semana o se cancela, el mercado se cancela.
+
+  Si ESPN y otro medio reportan marcadores distintos, prevalece el resultado que aparece en ESPN una vez marcado como final. Sanciones o decisiones administrativas posteriores no cambian un mercado ya resuelto.
+
+  El mercado deja de aceptar predicciones al kickoff programado: sábado 26 de septiembre de 2026, 17:45 h (CDMX). Cada acción del equipo ganador paga 1 PT; la del perdedor vale 0.
+context: >-
+  Semana 4 del college football 2026. No. 24 Mississippi State Bulldogs (3-0) recibe a No. 19 Missouri Tigers (3-0) en Davis Wade Stadium, Starkville, el sábado 26 de septiembre de 2026 a las 17:45 (CDMX). Ranking AP y récords según ESPN al 25 de septiembre de 2026.
+ends_at: 2026-09-26T23:45:00Z
+kickoff_at: 2026-09-26T23:45:00Z
+outcomes:
+  - {key: mississippistate, label: "Mississippi State", pct: 67}
+  - {key: missouri, label: "Missouri", pct: 33}

@@ -9,13 +9,14 @@ marcador salen de la API (`/markets/resumen`, `/markets/movers`, `kickoff_at`, `
 
 CONTENIDO: dict = {
     "categoria": "DEPORTES",
-    "actualizado": "2026-09-24",
+    "actualizado": "2026-09-25",
     # Liga (subcategoría exacta de src/lib/categories.ts) → multi de campeón de la temporada.
     # Solo ids con normas en market_content o documentos en mercados-pendientes.yaml (lo exige
     # tests/test_contenido_categorias.py). Al resolverse el multi, quitar la entrada o apuntarla
     # al del torneo siguiente (Clausura 2027, Super Bowl LXII).
     "titulos": {
         "NFL": "nfl-campeon-super-bowl-lxi",
+        "College Football": "cfb-campeon-cfp-2026",
         "Liga MX": "mx-campeon-apertura-2026",
         "F1": "f1-campeon-pilotos-2026",
         "MLS": "mls-campeon-cup-2026",
