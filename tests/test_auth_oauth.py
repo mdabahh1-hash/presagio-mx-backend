@@ -92,7 +92,7 @@ GITHUB_INFO = {"id": 77, "login": "octo", "email": "octo@github.com", "name": "O
 
 @pytest.mark.asyncio
 async def test_new_google_user_with_long_avatar_url(db):
-    user = await get_or_create_user(
+    user, creado = await get_or_create_user(
         db,
         email="nuevo@gmail.com",
         display_name="Daniel Zaga",
@@ -100,6 +100,7 @@ async def test_new_google_user_with_long_avatar_url(db):
         provider="google",
         provider_id="109873255256130498679",
     )
+    assert creado is True
     assert user.id is not None
     assert user.username == "daniel_zaga"
     assert user.google_id == "109873255256130498679"
@@ -114,7 +115,7 @@ async def test_new_google_user_with_long_avatar_url(db):
 async def test_existing_email_user_gets_google_id_and_long_avatar(db, make_user):
     existing = await make_user("veterano")
     # make_user uses <username>@test.local
-    user = await get_or_create_user(
+    user, creado = await get_or_create_user(
         db,
         email=existing.email,
         display_name="Veterano Google",
@@ -122,6 +123,7 @@ async def test_existing_email_user_gets_google_id_and_long_avatar(db, make_user)
         provider="google",
         provider_id="g-veterano",
     )
+    assert creado is False
     assert user.id == existing.id
     assert user.google_id == "g-veterano"
     assert user.avatar_url == LONG_AVATAR
@@ -319,12 +321,28 @@ async def test_google_callback_happy_path_without_cookie_keeps_next(client, db):
     assert "#/auth/callback?" in location
     q = _query(location)
     assert q["token"]
+    assert q["nuevo"] == "1"
     assert q["next"] == "/l/abc?join=1"
     assert "next=%2Fl%2Fabc%3Fjoin%3D1" in location
     assert "access_token=" in resp.headers["set-cookie"]
 
     user = (await db.execute(select(User).where(User.email == "nuevo@gmail.com"))).scalar_one()
     assert user.google_id == "g-123"
+
+
+@pytest.mark.asyncio
+async def test_google_callback_existing_user_is_not_nuevo(client, make_user):
+    existing = await make_user("yaexiste")
+    info = {**GOOGLE_INFO, "email": existing.email}
+    with patch("app.api.auth.httpx.AsyncClient", _fake_ok_client(info)):
+        resp = await client.get(
+            "/api/auth/google/callback",
+            params={"code": "ok", "state": _mint_state("google")},
+            follow_redirects=False,
+        )
+    q = _query(resp.headers["location"])
+    assert q["token"]
+    assert "nuevo" not in q
 
 
 @pytest.mark.asyncio
