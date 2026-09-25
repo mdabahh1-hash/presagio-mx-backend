@@ -32,6 +32,8 @@ COMPETENCIAS: dict[str, Competencia] = {
     "MLS": Competencia("MLS", "temporada regular 2026 de la MLS", "el resultado oficial de la MLS (mlssoccer.com)", "https://www.mlssoccer.com/schedule/scores"),
     "Leagues Cup": Competencia("Leagues Cup", "Leagues Cup 2026", "el resultado oficial de la Leagues Cup (leaguescup.com)", "https://www.leaguescup.com"),
     "Saudi Pro League": Competencia("Saudi Pro League", "Saudi Pro League 2026-27", "el resultado oficial de la Saudi Pro League (spl.com.sa)", "https://www.spl.com.sa"),
+    # Actualizar `nombre` en cada fecha FIFA. Amistosos y Nations League (fuentes.ESPN_EXTRA).
+    "Fecha FIFA": Competencia("Fecha FIFA", "fecha FIFA de septiembre-octubre 2026", "el resultado oficial de la FIFA o de la UEFA (fifa.com / uefa.com)", "https://www.fifa.com"),
 }
 
 # Espejo de src/lib/categories.ts (SUBCATEGORIES). Una subcategoría fuera de
@@ -42,7 +44,7 @@ COMPETENCIAS: dict[str, Competencia] = {
 SUBCATEGORIAS_CONOCIDAS: set[str] = {
     # Deportes
     "Liga MX", "Leagues Cup", "Premier League", "LaLiga", "Serie A", "Bundesliga", "Ligue 1",
-    "Liga Portugal", "MLS", "Champions League", "Saudi Pro League", "NFL", "F1", "Boxeo",
+    "Liga Portugal", "MLS", "Champions League", "Saudi Pro League", "NFL", "F1", "Boxeo", "Fecha FIFA",
     # Política
     "Elecciones", "Sheinbaum", "Visas de EEUU", "Congreso", "Regulación digital",
     # Crypto
@@ -65,7 +67,7 @@ SUBCATEGORIAS_CONOCIDAS: set[str] = {
 # viven en veredikt-mx/public/img/markets/temas/ (`npm run photos:temas`).
 SUBCATEGORIAS_CON_IMAGEN: set[str] = {
     "Liga MX", "Leagues Cup", "Premier League", "LaLiga", "Serie A", "Bundesliga", "Ligue 1",
-    "Liga Portugal", "MLS", "Champions League", "Saudi Pro League", "NFL", "F1", "Boxeo",
+    "Liga Portugal", "MLS", "Champions League", "Saudi Pro League", "NFL", "F1", "Boxeo", "Fecha FIFA",
     "Elecciones", "Tasas Banxico", "Inflación (INPC)", "Tipo de cambio", "PIB México",
     "Aranceles / T-MEC", "Fed / tasas EE.UU.", "Bolsa (BMV)", "Empleo / IMSS", "Mercados EEUU",
     "Remesas", "Bitcoin", "Ethereum", "Solana", "Stablecoins", "Mercado cripto", "Regulación",

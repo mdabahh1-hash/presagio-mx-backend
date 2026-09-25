@@ -39,7 +39,36 @@ LIGAS: dict[str, tuple[str, str, str]] = {
     "Saudi Pro League": ("soccer/ksa.1", "4668", "Saudi-Arabian Pro League"),
     "Champions League": ("soccer/uefa.champions", "4480", "UEFA Champions League"),
     "NFL": ("football/nfl", "4391", "NFL"),
+    # Selecciones: amistosos + Nations League (ESPN_EXTRA). TSDB solo cubre los amistosos
+    # por nombre de archivo; los de Nations League los encuentra searchevents por nombre.
+    "Fecha FIFA": ("soccer/fifa.friendly", "4562", "International Friendlies"),
 }
+
+# Rutas ESPN adicionales de una subcategoría que junta varias competencias.
+ESPN_EXTRA: dict[str, list[str]] = {"Fecha FIFA": ["soccer/uefa.nations"]}
+
+# Selecciones que entran en «Fecha FIFA» (las dos del partido deben estar aquí):
+# nombre exacto en ESPN → nombre en español para la pregunta y las opciones.
+SELECCIONES: dict[str, str] = {
+    "Mexico": "México", "United States": "Estados Unidos", "Canada": "Canadá", "Panama": "Panamá",
+    "Costa Rica": "Costa Rica", "Jamaica": "Jamaica", "Honduras": "Honduras",
+    "Argentina": "Argentina", "Brazil": "Brasil", "Uruguay": "Uruguay", "Colombia": "Colombia",
+    "Chile": "Chile", "Peru": "Perú", "Paraguay": "Paraguay", "Ecuador": "Ecuador",
+    "Bolivia": "Bolivia", "Venezuela": "Venezuela",
+    "Spain": "España", "England": "Inglaterra", "France": "Francia", "Germany": "Alemania",
+    "Portugal": "Portugal", "Italy": "Italia", "Netherlands": "Países Bajos", "Belgium": "Bélgica",
+    "Croatia": "Croacia", "Switzerland": "Suiza", "Denmark": "Dinamarca", "Austria": "Austria",
+    "Poland": "Polonia", "Scotland": "Escocia", "Wales": "Gales", "Türkiye": "Turquía",
+    "Ukraine": "Ucrania", "Sweden": "Suecia", "Norway": "Noruega", "Serbia": "Serbia",
+    "Czechia": "Chequia", "Greece": "Grecia", "Republic of Ireland": "Irlanda", "Hungary": "Hungría",
+    "Japan": "Japón", "South Korea": "Corea del Sur", "Australia": "Australia", "Iran": "Irán",
+    "Saudi Arabia": "Arabia Saudita", "Morocco": "Marruecos", "Senegal": "Senegal",
+    "Egypt": "Egipto", "Nigeria": "Nigeria", "Ivory Coast": "Costa de Marfil",
+}
+
+
+def rutas_espn(liga: str) -> list[str]:
+    return [LIGAS[liga][0], *ESPN_EXTRA.get(liga, [])]
 
 
 def deporte(liga: str) -> str:
@@ -63,6 +92,8 @@ TSDB_ALIAS: dict[str, str] = {
     "Alavés": "Deportivo Alavés",
     "Guadalajara": "CD Guadalajara",
     "Neom SC": "Neom",
+    # selecciones cuyo nombre en TheSportsDB no es el de ESPN (el resto: ver abajo)
+    "Estados Unidos": "USA", "Turquía": "Turkey", "Chequia": "Czech Republic", "Irlanda": "Ireland",
     "Internazionale": "Inter Milan",
     "Inter": "Inter Milan",
     "Deportivo": "Deportivo de A Coruña",
@@ -76,6 +107,10 @@ TSDB_ALIAS: dict[str, str] = {
     "Atlético de San Luis": "Atletico de San Luis",
     "Sporting CP": "Sporting CP",
 }
+# selección en español → nombre de ESPN, que TheSportsDB comparte salvo los de arriba
+for _en, _es in SELECCIONES.items():
+    if _es != _en:
+        TSDB_ALIAS.setdefault(_es, _en)
 
 _LEGAL = ("FC", "CF", "SC", "AFC", "CD", "AC", "SS", "SSC", "US", "AS", "TSG", "VfB", "VfL", "SV",
           "BSC", "1.", "07", "04", "05", "09", "1899", "1846")
@@ -293,19 +328,19 @@ def espn_scoreboard(http: Http, liga: str, desde: datetime, hasta: datetime) -> 
     Una petición por día: desde el 2026-09-16 ESPN responde 400 ("Failed to get
     events endpoint") al rango `dates=D1-D2` en fútbol y NFL; el día suelto
     `dates=D` sigue funcionando. Un evento que aparece en dos días se cuenta una vez."""
-    code = LIGAS[liga][0]
-    dia = (desde - timedelta(days=1)).date()
-    fin = (hasta + timedelta(days=1)).date()
     vistos: set[str] = set()
     out: list[Partido] = []
-    while dia <= fin:
-        data = http.get(f"{ESPN_API}/{code}/scoreboard?dates={dia:%Y%m%d}&limit=500")
-        for e in data.get("events", []):
-            if str(e["id"]) in vistos:
-                continue
-            vistos.add(str(e["id"]))
-            out.append(_espn_partido(e, liga))
-        dia += timedelta(days=1)
+    for code in rutas_espn(liga):
+        dia = (desde - timedelta(days=1)).date()
+        fin = (hasta + timedelta(days=1)).date()
+        while dia <= fin:
+            data = http.get(f"{ESPN_API}/{code}/scoreboard?dates={dia:%Y%m%d}&limit=500")
+            for e in data.get("events", []):
+                if str(e["id"]) in vistos:
+                    continue
+                vistos.add(str(e["id"]))
+                out.append(_espn_partido(e, liga))
+            dia += timedelta(days=1)
     return out
 
 
@@ -313,10 +348,15 @@ def espn_tabla(http: Http, liga: str) -> dict[str, dict]:
     """Tabla de posiciones de ESPN: id de equipo → {nombre, pj, pts, rank, grupos}.
     `grupos` = cuántas tablas tiene la liga (MLS: 2 conferencias; el rank es dentro
     de la suya). Liga sin tabla (eliminatorias) → {}."""
-    code = LIGAS[liga][0]
+    out: dict[str, dict] = {}
+    for code in rutas_espn(liga):
+        _tabla_de(http, code, out)
+    return out
+
+
+def _tabla_de(http: Http, code: str, out: dict[str, dict]) -> None:
     data = http.get(f"https://site.api.espn.com/apis/v2/sports/{code}/standings")
     hijos = data.get("children") or []
-    out: dict[str, dict] = {}
     for h in hijos:
         for e in (h.get("standings") or {}).get("entries") or []:
             st = {x.get("name"): x.get("value") for x in e.get("stats") or []}
@@ -326,7 +366,6 @@ def espn_tabla(http: Http, liga: str) -> dict[str, dict]:
                 "nombre": e["team"].get("displayName"), "pj": int(st["gamesPlayed"]),
                 "pts": int(st["points"]), "rank": int(st.get("rank") or 0), "grupos": len(hijos),
             }
-    return out
 
 
 def _equipo_resumen(id_: str, nombre: str, alias: list[str], lado: str | None) -> dict:

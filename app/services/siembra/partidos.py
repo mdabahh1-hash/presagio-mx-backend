@@ -6,6 +6,10 @@ después, y arma un doc `tipo: partido` del sembrador por partido. Criterios en
 agente-mercados/CRITERIOS-DE-MERCADOS.md (§7 «siempre entra»: la jornada
 completa, exento del filtro de tendencia).
 
+«Fecha FIFA» (selecciones): amistosos + Nations League; solo entra el partido con las
+dos selecciones en `fuentes.SELECCIONES`, que también da el nombre en español. Los
+amistosos no tienen tabla: abren con las cuotas solas y siempre salen en «revisar».
+
 Prior con dos fuentes (Mark, 24-sep-2026): abre con las cuotas de DraftKings que
 ESPN publica en el scoreboard, sin el margen de la casa, y lo compara con un
 modelo de la tabla de ESPN. Sin cuotas o sin el equipo en la tabla → descartado;
@@ -21,7 +25,7 @@ from datetime import datetime, timedelta, timezone
 import yaml
 
 from app.services.resolucion.fuentes import (
-    LIGAS, SCHEDULED, Http, Partido, deporte, espn_scoreboard, espn_tabla, variantes_nombre,
+    LIGAS, SCHEDULED, SELECCIONES, Http, Partido, deporte, espn_scoreboard, espn_tabla, variantes_nombre,
 )
 from seeds.plantillas import COMPETENCIAS
 from seeds.schema import QUESTION_MAX, SchemaError, cargar_texto
@@ -93,7 +97,8 @@ def es_duplicado(p: Partido, liga: str, existentes: list[dict]) -> bool:
     """Mismo partido ya abierto con otro id: misma subcategoría, kickoff a ±6 h y el
     nombre de un equipo en las etiquetas de sus opciones."""
     sub = COMPETENCIAS[liga].subcategoria
-    nombres = {_norm(n) for n in variantes_nombre(p.home, p.away) + [a for a in p.alias if len(a) >= 4]}
+    nombres = {_norm(n) for n in variantes_nombre(p.home, p.away) + [a for a in p.alias if len(a) >= 4]
+               + [SELECCIONES.get(p.home, ""), SELECCIONES.get(p.away, "")]}
     nombres.discard("")
     for m in existentes:
         if m["subcategory"] != sub or abs((m["kickoff_at"] - p.kickoff).total_seconds()) > 6 * 3600:
@@ -102,6 +107,11 @@ def es_duplicado(p: Partido, liga: str, existentes: list[dict]) -> bool:
         if any(f" {n} " in f" {etiquetas} " for n in nombres):
             return True
     return False
+
+
+def _nombres(p: Partido) -> tuple[str, str]:
+    """Nombre para la pregunta: el de la selección en español, o el de ESPN."""
+    return SELECCIONES.get(p.home, p.home), SELECCIONES.get(p.away, p.away)
 
 
 def id_partido(p: Partido, liga: str) -> str:
@@ -119,11 +129,15 @@ def propuesta(p: Partido, liga: str, tabla: dict, ahora: datetime) -> tuple[dict
     if cuotas is None:
         return None, "sin cuotas de DraftKings en ESPN"
     loc, vis = (tabla.get(i) for i in (p.equipo_ids or ("", "")))
-    if not loc or not vis:
+    selecciones = liga == "Fecha FIFA"
+    if (not loc or not vis) and not selecciones:
         return None, "sin tabla de ESPN para uno de los equipos"
+    home, away = _nombres(p)
     revisar = []
     t = prob_tabla(loc, vis)
-    if t is None:
+    if t is None and selecciones:
+        revisar.append("selecciones sin tabla útil: prior solo con cuotas")
+    elif t is None:
         revisar.append(f"tabla con menos de {MIN_PJ} partidos jugados")
     else:
         dif = max(abs(a - b) for a, b in zip(cuotas, t)) * 100
@@ -134,15 +148,20 @@ def propuesta(p: Partido, liga: str, tabla: dict, ahora: datetime) -> tuple[dict
     fin = k + timedelta(days=3)
     ventana = (f"la ventana del {k.day} al {_fecha(fin)}" if k.month == fin.month
                else f"la ventana del {_fecha(k)} al {_fecha(fin)}")
-    context = (
-        f"{_texto_equipo(p.home, loc)}; {_texto_equipo(p.away, vis)}, según la tabla de ESPN al "
-        f"{_fecha(ahora.astimezone(_MX))}. Las cuotas de DraftKings publicadas por ESPN ese día daban "
-        f"{pct[0]}% a {p.home}, {pct[1]}% al empate y {pct[2]}% a {p.away}."
-    )
+    hoy = _fecha(ahora.astimezone(_MX))
+    cuotas_txt = f"daban {pct[0]}% a {home}, {pct[1]}% al empate y {pct[2]}% a {away}."
+    if selecciones:
+        context = (f"{home} y {away} se enfrentan en la {COMPETENCIAS[liga].nombre}. Las cuotas de "
+                   f"DraftKings publicadas por ESPN el {hoy} {cuotas_txt}")
+    else:
+        context = (
+            f"{_texto_equipo(home, loc)}; {_texto_equipo(away, vis)}, según la tabla de ESPN al "
+            f"{hoy}. Las cuotas de DraftKings publicadas por ESPN ese día {cuotas_txt}"
+        )
     doc = {
         "tipo": "partido",
         "id": id_partido(p, liga),
-        "competencia": liga, "local": p.home, "visitante": p.away,
+        "competencia": liga, "local": home, "visitante": away,
         "kickoff": p.kickoff.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "pct": pct, "ventana": ventana, "context": context,
     }
@@ -154,7 +173,7 @@ def propuesta(p: Partido, liga: str, tabla: dict, ahora: datetime) -> tuple[dict
         return None, f"pregunta de {len(specs[0].question)} caracteres (máximo {QUESTION_MAX})"
     tabla_txt = "/".join(map(str, ints_100(t))) if t else "—"
     return {
-        "doc": doc, "grupo": liga, "titulo": f"{p.home} vs {p.away}", "cuando": doc["kickoff"],
+        "doc": doc, "grupo": liga, "titulo": f"{home} vs {away}", "cuando": doc["kickoff"],
         "precio": "/".join(map(str, pct)), "nota": f"tabla {tabla_txt}", "revisar": revisar, "url": p.url,
     }, None
 
@@ -182,9 +201,11 @@ def armar_propuestas(http: Http, ahora: datetime, excluir: set[str], existentes:
         for p in partidos:
             if id_partido(p, liga) in excluir or es_duplicado(p, liga, existentes):
                 continue
+            if liga == "Fecha FIFA" and not (p.home in SELECCIONES and p.away in SELECCIONES):
+                continue  # Tahití vs Islas Cook: ni al correo
             prop, motivo = propuesta(p, liga, tabla, ahora)
             if prop is None:
-                descartes.append({"grupo": liga, "titulo": f"{p.home} vs {p.away}", "motivo": motivo})
+                descartes.append({"grupo": liga, "titulo": " vs ".join(_nombres(p)), "motivo": motivo})
             else:
                 propuestas.append(prop)
     propuestas.sort(key=lambda x: (x["cuando"], x["grupo"]))
