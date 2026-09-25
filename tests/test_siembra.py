@@ -79,6 +79,24 @@ def test_duplicado_con_otro_id():
     assert not P.es_duplicado(_partido(k), "Liga MX", [{**mismo[0], "kickoff_at": k + timedelta(days=3)}])
 
 
+def test_fecha_fifa_sin_tabla_en_espanol_y_cruza():
+    from app.services.resolucion.cruce import emparejar
+    ahora = datetime(2026, 9, 24, 14, tzinfo=timezone.utc)
+    k = ahora + timedelta(days=2)
+    p = Partido(fuente="espn", id="9", url="https://www.espn.com/soccer/match/_/gameId/9", kickoff=k,
+                home="United States", away="Mexico", home_score=None, away_score=None, estado="SCHEDULED",
+                alias=["United States", "USA", "|", "Mexico", "MEX"], liga="Fecha FIFA", equipo_ids=("660", "203"),
+                cuotas=CUOTAS_CRUZ_TOLUCA)
+    prop, motivo = P.propuesta(p, "Fecha FIFA", {}, ahora)
+    assert motivo is None and prop["titulo"] == "Estados Unidos vs México"
+    assert prop["revisar"] and len(prop["doc"]["context"]) >= 120
+    # el resolvedor cruza la pregunta en español con los nombres de ESPN
+    assert emparejar("Estados Unidos", "México", k, [p])[0] is p
+    # el mismo partido ya abierto con etiquetas en español es duplicado
+    assert P.es_duplicado(p, "Fecha FIFA", [{"subcategory": "Fecha FIFA", "kickoff_at": k,
+                                              "labels": ["🏠 Estados Unidos", "🤝 Empate", "✈️ México"]}])
+
+
 # ── flujo completo ──────────────────────────────────────────────────────────
 
 @pytest.fixture

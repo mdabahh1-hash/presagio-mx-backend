@@ -8,7 +8,7 @@ import unicodedata
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 
-from .fuentes import (AET, CANCELLED, CBS_ABBR, FT, LIVE, NFL_CATEGORIAS_OFENSIVAS, POSTPONED, SCHEDULED,
+from .fuentes import (AET, SELECCIONES, CANCELLED, CBS_ABBR, FT, LIVE, NFL_CATEGORIAS_OFENSIVAS, POSTPONED, SCHEDULED,
                       UEFA_COMPETICION, Partido)
 
 # Tokens que no distinguen a un club (siglas de forma jurídica, artículos).
@@ -35,6 +35,13 @@ _ALIAS = {
 def sin_acentos(s: str) -> str:
     s = s.replace("ß", "ss")
     return "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c))
+
+
+# selecciones: nombre en español (pregunta) → nombre de ESPN
+for _en, _es in SELECCIONES.items():
+    _k, _v = sin_acentos(_es).lower(), sin_acentos(_en).lower()
+    if _k != _v:
+        _ALIAS[_k] = _v
 
 
 def normalizar(nombre: str) -> str:
