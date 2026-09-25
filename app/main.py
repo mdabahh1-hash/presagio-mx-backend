@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from app.database import create_tables, migrate_enums, migrate_columns, AsyncSessionLocal
 from app.config import settings
 from app.api import auth, markets, trades, comments, users, websockets, admin, proposals, passkeys, leagues, resolucion, contenido, siembra, leaderboard, revision
@@ -110,7 +111,9 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    max_age=86400,  # el preflight se cachea un día (default de Starlette: 10 min)
 )
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # REST routes
 app.include_router(auth.router, prefix="/api")

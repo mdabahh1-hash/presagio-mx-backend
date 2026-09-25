@@ -481,6 +481,36 @@ async def verify_email_endpoint(payload: VerifyEmailRequest, db: AsyncSession = 
     return {"token": token, "user": UserMe.model_validate(user)}
 
 
+class ResendCodeRequest(BaseModel):
+    email: str
+
+
+RESEND_COOLDOWN = timedelta(seconds=60)
+
+
+@router.post("/resend-code")
+async def resend_code(payload: ResendCodeRequest, db: AsyncSession = Depends(get_db)):
+    """Manda un código nuevo a una cuenta sin verificar (el correo pudo no llegar).
+
+    Responde lo mismo exista o no la cuenta, para no revelar correos registrados.
+    """
+    email = payload.email.strip().lower()
+    user = (await db.execute(select(User).where(User.email == email))).scalar_one_or_none()
+    now = datetime.now(timezone.utc)
+    if user and not user.email_verified:
+        # El código dura 15 min; el último se emitió en expires - 15 min.
+        emitido = user.email_verification_expires - timedelta(minutes=15) if user.email_verification_expires else None
+        if emitido and now - emitido < RESEND_COOLDOWN:
+            raise HTTPException(status_code=429, detail={"code": "RESEND_TOO_SOON", "message": "Espera un minuto antes de pedir otro código"})
+        code = _gen_code()
+        user.email_verification_code = code
+        user.email_verification_expires = now + timedelta(minutes=15)
+        user.email_verification_attempts = 0
+        await db.commit()
+        spawn(send_verification_email(email, user.display_name, code))
+    return {"message": "Si la cuenta existe y no está verificada, te mandamos un código nuevo"}
+
+
 @router.post("/logout")
 async def logout(response: Response):
     response.delete_cookie("access_token")
