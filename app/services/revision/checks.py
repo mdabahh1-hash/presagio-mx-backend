@@ -24,7 +24,7 @@ _ESCALERA = re.compile(r"cerrarán? \w+ en US\$[\d,.]+( mil millones| millones)?
 NOMBRES = {
     "fuente": "Sin fuente de resolución", "kickoff": "Partido sin hora de inicio",
     "kickoff_orden": "Hora de inicio incoherente", "imagen_invalida": "Imagen inválida",
-    "imagen_generica": "Solo ícono genérico de la categoría", "normas": "Normas cortas",
+    "imagen_generica": "Solo ícono genérico de la categoría", "sin_foto": "Sin foto propia", "normas": "Normas cortas",
     "contexto": "Contexto corto", "criterios": "Sin criterios de resolución",
     "subcategoria": "Subcategoría", "categoria": "Categoría o tipo", "titulo": "Título largo",
     "multi": "Multi incompleto", "sujeto": "Accesorio sin sujeto", "receta": "Escalera sin receta",
@@ -84,6 +84,9 @@ def revisar(m, n_outcomes: int, con_posiciones: bool, ahora: datetime) -> list[d
     if img and not (img.startswith("https://") or img.startswith("/img/")):
         h("imagen_invalida", f"image_url no es https:// ni /img/ ({img[:60]}): quitarla para usar el respaldo",
           "image_url", None)
+    elif not img and cat != "DEPORTES":
+        # Fuera de Deportes cada mercado lleva su propia foto (Mark, 24-sep); la del tema es solo respaldo.
+        h("sin_foto", "Sin foto propia (image_url): proponer una de Wikimedia Commons con licencia libre")
     elif not img and m.id not in MERCADOS_CON_IMAGEN and (sub or "") not in SUBCATEGORIAS_CON_IMAGEN:
         h("imagen_generica", f"Sin imagen propia para «{sub or 'sin subcategoría'}»: el sitio pinta el ícono de la categoría")
 
