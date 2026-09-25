@@ -56,10 +56,12 @@ def test_avisos_sin_arreglo():
 def test_imagen():
     assert _checks(_m(image_url="http://hotlink.jpg"))["imagen_invalida"]["fix"]["despues"] is None
     assert "sin_foto" in _checks(_m(image_url=None))  # fuera de Deportes, foto por mercado
-    dep = dict(category=MarketCategory.DEPORTES, image_url=None)
-    assert "imagen_generica" in _checks(_m(subcategory="Pádel", **dep))
-    assert _checks(_m(subcategory="Liga MX", **dep)) == {}  # escudo de la liga
-    avisos = [_checks(_m(id=f"b{i}", subcategory="Pádel", **dep))["imagen_generica"] for i in range(3)]
+    assert "sin_foto" in _checks(_m(category=MarketCategory.DEPORTES, subcategory="Boxeo", image_url=None))
+    dep = dict(category=MarketCategory.DEPORTES, image_url=None, kind="partido", market_type="multi",
+               kickoff_at=AHORA, ends_at=AHORA)
+    assert _checks(_m(subcategory="Liga MX", **dep), n=3) == {}  # partido: escudos, sin foto
+    assert "imagen_generica" in _checks(_m(subcategory="Pádel", **dep), n=3)
+    avisos = [_checks(_m(id=f"b{i}", subcategory="Pádel", **dep), n=3)["imagen_generica"] for i in range(3)]
     assert agrupar(avisos)[0] == ("Solo ícono genérico de la categoría (3)", ["Pádel: 3 mercados"])
 
 
