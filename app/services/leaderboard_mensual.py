@@ -99,6 +99,33 @@ def valor_trade(t: Trade, m: Market, q_multi: dict[str, float] | None) -> float:
     return min(marca, t.cost)
 
 
+_REALIZADOS = (*_RESUELTOS, MarketStatus.RESOLVED, MarketStatus.CANCELLED)
+
+
+async def realizados(db: AsyncSession, user_ids: list[int]) -> list[tuple[int, date, float]]:
+    """(user_id, día CDMX en que se resolvió, ganancia) de cada trade en un mercado
+    resuelto o cancelado. Es el P&L del perfil, «Siguiendo» y el leaderboard
+    histórico: solo trades, sin bonos, referidos ni los 10k de registro. Apostar
+    no lo mueve; resolver sí."""
+    if not user_ids:
+        return []
+    rows = (await db.execute(
+        select(Trade, Market).join(Market, Market.id == Trade.market_id)
+        .where(Trade.user_id.in_(user_ids), Market.status.in_(_REALIZADOS))
+    )).all()
+    return [
+        (t.user_id, (m.resolved_at or m.ends_at).astimezone(MX).date(), valor_trade(t, m, None) - t.cost)
+        for t, m in rows
+    ]
+
+
+async def ganancia_realizada(db: AsyncSession, user_ids: list[int]) -> dict[int, float]:
+    g: dict[int, float] = {}
+    for uid, _, v in await realizados(db, user_ids):
+        g[uid] = g.get(uid, 0.0) + v
+    return g
+
+
 def asignar_ranks(filas: list[Fila]) -> None:
     """Ordena por ganancia y numera a los elegibles; empates comparten lugar
     (mismo criterio que `league_engine.maybe_resolve_cycle`)."""

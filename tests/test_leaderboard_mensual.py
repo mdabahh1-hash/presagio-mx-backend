@@ -169,3 +169,25 @@ async def test_correo_competencia(monkeypatch):
     subject, html, text = out[0]
     assert subject == "Últimos días: vas en el lugar 5 del mes"
     assert "+120 PT" in html and "80 PT para el podio" in text and "/#/clasificacion" in html
+
+
+async def test_pnl_historico_solo_trades(client, db, make_user, make_binary_market):
+    """Perfil, gráfica y leaderboard «Todo»: solo trades realizados, sin bonos."""
+    u = await make_user("pnl")
+    u.points += 700                      # bono diario + referido: no es ganancia
+    u.markets_traded = 4
+    gana, pierde, cancelado, abierto = [await make_binary_market(f"p{i}") for i in range(4)]
+    ahora = datetime.now(timezone.utc)
+    for m, st in ((gana, MarketStatus.RESOLVED_YES), (pierde, MarketStatus.RESOLVED_NO), (cancelado, MarketStatus.CANCELLED)):
+        m.status, m.resolved_at = st, ahora
+    _trade(db, u, gana, 40, 100, at=ahora)       # +60
+    _trade(db, u, pierde, 25, 100, at=ahora)     # −25
+    _trade(db, u, cancelado, 30, 60, at=ahora)   # 0
+    _trade(db, u, abierto, 50, 100, at=ahora)    # sin resolver: 0
+    await db.commit()
+
+    assert (await client.get(f"/api/users/{u.username}")).json()["pnl"] == 35
+    [fila] = (await client.get("/api/users/leaderboard?period=all")).json()
+    assert fila["pnl"] == 35
+    hist = (await client.get("/api/users/me/points-history", headers=auth_headers(u))).json()
+    assert hist[-1]["price"] == 35 and hist[0]["price"] in (0, 35)

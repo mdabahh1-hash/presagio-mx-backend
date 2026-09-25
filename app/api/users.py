@@ -18,7 +18,6 @@ from app.schemas.user import (
 from app.schemas.trade import PositionOut
 from app.core import lmsr
 from app.core.auth import get_current_user, get_current_user_optional
-from app.config import settings
 from app.services import ledger, referral, leaderboard_mensual
 from app.models.leaderboard_mes import LeaderboardMes, LeaderboardMesFila
 from pydantic import BaseModel
@@ -182,39 +181,25 @@ async def get_points_history(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Daily points balance over the last `days` days (Mexico-time days).
-
-    Walks BACKWARD from the live balance subtracting points_ledger deltas per
-    day: exact for any window the ledger covers, and never invents a zero
-    balance. The sign-up grant has no ledger row — it's implicitly part of the
-    balance — and days before the account existed are not emitted.
+    """Daily cumulative P&L (realized trades only, no bonuses/referrals) over
+    the last `days` days (Mexico-time days). Betting leaves it flat; it moves on
+    the day a market resolves. Days before the account existed are not emitted.
     """
     today_mx = datetime.now(MX_TZ).date()
     created_mx = current_user.created_at.astimezone(MX_TZ).date() if current_user.created_at else today_mx
     start_day = max(today_mx - timedelta(days=days - 1), created_mx)
 
-    window_start_utc = datetime.combine(start_day, time.min, MX_TZ).astimezone(timezone.utc)
-    res = await db.execute(
-        select(PointsLedger.created_at, PointsLedger.delta)
-        .where(
-            PointsLedger.user_id == current_user.id,
-            PointsLedger.created_at >= window_start_utc,
-        )
-    )
-    delta_by_day: dict[date, float] = {}
-    for created_at, delta in res.all():
-        d = created_at.astimezone(MX_TZ).date()
-        delta_by_day[d] = delta_by_day.get(d, 0.0) + delta
+    by_day: dict[date, float] = {}
+    for _, d, v in await leaderboard_mensual.realizados(db, [current_user.id]):
+        by_day[d] = by_day.get(d, 0.0) + v
 
-    # Balance at close of day D−1 = balance at close of D − deltas during D.
+    acc = sum(v for d, v in by_day.items() if d < start_day)
     history: list[dict] = []
-    bal = current_user.points
-    day = today_mx
-    while day >= start_day:
-        history.append({"date": day.isoformat(), "price": round(bal, 2)})
-        bal -= delta_by_day.get(day, 0.0)
-        day -= timedelta(days=1)
-    history.reverse()
+    day = start_day
+    while day <= today_mx:
+        acc += by_day.get(day, 0.0)
+        history.append({"date": day.isoformat(), "price": round(acc, 2)})
+        day += timedelta(days=1)
 
     # The chart needs ≥2 points; on sign-up day, pad with a flat previous day.
     if len(history) == 1:
@@ -440,9 +425,8 @@ async def _leaderboard(limit: int, period: str, db: AsyncSession) -> list[Leader
     if not users:
         return []
 
-    # Amount currently invested per user = cost basis of open positions
-    # (what they have at stake right now). Used for both volume and P&L so that
-    # placing a bet is P&L-neutral; P&L only moves when a market resolves.
+    # Volume = cost basis of open positions (what's at stake right now).
+    # P&L = realized trades only (no bonuses/referrals): see leaderboard_mensual.realizados.
     pos_res = await db.execute(
         select(Position.user_id, Position.shares, Position.avg_cost)
         .where(Position.shares > 0)
@@ -451,14 +435,14 @@ async def _leaderboard(limit: int, period: str, db: AsyncSession) -> list[Leader
     for uid, shares, avg_cost in pos_res.all():
         invested_by_user[uid] = invested_by_user.get(uid, 0.0) + shares * avg_cost
 
-    base = float(settings.NEW_USER_POINTS)
+    pnl_by_user = await leaderboard_mensual.ganancia_realizada(db, [u.id for u in users])
     entries = [
         LeaderboardEntry(
             id=u.id,
             username=u.username,
             display_name=u.display_name,
             avatar_url=u.avatar_url,
-            pnl=round(u.points + invested_by_user.get(u.id, 0.0) - base, 2),
+            pnl=round(pnl_by_user.get(u.id, 0.0), 2),
             volume=round(invested_by_user.get(u.id, 0.0), 2),
             markets_traded=u.markets_traded,
             accuracy=u.accuracy,
@@ -573,8 +557,8 @@ async def _pnl_and_volume(db: AsyncSession, user: User) -> tuple[float, float]:
     """Realized P&L and amount currently invested for one user.
 
     invested = cost basis of open positions (what's at stake right now).
-    pnl = points + invested − starting bonus → P&L-neutral when betting, only
-    moves when a market resolves.
+    pnl = realized trades only (no bonuses/referrals) → P&L-neutral when
+    betting, only moves when a market resolves.
     """
     pos_res = await db.execute(
         select(Position.shares, Position.avg_cost)
@@ -584,7 +568,7 @@ async def _pnl_and_volume(db: AsyncSession, user: User) -> tuple[float, float]:
     for shares, avg_cost in pos_res.all():
         invested += shares * avg_cost
 
-    pnl = user.points + invested - float(settings.NEW_USER_POINTS)
+    pnl = (await leaderboard_mensual.ganancia_realizada(db, [user.id])).get(user.id, 0.0)
     return round(pnl, 2), round(invested, 2)
 
 
