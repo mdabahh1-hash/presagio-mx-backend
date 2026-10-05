@@ -12,14 +12,18 @@ amistosos no tienen tabla: abren con las cuotas solas y siempre salen en «revis
 
 Prior con dos fuentes (Mark, 24-sep-2026): abre con las cuotas de DraftKings que
 ESPN publica en el scoreboard, sin el margen de la casa, y lo compara con un
-modelo de la tabla de ESPN. Sin cuotas o sin el equipo en la tabla → descartado;
+modelo de la tabla de ESPN. Sin DraftKings (Mark, 5-oct-2026: así se caían 6 de 9
+de Liga MX) abre con los precios de Polymarket del mismo partido, siempre en
+«revisar». Sin ninguno de los dos o sin el equipo en la tabla → descartado;
 diferencia > 15 puntos en alguna opción o tabla con < 3 partidos → «revisar».
 """
 from __future__ import annotations
 
+import json
 import math
 import re
 import unicodedata
+import urllib.parse
 from datetime import datetime, timedelta, timezone
 
 import yaml
@@ -65,6 +69,78 @@ def prob_tabla(loc: dict | None, vis: dict | None) -> tuple[float, float, float]
     empate = max(0.18, 0.27 - 0.05 * abs(diff))
     local = (1 - empate) / (1 + math.exp(-1.1 * diff))
     return (local, empate, 1 - empate - local)
+
+
+def _precio(m: dict) -> float:
+    """Punto medio bid/ask; el último precio si no hay libro."""
+    bid, ask = m.get("bestBid"), m.get("bestAsk")
+    if bid is not None and ask is not None and float(ask) > 0:
+        return (float(bid) + float(ask)) / 2
+    precios = m["outcomePrices"]
+    return float((json.loads(precios) if isinstance(precios, str) else precios)[0])
+
+
+def polymarket_partido(http: Http, p: Partido) -> dict | None:
+    """Momio de respaldo: {probs (local, empate, visitante) sumando 1, url} del evento
+    de Polymarket del mismo partido (gamma API, sin llave), o None. El evento debe
+    cerrar a ±6 h del kickoff y cada mercado de equipo casar con UN solo lado: el
+    título de Polymarket no respeta la localía (amistosos), así que nunca se adivina."""
+    loc, vis = _alias_por_lado(p)
+    lados = [_palabras([p.home, *variantes_nombre(p.home), *loc]), _palabras([p.away, *variantes_nombre(p.away), *vis])]
+    lados = [lados[0] - lados[1], lados[1] - lados[0]]  # «Real», «City»… no distinguen
+    # la búsqueda de Polymarket es estricta: «Atletico San Luis Santos» halla el partido,
+    # «Atlético de San Luis Santos» no; se prueban nombre completo y corto, tal cual y sin acentos ni «de»
+    cortos = (loc[1] if len(loc) > 1 else p.home, vis[1] if len(vis) > 1 else p.away)
+    busquedas = dict.fromkeys(q for par in ((p.home, p.away), cortos)
+                              for q in (" ".join(par), " ".join(w for n in par for w in _norm(n).split() if len(w) >= 3)))
+    for q in busquedas:
+        data = http.get("https://gamma-api.polymarket.com/public-search?q=" + urllib.parse.quote(q))
+        for e in data.get("events") or []:
+            try:
+                fin = datetime.fromisoformat(e["endDate"].replace("Z", "+00:00"))
+                if e.get("closed") or " vs. " not in e.get("title", "") or abs((fin - p.kickoff).total_seconds()) > 6 * 3600:
+                    continue
+                return _probs_evento(e, lados)
+            except (KeyError, ValueError, TypeError, IndexError):
+                return None
+    return None
+
+
+def _palabras(nombres) -> set[str]:
+    return {w for n in nombres for w in _norm(n).split() if len(w) >= 3}
+
+
+def _casa(titulo: set[str], lado: set[str]) -> bool:
+    """Alguna palabra en común, o una prefijo de la otra («Hamburg» / «Hamburger»)."""
+    return any(a == b or (min(len(a), len(b)) >= 5 and (a.startswith(b) or b.startswith(a)))
+               for a in titulo for b in lado)
+
+
+def _probs_evento(e: dict, lados: list[set[str]]) -> dict | None:
+    probs: list[float | None] = [None, None, None]
+    for m in e.get("markets") or []:
+        if m.get("sportsMarketType") != "moneyline" or m.get("closed"):
+            continue
+        titulo = m.get("groupItemTitle") or ""
+        if titulo.lower().startswith("draw"):
+            probs[1] = _precio(m)
+            continue
+        lado = [i for i, nombres in ((0, lados[0]), (2, lados[1])) if _casa(_palabras([titulo]), nombres)]
+        if len(lado) != 1 or probs[lado[0]] is not None:
+            return None
+        probs[lado[0]] = _precio(m)
+    if None in probs or min(probs) <= 0:
+        return None
+    total = sum(probs)
+    return {"probs": tuple(x / total for x in probs), "url": f"https://polymarket.com/event/{e.get('slug', '')}"}
+
+
+def _alias_por_lado(p: Partido) -> tuple[list[str], list[str]]:
+    """p.alias = [nombres del local..., "|", nombres del visitante...]."""
+    if "|" not in p.alias:
+        return [], []
+    i = p.alias.index("|")
+    return p.alias[:i], p.alias[i + 1:]
 
 
 def ints_100(ps) -> list[int]:
@@ -123,17 +199,22 @@ def _texto_equipo(nombre: str, t: dict) -> str:
     return f"{nombre} es {t['rank']}º {donde} con {t['pts']} puntos en {t['pj']} partidos"
 
 
-def propuesta(p: Partido, liga: str, tabla: dict, ahora: datetime) -> tuple[dict | None, str | None]:
-    """(propuesta, None) o (None, motivo de descarte)."""
+def propuesta(p: Partido, liga: str, tabla: dict, ahora: datetime,
+              respaldo: dict | None = None) -> tuple[dict | None, str | None]:
+    """(propuesta, None) o (None, motivo de descarte). `respaldo` = polymarket_partido,
+    solo se usa si ESPN no trae DraftKings."""
     cuotas = prob_cuotas(p.cuotas)
+    fuente, url = "las cuotas de DraftKings publicadas por ESPN", p.url
+    if cuotas is None and respaldo:
+        cuotas, fuente, url = respaldo["probs"], "los precios de Polymarket", respaldo["url"]
     if cuotas is None:
-        return None, "sin cuotas de DraftKings en ESPN"
+        return None, "sin cuotas de DraftKings ni Polymarket"
     loc, vis = (tabla.get(i) for i in (p.equipo_ids or ("", "")))
     selecciones = liga == "Fecha FIFA"
     if (not loc or not vis) and not selecciones:
         return None, "sin tabla de ESPN para uno de los equipos"
     home, away = _nombres(p)
-    revisar = []
+    revisar = ["momio de Polymarket (ESPN sin DraftKings)"] if url != p.url else []
     t = prob_tabla(loc, vis)
     if t is None and selecciones:
         revisar.append("selecciones sin tabla útil: prior solo con cuotas")
@@ -151,12 +232,12 @@ def propuesta(p: Partido, liga: str, tabla: dict, ahora: datetime) -> tuple[dict
     hoy = _fecha(ahora.astimezone(_MX))
     cuotas_txt = f"daban {pct[0]}% a {home}, {pct[1]}% al empate y {pct[2]}% a {away}."
     if selecciones:
-        context = (f"{home} y {away} se enfrentan en la {COMPETENCIAS[liga].nombre}. Las cuotas de "
-                   f"DraftKings publicadas por ESPN el {hoy} {cuotas_txt}")
+        context = (f"{home} y {away} se enfrentan en la {COMPETENCIAS[liga].nombre}. "
+                   f"{fuente[0].upper()}{fuente[1:]} el {hoy} {cuotas_txt}")
     else:
         context = (
             f"{_texto_equipo(home, loc)}; {_texto_equipo(away, vis)}, según la tabla de ESPN al "
-            f"{hoy}. Las cuotas de DraftKings publicadas por ESPN ese día {cuotas_txt}"
+            f"{hoy}. {fuente[0].upper()}{fuente[1:]} ese día {cuotas_txt}"
         )
     doc = {
         "tipo": "partido",
@@ -174,7 +255,8 @@ def propuesta(p: Partido, liga: str, tabla: dict, ahora: datetime) -> tuple[dict
     tabla_txt = "/".join(map(str, ints_100(t))) if t else "—"
     return {
         "doc": doc, "grupo": liga, "titulo": f"{home} vs {away}", "cuando": doc["kickoff"],
-        "precio": "/".join(map(str, pct)), "nota": f"tabla {tabla_txt}", "revisar": revisar, "url": p.url,
+        "precio": "/".join(map(str, pct)), "nota": f"tabla {tabla_txt}", "revisar": revisar,
+        "url": url,
     }, None
 
 
@@ -203,7 +285,13 @@ def armar_propuestas(http: Http, ahora: datetime, excluir: set[str], existentes:
                 continue
             if liga == "Fecha FIFA" and not (p.home in SELECCIONES and p.away in SELECCIONES):
                 continue  # Tahití vs Islas Cook: ni al correo
-            prop, motivo = propuesta(p, liga, tabla, ahora)
+            respaldo = None
+            if prob_cuotas(p.cuotas) is None:
+                try:
+                    respaldo = polymarket_partido(http, p)
+                except RuntimeError:
+                    pass  # Polymarket caído: se descarta como antes
+            prop, motivo = propuesta(p, liga, tabla, ahora, respaldo)
             if prop is None:
                 descartes.append({"grupo": liga, "titulo": " vs ".join(_nombres(p)), "motivo": motivo})
             else:

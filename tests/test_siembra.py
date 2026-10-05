@@ -71,6 +71,37 @@ def test_propuesta_valida_y_revisar():
     assert P.propuesta(_partido(ahora + timedelta(days=2)), "Liga MX", {}, ahora)[1]
 
 
+def _poly_evento(kickoff: str = "2026-09-26T02:00:00Z", local="Club Toluca", **extra) -> dict:
+    """Evento de Polymarket como el de América–Monterrey del 10-oct-2026, con el
+    título invertido (visitante primero) para probar que no se usa la posición."""
+    def m(titulo, bid, ask):
+        return {"sportsMarketType": "moneyline", "groupItemTitle": titulo, "bestBid": bid, "bestAsk": ask,
+                "outcomePrices": "[\"0.5\", \"0.5\"]"}
+    return {"events": [{"title": "Club Toluca vs. Cruz Azul", "slug": "mex-tol-caz", "endDate": kickoff, "closed": False,
+                        "markets": [m(local, 0.40, 0.42), m("Draw (Club Toluca vs. Cruz Azul)", 0.26, 0.28),
+                                    m("Cruz Azul", 0.30, 0.32)], **extra}]}
+
+
+def test_polymarket_de_respaldo():
+    k = datetime(2026, 9, 26, 2, tzinfo=timezone.utc)
+    r = P.polymarket_partido(FakeHttp({"polymarket": _poly_evento()}), _partido(k, cuotas=None))
+    l, e, v = r["probs"]  # local = Cruz Azul aunque Polymarket lo ponga segundo
+    assert abs(l + e + v - 1) < 1e-9 and l == pytest.approx(0.31 / 0.99) and v == pytest.approx(0.41 / 0.99)
+    assert r["url"].endswith("/mex-tol-caz")
+    # otro día o un equipo que no casa con ninguno → nada (nunca se adivina)
+    assert P.polymarket_partido(FakeHttp({"polymarket": _poly_evento("2026-09-27T02:00:00Z")}), _partido(k)) is None
+    assert P.polymarket_partido(FakeHttp({"polymarket": _poly_evento(local="Pachuca")}), _partido(k)) is None
+
+    ahora = datetime(2026, 9, 24, 14, tzinfo=timezone.utc)
+    prop, motivo = P.propuesta(_partido(k, cuotas=None), "Liga MX", _tabla(), ahora, r)
+    assert motivo is None and prop["doc"]["pct"] == P.ints_100(r["probs"])
+    assert "Polymarket" in prop["revisar"][0] and "Polymarket" in prop["doc"]["context"]
+    assert prop["url"] == r["url"]
+    # con DraftKings el respaldo no se usa
+    prop, _ = P.propuesta(_partido(k), "Liga MX", _tabla(), ahora, r)
+    assert prop["revisar"] == [] and "DraftKings" in prop["doc"]["context"]
+
+
 def test_duplicado_con_otro_id():
     k = datetime(2026, 9, 27, 2, tzinfo=timezone.utc)
     mismo = [{"subcategory": "Liga MX", "kickoff_at": k + timedelta(hours=1), "labels": ["🏠 Cruz Azul", "🤝 Empate", "✈️ Toluca"]}]
