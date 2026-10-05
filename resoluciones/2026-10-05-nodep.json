@@ -1,0 +1,300 @@
+{
+  "generado": "2026-10-05T18:00:00Z",
+  "modo": "agente",
+  "nota": "No deportivos (skill resolver-no-deportivos), a petición de Mark. 21 cripto: el job leyó CF Benchmarks pero Binance le responde 451 desde Railway; aquí se leyó Binance (y Kraken) desde local y coinciden del lado de cada umbral. Escalados: 4 NO por ausencia (regla de Mark), stablecoins (una sola fuente), Polo (landfall 1 minuto después del cierre), Brasil (TSE bloquea la lectura) e IMSS (dato aún no publicado).",
+  "resoluciones": [
+    {
+      "id": "btc-cierre-sep26-76000",
+      "veredicto": "YES",
+      "resultado": "BRR de CF Benchmarks del 30-sep-2026: US$83,880.84 ≥ US$76,000 → SÍ. Respaldo: cierre diario UTC de BTCUSDT en Binance del 30-sep-2026 US$83,623.60 (mismo lado del umbral); Kraken XBTUSD US$83,564.70 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/BRR",
+      "fuente_2": "https://www.binance.com/en/trade/BTCUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "btc-cierre-sep26-78000",
+      "veredicto": "YES",
+      "resultado": "BRR de CF Benchmarks del 30-sep-2026: US$83,880.84 ≥ US$78,000 → SÍ. Respaldo: cierre diario UTC de BTCUSDT en Binance del 30-sep-2026 US$83,623.60 (mismo lado del umbral); Kraken XBTUSD US$83,564.70 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/BRR",
+      "fuente_2": "https://www.binance.com/en/trade/BTCUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "btc-cierre-sep26-80000",
+      "veredicto": "YES",
+      "resultado": "BRR de CF Benchmarks del 30-sep-2026: US$83,880.84 ≥ US$80,000 → SÍ. Respaldo: cierre diario UTC de BTCUSDT en Binance del 30-sep-2026 US$83,623.60 (mismo lado del umbral); Kraken XBTUSD US$83,564.70 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/BRR",
+      "fuente_2": "https://www.binance.com/en/trade/BTCUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "btc-cierre-sep26-82000",
+      "veredicto": "YES",
+      "resultado": "BRR de CF Benchmarks del 30-sep-2026: US$83,880.84 ≥ US$82,000 → SÍ. Respaldo: cierre diario UTC de BTCUSDT en Binance del 30-sep-2026 US$83,623.60 (mismo lado del umbral); Kraken XBTUSD US$83,564.70 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/BRR",
+      "fuente_2": "https://www.binance.com/en/trade/BTCUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "btc-cierre-sep26-84000",
+      "veredicto": "NO",
+      "resultado": "BRR de CF Benchmarks del 30-sep-2026: US$83,880.84 < US$84,000 → NO. Respaldo: cierre diario UTC de BTCUSDT en Binance del 30-sep-2026 US$83,623.60 (mismo lado del umbral); Kraken XBTUSD US$83,564.70 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/BRR",
+      "fuente_2": "https://www.binance.com/en/trade/BTCUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "btc-cierre-sep26-86000",
+      "veredicto": "NO",
+      "resultado": "BRR de CF Benchmarks del 30-sep-2026: US$83,880.84 < US$86,000 → NO. Respaldo: cierre diario UTC de BTCUSDT en Binance del 30-sep-2026 US$83,623.60 (mismo lado del umbral); Kraken XBTUSD US$83,564.70 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/BRR",
+      "fuente_2": "https://www.binance.com/en/trade/BTCUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "eth-cierre-sep26-2400",
+      "veredicto": "YES",
+      "resultado": "ETHUSD_RR de CF Benchmarks del 30-sep-2026: US$2,684.99 ≥ US$2,400 → SÍ. Respaldo: cierre diario UTC de ETHUSDT en Binance del 30-sep-2026 US$2,686.01 (mismo lado del umbral); Kraken ETHUSD US$2,684.11 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/ETHUSD_RR",
+      "fuente_2": "https://www.binance.com/en/trade/ETHUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "eth-cierre-sep26-2500",
+      "veredicto": "YES",
+      "resultado": "ETHUSD_RR de CF Benchmarks del 30-sep-2026: US$2,684.99 ≥ US$2,500 → SÍ. Respaldo: cierre diario UTC de ETHUSDT en Binance del 30-sep-2026 US$2,686.01 (mismo lado del umbral); Kraken ETHUSD US$2,684.11 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/ETHUSD_RR",
+      "fuente_2": "https://www.binance.com/en/trade/ETHUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "eth-cierre-sep26-2600",
+      "veredicto": "YES",
+      "resultado": "ETHUSD_RR de CF Benchmarks del 30-sep-2026: US$2,684.99 ≥ US$2,600 → SÍ. Respaldo: cierre diario UTC de ETHUSDT en Binance del 30-sep-2026 US$2,686.01 (mismo lado del umbral); Kraken ETHUSD US$2,684.11 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/ETHUSD_RR",
+      "fuente_2": "https://www.binance.com/en/trade/ETHUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "eth-cierre-sep26-2700",
+      "veredicto": "NO",
+      "resultado": "ETHUSD_RR de CF Benchmarks del 30-sep-2026: US$2,684.99 < US$2,700 → NO. Respaldo: cierre diario UTC de ETHUSDT en Binance del 30-sep-2026 US$2,686.01 (mismo lado del umbral); Kraken ETHUSD US$2,684.11 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/ETHUSD_RR",
+      "fuente_2": "https://www.binance.com/en/trade/ETHUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "eth-cierre-sep26-2800",
+      "veredicto": "NO",
+      "resultado": "ETHUSD_RR de CF Benchmarks del 30-sep-2026: US$2,684.99 < US$2,800 → NO. Respaldo: cierre diario UTC de ETHUSDT en Binance del 30-sep-2026 US$2,686.01 (mismo lado del umbral); Kraken ETHUSD US$2,684.11 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/ETHUSD_RR",
+      "fuente_2": "https://www.binance.com/en/trade/ETHUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "eth-cierre-sep26-2900",
+      "veredicto": "NO",
+      "resultado": "ETHUSD_RR de CF Benchmarks del 30-sep-2026: US$2,684.99 < US$2,900 → NO. Respaldo: cierre diario UTC de ETHUSDT en Binance del 30-sep-2026 US$2,686.01 (mismo lado del umbral); Kraken ETHUSD US$2,684.11 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/ETHUSD_RR",
+      "fuente_2": "https://www.binance.com/en/trade/ETHUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "sol-cierre-sep26-100",
+      "veredicto": "YES",
+      "resultado": "SOLUSD_RR de CF Benchmarks del 30-sep-2026: US$119.43 ≥ US$100 → SÍ. Respaldo: cierre diario UTC de SOLUSDT en Binance del 30-sep-2026 US$118.12 (mismo lado del umbral); Kraken SOLUSD US$118.06 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/SOLUSD_RR",
+      "fuente_2": "https://www.binance.com/en/trade/SOLUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "sol-cierre-sep26-105",
+      "veredicto": "YES",
+      "resultado": "SOLUSD_RR de CF Benchmarks del 30-sep-2026: US$119.43 ≥ US$105 → SÍ. Respaldo: cierre diario UTC de SOLUSDT en Binance del 30-sep-2026 US$118.12 (mismo lado del umbral); Kraken SOLUSD US$118.06 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/SOLUSD_RR",
+      "fuente_2": "https://www.binance.com/en/trade/SOLUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "sol-cierre-sep26-110",
+      "veredicto": "YES",
+      "resultado": "SOLUSD_RR de CF Benchmarks del 30-sep-2026: US$119.43 ≥ US$110 → SÍ. Respaldo: cierre diario UTC de SOLUSDT en Binance del 30-sep-2026 US$118.12 (mismo lado del umbral); Kraken SOLUSD US$118.06 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/SOLUSD_RR",
+      "fuente_2": "https://www.binance.com/en/trade/SOLUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "sol-cierre-sep26-115",
+      "veredicto": "YES",
+      "resultado": "SOLUSD_RR de CF Benchmarks del 30-sep-2026: US$119.43 ≥ US$115 → SÍ. Respaldo: cierre diario UTC de SOLUSDT en Binance del 30-sep-2026 US$118.12 (mismo lado del umbral); Kraken SOLUSD US$118.06 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/SOLUSD_RR",
+      "fuente_2": "https://www.binance.com/en/trade/SOLUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "sol-cierre-sep26-120",
+      "veredicto": "NO",
+      "resultado": "SOLUSD_RR de CF Benchmarks del 30-sep-2026: US$119.43 < US$120 → NO. Respaldo: cierre diario UTC de SOLUSDT en Binance del 30-sep-2026 US$118.12 (mismo lado del umbral); Kraken SOLUSD US$118.06 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/SOLUSD_RR",
+      "fuente_2": "https://www.binance.com/en/trade/SOLUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "sol-cierre-sep26-125",
+      "veredicto": "NO",
+      "resultado": "SOLUSD_RR de CF Benchmarks del 30-sep-2026: US$119.43 < US$125 → NO. Respaldo: cierre diario UTC de SOLUSDT en Binance del 30-sep-2026 US$118.12 (mismo lado del umbral); Kraken SOLUSD US$118.06 también coincide.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/SOLUSD_RR",
+      "fuente_2": "https://www.binance.com/en/trade/SOLUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "btc-rango-cierre-sep26",
+      "veredicto": "r_82000_86000",
+      "resultado": "BRR del 30-sep-2026: US$83,880.84, dentro del rango US$82,000–US$86,000 (incluye el inferior, excluye el superior). Respaldo: Binance BTCUSDT cierre UTC 30-sep US$83,623.60 y Kraken XBTUSD US$83,564.70, mismo rango.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/BRR",
+      "fuente_2": "https://www.binance.com/en/trade/BTCUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "eth-rango-cierre-sep26",
+      "veredicto": "r_2500_2700",
+      "resultado": "ETHUSD_RR del 30-sep-2026: US$2,684.99, dentro del rango US$2,500–US$2,700 (incluye el inferior, excluye el superior). Respaldo: Binance ETHUSDT cierre UTC 30-sep US$2,686.01 y Kraken ETHUSD US$2,684.11, mismo rango.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/ETHUSD_RR",
+      "fuente_2": "https://www.binance.com/en/trade/ETHUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "sol-rango-cierre-sep26",
+      "veredicto": "r_115_125",
+      "resultado": "SOLUSD_RR del 30-sep-2026: US$119.43, dentro del rango US$115–US$125 (incluye el inferior, excluye el superior). Respaldo: Binance SOLUSDT cierre UTC 30-sep US$118.12 y Kraken SOLUSD US$118.06, mismo rango.",
+      "fuente_1": "https://www.cfbenchmarks.com/data/indices/SOLUSD_RR",
+      "fuente_2": "https://www.binance.com/en/trade/SOLUSDT",
+      "confianza": "alta"
+    },
+    {
+      "id": "banxico-mantiene-tasa-sep26",
+      "veredicto": "YES",
+      "resultado": "Anuncio de Banxico del 24-sep-2026: «El objetivo para la Tasa de Interés Interbancaria a 1 día (tasa objetivo) se mantiene sin cambio en 6.50 por ciento». El Financiero: «dejó la tasa de interés sin cambios en 6.50 por ciento este jueves 24 de septiembre».",
+      "fuente_1": "https://www.banxico.org.mx/publicaciones-y-prensa/anuncios-de-las-decisiones-de-politica-monetaria/anuncios-politica-monetaria-t.html",
+      "fuente_2": "https://www.elfinanciero.com.mx/economia/2026/09/24/tasa-del-banxico-hoy-24-de-septiembre-2026-en-cuanto-quedo/",
+      "confianza": "alta"
+    },
+    {
+      "id": "banxico-recorte-tasa-2026-q3",
+      "veredicto": "NO",
+      "resultado": "Las únicas decisiones de Banxico entre el 1-jul y el 30-sep-2026 son las del 6-ago y el 24-sep, ambas «se mantiene sin cambio en 6.50 por ciento» (listado oficial de anuncios; no hubo decisión extraordinaria). Expansión, 24-sep: «Esta es la cuarta vez consecutiva que la Junta de Gobierno ... decide mantener la tasa de interés en 6.50%».",
+      "fuente_1": "https://www.banxico.org.mx/publicaciones-y-prensa/anuncios-de-las-decisiones-de-politica-monetaria/anuncios-politica-monetaria-t.html",
+      "fuente_2": "https://expansion.mx/economia/2026/09/24/banxico-tasa-de-interes-de-referencia-6-5-septiembre",
+      "confianza": "alta"
+    },
+    {
+      "id": "letonia-nueva-unidad-2026",
+      "veredicto": "NO",
+      "resultado": "Resultados de la CVK (provisionales, 1,059 de 1,059 casillas contadas, actualizados el 5-oct-2026): Jaunā Vienotība «7 vietas»; Apvienotais saraksts «41 vieta». Nueva Unidad no tiene más escaños que cualquier otro partido (le saca 34 la Lista Unida; ningún recuento cambia eso). Wikipedia: JV 6.45 %, 7 escaños; AS 35.76 %, 41.",
+      "fuente_1": "https://www.cvk.lv/saeima-2026-rezultati",
+      "fuente_2": "https://en.wikipedia.org/wiki/2026_Latvian_parliamentary_election",
+      "confianza": "alta"
+    },
+    {
+      "id": "lcdlf-mexico-2026-ganador",
+      "veredicto": "mariana_ochoa",
+      "resultado": "Sitio oficial: «El ganador de La Casa de los Famosos México 2026 fue revelado durante la gran final de este domingo 4 de octubre ... Ganador: Mariana Ochoa». El Financiero (4-oct, 23:25): «Mariana Ochoa se consagró como la gran ganadora de la cuarta temporada del reality show».",
+      "fuente_1": "https://www.lacasadelosfamososmexico.tv/quien-gano-la-casa-de-los-famosos-mexico-2026",
+      "fuente_2": "https://www.elfinanciero.com.mx/entretenimiento/2026/10/04/quien-es-el-ganador-de-la-casa-de-los-famosos-mexico-2026/",
+      "confianza": "alta"
+    }
+  ],
+  "escalados": [
+    {
+      "id": "stablecoins-cierre-sep26-310-5b",
+      "veredicto_sugerido": "YES",
+      "razon": "DefiLlama (fuente de las normas, serie totalCirculatingUSD.peggedUSD) da US$310,711 millones con fecha 1-oct-2026 ≥ umbral US$310,500 millones → SÍ por 0.07 %. El respaldo (CoinGecko) no publica historial gratis: su cifra de 309.6 B es de hoy y con otra metodología, así que no confirma ni desmiente. Una sola fuente → lo decides tú.",
+      "evidencia": [
+        "https://defillama.com/stablecoins",
+        "https://stablecoins.llama.fi/stablecoincharts/all"
+      ],
+      "citas": [
+        "2026-10-01 peggedUSD = 310,711,423,887"
+      ]
+    },
+    {
+      "id": "huracan-polo-tierra-sep26",
+      "veredicto_sugerido": "NO",
+      "razon": "Polo SÍ tocó tierra en México, pero después del cierre: aviso intermedio 34A del NHC, 11:00 PM MST del lunes 28-sep = 06:00 UTC del 29-sep (00:00 CDMX), y el mercado cerró a las 05:59 UTC. La pregunta dice «antes del 28 de septiembre»: con cualquiera de las dos lecturas el landfall llegó tarde, por un minuto respecto al cierre. Sin operaciones (0 PT). Escalo por lo justo del margen y porque la única fuente leída es el NHC.",
+      "evidencia": [
+        "https://www.nhc.noaa.gov/archive/2026/ep17/ep172026.public_a.034.shtml",
+        "https://www.nhc.noaa.gov/archive/2026/ep17/ep172026.public.038.shtml"
+      ],
+      "citas": [
+        "At 1100 PM MST (0600 UTC), the center of Hurricane Polo is making landfall now on the west coast of Baja California Sur just south of Las Barrancas",
+        "...POLO DISSIPATES OVER NORTHWESTERN MEXICO... (aviso 38, 800 PM MST Tue Sep 29 2026)"
+      ]
+    },
+    {
+      "id": "brasil-segunda-vuelta-2026",
+      "veredicto_sugerido": "YES",
+      "razon": "Primera vuelta del 4-oct-2026: Flávio Bolsonaro 47.03 % y Lula 45.16 % de los votos válidos; nadie pasa del 50 %, segunda vuelta el 25-oct. Wikipedia lo confirma con las mismas cifras, pero la nota del TSE (fuente de las normas) bloquea la lectura automática (HTTP 403), así que solo vi su texto en el buscador. Ábrela tú y aprueba.",
+      "evidencia": [
+        "https://www.tse.jus.br/comunicacao/noticias/2026/Outubro/flavio-bolsonaro-e-lula-vao-disputar-o-2o-turno-para-a-presidencia-da-republica",
+        "https://en.wikipedia.org/wiki/2026_Brazilian_presidential_election"
+      ],
+      "citas": [
+        "Flávio Bolsonaro (PL): 47.03% (56,104,268 votes); Lula: 45.16% (53,876,617 votes); runoff October 25, 2026"
+      ]
+    },
+    {
+      "id": "imss-empleo-sep26-135k",
+      "razon": "El comunicado del IMSS de septiembre aún no se publica (sale normalmente entre el 5 y el 10 de octubre). Ventana de dato no cerrada: volver a revisar después del 10-oct.",
+      "evidencia": [
+        "https://www.imss.gob.mx/prensa"
+      ],
+      "citas": []
+    },
+    {
+      "id": "cdmx-interviene-batalla-aura-sep26",
+      "veredicto_sugerido": "NO",
+      "razon": "NO por AUSENCIA. Busqué en medios nacionales intervenciones de autoridades de CDMX a batallas de aura entre el 2 y el 30-sep: solo aparece el incidente del 23/25-ago en el Foro Lindbergh (fuera de ventana; además el evento siguió), la batalla oficial de la Secretaría de Cultura del 13-sep en Chapultepec y la postura de Brugada de que «son bienvenidas». La prohibición de Veracruz no cuenta (fuera de CDMX). Regla de Mark: un NO por ausencia lo decides tú. Es el único de este grupo con apuestas (1 operación, ~1,000 PT).",
+      "evidencia": [
+        "https://www.infobae.com/mexico/2026/08/25/policia-recibe-un-zape-al-intentar-frenar-batalla-de-farmear-aura-en-cdmx/",
+        "https://www.infobae.com/mexico/2026/09/09/gobierno-de-mexico-organiza-mega-batalla-de-farmear-aura-en-chapultepec-fecha-premios-y-como-participar/"
+      ],
+      "citas": [
+        "(paráfrasis, no cita textual) 23-ago, Foro Lindbergh: la autoridad confirmó que el evento siguió"
+      ]
+    },
+    {
+      "id": "norona-rompe-visa-sep26",
+      "veredicto_sugerido": "NO",
+      "razon": "NO por AUSENCIA. Lo único que aparece es que Noroña se NEGÓ a romper la visa (20-ago; dijo que no podía «con una mano», según Infobae) y que lo que mostró era una tarjeta BBVA Visa, no la visa de EE. UU. Ningún medio reporta que la haya roto antes del 1-oct.",
+      "evidencia": [
+        "https://www.infobae.com/mexico/2026/08/20/la-absurda-razon-por-la-que-norona-se-nego-a-romper-su-visa-de-eeuu/"
+      ],
+      "citas": [
+        "(paráfrasis del titular de Infobae, no cita textual) Noroña se negó a romper su visa de EE. UU., 20-ago-2026"
+      ]
+    },
+    {
+      "id": "pelea-legisladores-federales-sep26",
+      "veredicto_sugerido": "NO",
+      "razon": "NO por AUSENCIA. La última pelea física documentada es la del 12-ago (Arturo Ávila vs Carlos Gutiérrez Mancilla en el Senado, Comisión Permanente), antes de la ventana del 2 al 30-sep. En septiembre no aparece ninguna con contacto físico entre legisladores federales (la nota de Infobae del 30-sep sobre Malvinas es de Argentina).",
+      "evidencia": [
+        "https://www.proceso.com.mx/nacional/politica/2026/8/12/a-insultos-y-empujones-diputados-arturo-avila-y-carlos-mancilla-pelean-en-patio-del-senado-video-377923.html"
+      ],
+      "citas": [
+        "12-ago-2026: insultos y empujones en el patio del Senado (fuera de la ventana)"
+      ]
+    },
+    {
+      "id": "sheinbaum-cancion-mananera-sep26",
+      "veredicto_sugerido": "NO",
+      "razon": "NO por AUSENCIA. Ninguna nota de medios nacionales reporta una canción en una mañanera entre el 2 y el 30-sep. Revisé la del 14-sep (la más probable, por México Canta): los finalistas e Intocable tocaron en el Zócalo tras el Grito, no en la conferencia. El antecedente de El Bogueto es de julio. No revisé los videos oficiales uno por uno.",
+      "evidencia": [
+        "https://www.milenio.com/politica/claudia-sheinbaum-la-mananera-hoy-14-de-septiembre-2026-en-vivo-atm",
+        "https://www.elfinanciero.com.mx/espectaculos/2026/07/23/asi-fue-la-aparicion-de-el-bogueto-en-la-mananera-de-claudia-sheinbaum/"
+      ],
+      "citas": [
+        "estarán (en el Zócalo) los tres (finalistas de México Canta) e Intocable"
+      ]
+    }
+  ]
+}
