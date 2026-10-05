@@ -58,7 +58,8 @@ def test_resolver_receta_acuerdo_y_discrepancia(monkeypatch):
 
 def test_resolver_receta_una_fuente_y_errores(monkeypatch):
     monkeypatch.setattr(recetas, "leer_cf", lambda http, indice, dia: _lectura(103210.5))
-    monkeypatch.setattr(recetas, "leer_binance", lambda http, symbol, dia: (_ for _ in ()).throw(RecetaError("la vela aún no cierra")))
+    monkeypatch.setattr(recetas, "leer_binance", lambda http, symbol, dia: (_ for _ in ()).throw(RecetaError("binance: HTTP Error 451")))
+    monkeypatch.setattr(recetas, "leer_kraken", lambda http, pair, dia: (_ for _ in ()).throw(RecetaError("la vela aún no cierra")))
     e = resolver_receta(_m(R_CIERRE), http=object(), ahora=AHORA)
     assert e["escalar"] and e["veredicto_sugerido"] == "YES" and "una sola fuente" in e["razon"] and "aún no cierra" in e["razon"]
     # primaria falla → escalado sin sugerencia
@@ -147,3 +148,14 @@ def test_fuentes_confiables_en_validar_entrada():
     # deportes no cambia
     dep = {**detalle, "category": "Deportes", "resolution_source_url": "https://www.uefa.com/x"}
     assert validar_entrada({**ok, "fuente_1": "https://www.espn.com/a", "fuente_2": "https://www.skysports.com/b"}, dep, ahora) == []
+
+
+def test_cripto_cierre_kraken_cuando_binance_falla(monkeypatch):
+    # Binance responde 451 desde Railway: la receta (sin params.pair) cae a Kraken XBTUSD.
+    pares = []
+    monkeypatch.setattr(recetas, "leer_cf", lambda http, indice, dia: _lectura(103210.5))
+    monkeypatch.setattr(recetas, "leer_binance", lambda http, symbol, dia: (_ for _ in ()).throw(RecetaError("HTTP Error 451")))
+    monkeypatch.setattr(recetas, "leer_kraken", lambda http, pair, dia: pares.append(pair) or _lectura(103150.0, "kraken", "https://www.kraken.com/prices/xbtusd"))
+    e = resolver_receta(_m(R_CIERRE), http=object(), ahora=AHORA)
+    assert pares == ["XBTUSD"]
+    assert e["veredicto"] == "YES" and e["confianza"] == "alta" and e["fuente_2"].startswith("https://www.kraken.com")

@@ -210,6 +210,10 @@ def leer_binance_ventana(http: Http, symbol: str, desde: date, hasta: date, camp
                    f"{symbol} {agg} de {campo} entre {desde} y {hasta}: {v[campo]:,.2f} ({v['fecha']})", "binance")
 
 
+# Par de Kraken por símbolo de Binance (espejo de siembra/cripto.py:ACTIVOS), para recetas sin params.pair.
+KRAKEN_PAR = {"BTCUSDT": "XBTUSD", "ETHUSDT": "ETHUSD", "SOLUSDT": "SOLUSD"}
+
+
 def kraken_ohlc(http: Http, pair: str, desde: date) -> tuple[list[dict], str]:
     since = int(datetime(desde.year, desde.month, desde.day, tzinfo=timezone.utc).timestamp())
     data = http.get(f"https://api.kraken.com/0/public/OHLC?pair={pair}&interval=1440&since={since - 1}")
@@ -418,7 +422,9 @@ def lecturas(r: dict, ends_at: datetime, http: Http) -> tuple[Lectura, Lectura |
     if tipo == "cripto_cierre":
         if p.get("indice"):
             l1 = leer_cf(http, p["indice"], fecha)
-            l2 = _try(lambda: leer_binance(http, p["symbol"], fecha)) if p.get("symbol") else None
+            pair = p.get("pair") or KRAKEN_PAR.get(p.get("symbol"))
+            l2 = _respaldo(lambda: leer_binance(http, p["symbol"], fecha) if p.get("symbol") else None,
+                           lambda: leer_kraken(http, pair, fecha) if pair else None)
         else:
             l1 = leer_binance(http, p["symbol"], fecha)
             l2 = _try(lambda: leer_kraken(http, p["pair"], fecha)) if p.get("pair") else None
@@ -426,7 +432,9 @@ def lecturas(r: dict, ends_at: datetime, http: Http) -> tuple[Lectura, Lectura |
         campo, agg = p["campo"], p["agg"]
         if p.get("indice") and campo == "close":
             l1 = leer_cf_ventana(http, p["indice"], desde, fecha, agg)
-            l2 = _try(lambda: leer_binance_ventana(http, p["symbol"], desde, fecha, campo, agg))
+            pair = p.get("pair") or KRAKEN_PAR.get(p.get("symbol"))
+            l2 = _respaldo(lambda: leer_binance_ventana(http, p["symbol"], desde, fecha, campo, agg),
+                           lambda: leer_kraken_ventana(http, pair, desde, fecha, campo, agg) if pair else None)
         else:
             l1 = leer_binance_ventana(http, p["symbol"], desde, fecha, campo, agg)
             l2 = _try(lambda: leer_kraken_ventana(http, p["pair"], desde, fecha, campo, agg)) if p.get("pair") else None
@@ -465,6 +473,18 @@ def _try(fn):
         return fn()
     except (RecetaError, RuntimeError, KeyError, ValueError, TypeError) as e:
         return e
+
+
+def _respaldo(*fns):
+    """Primera lectura que funcione; si ninguna, el último error (o None si no aplicó ninguna).
+    Binance responde 451 desde Railway (EE. UU.), así que Kraken va detrás."""
+    res = None
+    for fn in fns:
+        r = _try(fn)
+        if isinstance(r, Lectura):
+            return r
+        res = r if r is not None else res
+    return res
 
 
 def veredicto(r: dict, l: Lectura) -> str:
